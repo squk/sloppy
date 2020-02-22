@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MMU_H
+#define MMU_H
 
 #include <gba_base.h>
 
@@ -23,7 +24,7 @@ typedef struct {
 	u8 zram[0xFFFF];
 
 	bool in_bios;
-} gbc_mmu
+} gbc_mmu;
 
 // From Gambatte emulator
 // also from https://github.com/drhelius/Gearboy/blob/master/src/Memory.h lol
@@ -66,6 +67,12 @@ const u8 kInitialValuesForColorFFXX[256] = {
 };
 
 
+void gbc_mmu_init(gbc_mmu *mmu);
 u8 get_address_ptr(gbc_mmu *mmu , u16 address);
+
 u8 read_u8(gbc_mmu *mmu , u16 address);
 void write_u8(gbc_mmu *mmu , u16 address, u8 val);
+u16 read_u16(gbc_mmu *mmu , u16 address);
+void write_u16(gbc_mmu *mmu , u16 address, u16 val);
+
+#endif

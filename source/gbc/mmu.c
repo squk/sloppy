@@ -1,6 +1,8 @@
 #include <gba_base.h>
 
-void mmu_init(gbc_mmu *mmu){
+#include "mmu.h"
+
+void gbc_mmu_init(gbc_mmu *mmu){
 	mmu->in_bios = true;
 }
 
@@ -80,6 +82,16 @@ u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
 		return 0;
 }
 
+u8 read_u8(gbc_mmu *mmu , u16 address) {
+    u8 *ptr = get_address_ptr(mmu, address);
+    return *ptr;
+}
+
+void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
+    u8 *ptr = get_address_ptr(mmu, address);
+    *ptr = val;
+}
+
 u16 read_u16(gbc_mmu *mmu , u16 address) {
     u8 *ptr = get_address_ptr(mmu, address);
     u16 val;
@@ -95,12 +107,3 @@ u16 write_u16(gbc_mmu *mmu , u16 address, u16 val) {
     return val;
 }
 
-u8 read_u8(gbc_mmu *mmu , u16 address) {
-    u8 *ptr = get_address_ptr(mmu, address);
-    return *ptr;
-}
-
-void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
-    u8 *ptr = get_address_ptr(mmu, address);
-    *ptr = val;
-}
