@@ -31,8 +31,8 @@ int main(void) {
 	// the screen is only scrolling 7 pixels - to reveal the
 	// illusion of how the scroller works
     /**((u16 *)MAPADDRESS + 1) = 0x20;	// 0x20 == '@'*/
-    put_s(0, "Hello world");
-    /*put_c(0, 0, "W");*/
+    put_s(0, "TEWNW - this emu will nvr work");
+    put_s(1, "--------------------------------");
 
 	// set the screen base to 31 (0x600F800) and char base to 0 (0x6000000)
 	BGCTRL[0] = SCREEN_BASE(31);
