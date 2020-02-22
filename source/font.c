@@ -18,5 +18,5 @@ void set_pallete(const u16 palette[]) {
 }
 
 void load_font() {
-	CpuFastSet(r6502_portfont_bin, (u16*)VRAM,(r6502_portfont_bin_size/4) | COPY32);
+	CpuFastSet(r6502_portfont_bin, (u16*)VRAM, (r6502_portfont_bin_size / 4) | COPY32);
 }
