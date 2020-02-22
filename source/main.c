@@ -17,7 +17,7 @@ int main(void) {
 
 	REG_IME = 1;
 
-    set_pallete(PALETTE_1);
+    set_pallete(PALETTE_0);
     load_font();
 
 	// clear screen map with tile 0 ('space' tile) (256x256 halfwords)
@@ -27,12 +27,11 @@ int main(void) {
 	// set screen H and V scroll positions
 	BG_OFFSET[0].x = 0; BG_OFFSET[0].y = 0;
 
-	// put the '@' symbol on the top of the screen to show how
-	// the screen is only scrolling 7 pixels - to reveal the
-	// illusion of how the scroller works
-    /**((u16 *)MAPADDRESS + 1) = 0x20;	// 0x20 == '@'*/
     put_s(0, "TEWNW - this emu will nvr work");
     put_s(1, "--------------------------------");
+    char s[80];
+    /*sprintf(s, "%d", tetris_gbc_bin_size);*/
+    /*put_s(2, s);*/
 
 	// set the screen base to 31 (0x600F800) and char base to 0 (0x6000000)
 	BGCTRL[0] = SCREEN_BASE(31);

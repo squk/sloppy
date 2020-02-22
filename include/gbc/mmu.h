@@ -1,5 +1,7 @@
 #pragma once
 
+#include <gba_base.h>
+
 // 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 // 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
 // 8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
@@ -17,7 +19,7 @@ typedef struct {
 	u8 rom1[0x4000];
 	u8 vram[0x2000];
 	u8 wram0[0x2000];
-	u8 wram1[0x2000];
+	u8 wram1[0x2000]; // shadow
 	u8 zram[0xFFFF];
 } gbc_mmu
 
@@ -62,5 +64,6 @@ const u8 kInitialValuesForColorFFXX[256] = {
 };
 
 
-u8 read_u8(mmu *gba_mmu, address u8);
-void write_u8(mmu *gba_mmu, address u8);
+u8 get_address_ptr(gbc_mmu *mmu , u16 address);
+u8 read_u8(gbc_mmu *mmu , u16 address);
+void write_u8(gbc_mmu *mmu , u16 address, u8 val);
