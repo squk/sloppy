@@ -21,6 +21,8 @@ typedef struct {
 	u8 wram0[0x2000];
 	u8 wram1[0x2000]; // shadow
 	u8 zram[0xFFFF];
+
+	bool in_bios;
 } gbc_mmu
 
 // From Gambatte emulator

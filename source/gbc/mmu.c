@@ -1,14 +1,18 @@
 #include <gba_base.h>
 
+void mmu_init(gbc_mmu *mmu){
+	mmu->in_bios = true;
+}
+
 u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
     // BIOS (256b)/ROM0
     case 0x0000:
-        if(mmu->inBIOS)
+        if(mmu->in_bios)
         {
             if(address < 0x0100)
                 &return mmu->bios[address];
             else if(Z80._r.pc == 0x0100)
-                mmu->inBIOS = false;
+                mmu->in_bios = false;
         }
 
         return &mmu->rom[address];
@@ -74,6 +78,21 @@ u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
         }
 	default:
 		return 0;
+}
+
+u16 read_u16(gbc_mmu *mmu , u16 address) {
+    u8 *ptr = get_address_ptr(mmu, address);
+    u16 val;
+    memcpy(&val, *ptr, sizeof(u16));
+
+    return val;
+}
+
+u16 write_u16(gbc_mmu *mmu , u16 address, u16 val) {
+    u8 *ptr = get_address_ptr(mmu, address);
+    memcpy(ptr, val, sizeof(u16));
+
+    return val;
 }
 
 u8 read_u8(gbc_mmu *mmu , u16 address) {
