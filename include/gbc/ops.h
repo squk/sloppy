@@ -1,7 +1,8 @@
 #pragma once
 
 #include "gbc/cpu.h"
-#include "gbc/mmu.h"
+
+typedef void (*gbc_operator)(gbc_cpu *cpu);
 
 void execute_init(gbc_cpu *cpu);
 
@@ -595,8 +596,6 @@ void rsv(gbc_cpu* cpu);
 void rrs(gbc_cpu* cpu);
 void MAPcb(gbc_cpu* cpu);
 void XX(gbc_cpu* cpu);
-
-typedef void (*gbc_operator)(gbc_cpu *cpu);
 
 static const gbc_operator OPS[256] = {
 	// 00

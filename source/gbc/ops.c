@@ -131,17 +131,11 @@ void LD_DE_d16(gbc_cpu *cpu) { e=read_u8(*pc); d=read_u8(*pc+1); *pc+=2; *m=3; }
 void LD_HL_d16(gbc_cpu *cpu) { l=read_u8(*pc); h=read_u8(*pc+1); *pc+=2; *m=3; };
 void LD_SP_d16(gbc_cpu *cpu) { *sp=read_u16(*pc); *pc+=2; *m=3; };
 
-
-
-/*void LD_HL_mm(gbc_cpu *cpu) { word i=read_u16(*pc); *pc+=2; l=read_u8(cpu->mmu, i); h=read_u8(cpu->mmu, i+1); *m=5; };*/
-/*void LD_mm_HL(gbc_cpu *cpu) { word i=read_u16(*pc); *pc+=2; write_u16(cpu->mmu, i, (h<<8)+l); *m=5; };*/
-
 void LD_mHLI_A(gbc_cpu* cpu) { write_u8(cpu->mmu,(*h<<8)+*l, *a); *l=(*l+1)&255; if(!*l) *h=(*h+1)&255; *m=2; };
 void LD_A_mHLI(gbc_cpu* cpu) { *a=read_u8(cpu->mmu,(*h<<8)+*l); *l=(*l+1)&255; if(!*l) *h=(*h+1)&255; *m=2; };
 
 void LD_mHLD_A(gbc_cpu* cpu) { write_u8(cpu->mmu,(*h<<8)+*l, *a); *l=(*l-1)&255; if(*l==255) *h=(*h-1)&255; *m=2; };
 void LD_A_mHLD(gbc_cpu* cpu) { *a=read_u8(cpu->mmu,(*h<<8)+*l); *l=(*l-1)&255; if(*l==255) *h=(*h-1)&255; *m=2; };
-
 
 void LDH_a8_A(CPU* cpu) { write_u8(cpu->mmu,0xFF00+read_u8(cpu->mmu,*pc),*a); *pc++; *m=3; };
 void LDH_A_a8(CPU* cpu) { *a=read_u8(cpu->mmu,0xFF00+read_u8(cpu->mmu,*pc)); *pc++; *m=3; };
