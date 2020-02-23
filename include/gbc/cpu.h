@@ -1,4 +1,5 @@
 #pragma once
+
 #include "gbc/mmu.h"
 
 typedef struct {

@@ -10,5 +10,5 @@ void emu_run() {
 
     gbc_mmu_init(&mmu);
     gbc_cpu_reset(&cpu);
-    gbc_cpu_run(&cpu);
+    gbc_cpu_loop(&cpu);
 }
