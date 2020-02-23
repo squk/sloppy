@@ -1,7 +1,4 @@
-#ifndef MMU_H
-#define MMU_H
-
-#include <gba_base.h>
+#pragma once
 
 // 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 // 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -74,5 +71,3 @@ u8 read_u8(gbc_mmu *mmu , u16 address);
 void write_u8(gbc_mmu *mmu , u16 address, u8 val);
 u16 read_u16(gbc_mmu *mmu , u16 address);
 void write_u16(gbc_mmu *mmu , u16 address, u16 val);
-
-#endif
