@@ -6,9 +6,7 @@
 
 #include "font.h"
 #include "text.h"
-
-#include "gbc/cpu.h"
-#include "gbc/mmu.h"
+#include "gbc/emu.h"
 
 #define MAPADDRESS        MAP_BASE_ADR(31)    // our base map address
 
@@ -32,19 +30,12 @@ int main(void) {
 
     /*put_s(0, "TEMW - this emu might work");*/
     /*put_s(1, "--------------------------------");*/
-    gbc_cpu cpu;
-    gbc_mmu mmu;
-    cpu.mmu = &mmu;
-
-    gbc_mmu_init(&mmu);
-    gbc_cpu_reset(&cpu);
-    gbc_cpu_loop(&cpu);
-
     // set the screen base to 31 (0x600F800) and char base to 0 (0x6000000)
     BGCTRL[0] = SCREEN_BASE(31);
 
     // screen mode & background to display
     SetMode( MODE_0 | BG0_ON );
+    emu_run();
 
     while (1) {
         VBlankIntrWait();
