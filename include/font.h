@@ -1,5 +1,4 @@
-#ifndef FONT_H
-#define FONT_H
+#pragma once
 
 const u16 PALETTE_0[] = {
     RGB8(0x40,0x80,0xc0),
@@ -23,5 +22,3 @@ const u16 PALETTE_1[] = {
 
 void set_pallete(const u16 palette[]);
 void load_font();
-
-#endif
