@@ -28,12 +28,12 @@ void gbc_cpu_reset(gbc_cpu *cpu) {
 }
 
 void gbc_cpu_loop(gbc_cpu *cpu) {
-	execute_init(cpu);
+    execute_init(cpu);
 
-	u8 i = 0;
-	while(true) {
-		// Fetch and execute instruction
-		u8 opcode = read_u8(cpu->mmu, cpu->registers.pc++);
+    u8 i = 0;
+    while(true) {
+        // Fetch and execute instruction
+        u8 opcode = read_u8(cpu->mmu, cpu->registers.pc++);
         OPS[opcode](cpu);
         char s[80];
         sprintf(s, "%x", opcode);
@@ -42,10 +42,10 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
             i = 0;
         }
 
-		// Add execution time to the CPU clk
-		cpu->clk.m += cpu->registers.m;
-		cpu->clk.t += cpu->registers.t;
-	}
+        // Add execution time to the CPU clk
+        cpu->clk.m += cpu->registers.m;
+        cpu->clk.t += cpu->registers.t;
+    }
 }
 
 // x = the opcode's 1st octal digit (i.e. bits 7-6)

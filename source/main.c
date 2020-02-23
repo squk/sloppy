@@ -7,39 +7,46 @@
 #include "font.h"
 #include "text.h"
 
-#define MAPADDRESS		MAP_BASE_ADR(31)	// our base map address
+#include "gbc/cpu.h"
+#include "gbc/mmu.h"
+
+#define MAPADDRESS        MAP_BASE_ADR(31)    // our base map address
 
 int main(void) {
-	// Set up the interrupt handlers
-	irqInit();
-	// Enable Vblank Interrupt to allow VblankIntrWait
-	irqEnable(IRQ_VBLANK);
+    // Set up the interrupt handlers
+    irqInit();
+    // Enable Vblank Interrupt to allow VblankIntrWait
+    irqEnable(IRQ_VBLANK);
 
-	REG_IME = 1;
+    REG_IME = 1;
 
     set_pallete(PALETTE_0);
     load_font();
 
-	// clear screen map with tile 0 ('space' tile) (256x256 halfwords)
-	*((u32 *)MAP_BASE_ADR(31)) =0;
-	CpuFastSet( MAP_BASE_ADR(31), MAP_BASE_ADR(31), FILL | COPY32 | (0x800/4));
+    // clear screen map with tile 0 ('space' tile) (256x256 halfwords)
+    *((u32 *)MAP_BASE_ADR(31)) =0;
+    CpuFastSet( MAP_BASE_ADR(31), MAP_BASE_ADR(31), FILL | COPY32 | (0x800/4));
 
-	// set screen H and V scroll positions
-	BG_OFFSET[0].x = 0; BG_OFFSET[0].y = 0;
+    // set screen H and V scroll positions
+    BG_OFFSET[0].x = 0; BG_OFFSET[0].y = 0;
 
-    put_s(0, "TEWNW - this emu will nvr work");
-    put_s(1, "--------------------------------");
-    char s[80];
-    /*sprintf(s, "%d", tetris_gbc_bin_size);*/
-    /*put_s(2, s);*/
+    /*put_s(0, "TEMW - this emu might work");*/
+    /*put_s(1, "--------------------------------");*/
+    gbc_cpu cpu;
+    gbc_mmu mmu;
+    cpu.mmu = &mmu;
 
-	// set the screen base to 31 (0x600F800) and char base to 0 (0x6000000)
-	BGCTRL[0] = SCREEN_BASE(31);
+    gbc_mmu_init(&mmu);
+    gbc_cpu_reset(&cpu);
+    gbc_cpu_loop(&cpu);
 
-	// screen mode & background to display
+    // set the screen base to 31 (0x600F800) and char base to 0 (0x6000000)
+    BGCTRL[0] = SCREEN_BASE(31);
+
+    // screen mode & background to display
     SetMode( MODE_0 | BG0_ON );
 
-	while (1) {
-		VBlankIntrWait();
-	}
+    while (1) {
+        VBlankIntrWait();
+    }
 }

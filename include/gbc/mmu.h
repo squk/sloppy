@@ -17,13 +17,13 @@
 // FFFF        Interrupt Enable Register
 typedef struct {
     u8 rom0[0x4000];
-	u8 rom1[0x4000];
-	u8 vram[0x2000];
-	u8 wram0[0x2000];
-	u8 wram1[0x2000]; // shadow
-	u8 zram[0xFFFF];
+    u8 rom1[0x4000];
+    u8 vram[0x2000];
+    u8 wram0[0x2000];
+    u8 wram1[0x2000]; // shadow
+    u8 zram[0xFFFF];
 
-	bool in_bios;
+    bool in_bios;
 } gbc_mmu;
 
 // From Gambatte emulator

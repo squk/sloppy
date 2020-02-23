@@ -3,7 +3,7 @@
 #include "mmu.h"
 
 void gbc_mmu_init(gbc_mmu *mmu){
-	mmu->in_bios = true;
+    mmu->in_bios = true;
 }
 
 u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
@@ -78,8 +78,8 @@ u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
                 // Currently unhandled
                 return 0;
         }
-	default:
-		return 0;
+    default:
+        return 0;
 }
 
 u8 read_u8(gbc_mmu *mmu , u16 address) {
