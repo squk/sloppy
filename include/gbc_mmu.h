@@ -13,6 +13,7 @@
 // FF80-FFFE   High RAM (HRAM)
 // FFFF        Interrupt Enable Register
 typedef struct {
+    u8 bios[0x100];
     u8 rom0[0x4000];
     u8 rom1[0x4000];
     u8 vram[0x2000];
@@ -23,11 +24,7 @@ typedef struct {
     bool in_bios;
 } gbc_mmu;
 
-// From Gambatte emulator
-// also from https://github.com/drhelius/Gearboy/blob/master/src/Memory.h lol
-
 const u8 kInitialValuesForFFXX[256];
-
 const u8 kInitialValuesForColorFFXX[256];
 
 void gbc_mmu_init(gbc_mmu *mmu);
