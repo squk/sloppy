@@ -1,30 +1,8 @@
-#pragma once
+#include <gba_base.h>
+#include <string.h>
 
-// 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
-// 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
-// 8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
-// A000-BFFF   8KB External RAM     (in cartridge, switchable bank, if any)
-// C000-CFFF   4KB Work RAM Bank 0 (WRAM)
-// D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
-// E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
-// FE00-FE9F   Sprite Attribute Table (OAM)
-// FEA0-FEFF   Not Usable
-// FF00-FF7F   I/O Ports
-// FF80-FFFE   High RAM (HRAM)
-// FFFF        Interrupt Enable Register
-typedef struct {
-    u8 rom0[0x4000];
-    u8 rom1[0x4000];
-    u8 vram[0x2000];
-    u8 wram0[0x2000];
-    u8 wram1[0x2000]; // shadow
-    u8 zram[0xFFFF];
+#include "gbc_mmu.h"
 
-    bool in_bios;
-} gbc_mmu;
-
-// From Gambatte emulator
-// also from https://github.com/drhelius/Gearboy/blob/master/src/Memory.h lol
 const u8 kInitialValuesForFFXX[256] = {
     0xCF, 0x00, 0x7E, 0xFF, 0xD3, 0x00, 0x00, 0xF8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE1,
     0x80, 0xBF, 0xF3, 0xFF, 0xBF, 0xFF, 0x3F, 0x00, 0xFF, 0xBF, 0x7F, 0xFF, 0x9F, 0xFF, 0xBF, 0xFF,
@@ -63,11 +41,99 @@ const u8 kInitialValuesForColorFFXX[256] = {
     0x98, 0xD1, 0x71, 0x02, 0x4D, 0x01, 0xC1, 0xFF, 0x0D, 0x00, 0xD3, 0x05, 0xF9, 0x00, 0x0B, 0x00
 };
 
+void gbc_mmu_init(gbc_mmu *mmu){
+    mmu->in_bios = true;
+}
 
-void gbc_mmu_init(gbc_mmu *mmu);
-u8 get_address_ptr(gbc_mmu *mmu , u16 address);
+u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
+    switch(address & 0xF000){
+        // BIOS (256b)/ROM0
+        case 0x0000:
+            return &mmu->rom0[address];
 
-u8 read_u8(gbc_mmu *mmu , u16 address);
-void write_u8(gbc_mmu *mmu , u16 address, u8 val);
-u16 read_u16(gbc_mmu *mmu , u16 address);
-void write_u16(gbc_mmu *mmu , u16 address, u16 val);
+            // ROM0
+        case 0x1000:
+        case 0x2000:
+        case 0x3000:
+            return &mmu->rom0[address];
+
+            // ROM1 (unbanked) (16k)
+        case 0x4000:
+        case 0x5000:
+        case 0x6000:
+        case 0x7000:
+            return &mmu->rom1[address];
+
+            // VRAM (8k)
+        case 0x8000:
+        case 0x9000:
+            return &mmu->vram[address & 0x1FFF];
+
+            // External RAM (8k)
+        case 0xA000:
+        case 0xB000:
+            return &mmu->vram[address & 0x1FFF];
+
+            // Working RAM (8k)
+        case 0xC000:
+        case 0xD000:
+            return &mmu->wram0[address & 0x1FFF];
+
+            // Working RAM shadow
+        case 0xE000:
+            return &mmu->wram0[address & 0x1FFF];
+
+            // Working RAM shadow, I/O, Zero-page RAM
+        case 0xF000:
+            switch(address & 0x0F00){
+                // Working RAM shadow
+                case 0x000: case 0x100: case 0x200: case 0x300: case 0x400:
+                case 0x500: case 0x600: case 0x700: case 0x800: case 0x900:
+                case 0xA00: case 0xB00: case 0xC00: case 0xD00:
+                    return &mmu->wram0[address & 0x1FFF];
+
+                    // Graphics: object attribute memory
+                    // OAM is 160 bytes, remaining bytes read as 0
+                case 0xE00:
+                    if(address < 0xFEA0) {
+                        /*return &GPU->oam[address & 0xFF];*/
+                    }
+                    return 0;
+
+                    // Zero-page
+                case 0xF00:
+                    if(address >= 0xFF80) {
+                        return &mmu->zram[address & 0x7F];
+                    }
+
+                    // I/O control handling
+                    // Currently unhandled
+                    return 0;
+            }
+        default:
+            return 0;
+    }
+}
+
+u8 read_u8(gbc_mmu *mmu , u16 address) {
+    return *get_address_ptr(mmu, address);
+}
+
+void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
+    u8 *ptr = get_address_ptr(mmu, address);
+    *ptr = val;
+}
+
+u16 read_u16(gbc_mmu *mmu , u16 address) {
+    u8 *ptr = get_address_ptr(mmu, address);
+    u16 val;
+    memcpy(&val, *ptr, sizeof(u16));
+
+    return val;
+}
+
+void write_u16(gbc_mmu *mmu , u16 address, u16 val) {
+    u8 *ptr = get_address_ptr(mmu, address);
+    memcpy(ptr, val, sizeof(u16));
+}
+

@@ -1,6 +1,7 @@
 #pragma once
+#include <gba_base.h>
 
-#include "gbc/mmu.h"
+#include "gbc_mmu.h"
 
 typedef struct {
     // two types of timeclocks in the Z80

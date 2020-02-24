@@ -6,7 +6,7 @@
 
 #include "font.h"
 #include "text.h"
-#include "gbc/emu.h"
+#include "gbc_emu.h"
 
 #define MAPADDRESS        MAP_BASE_ADR(31)    // our base map address
 
@@ -28,6 +28,7 @@ int main(void) {
     // set screen H and V scroll positions
     BG_OFFSET[0].x = 0; BG_OFFSET[0].y = 0;
 
+    /*put_s(0, "TEMW - this emu might work");*/
     /*put_s(0, "TEMW - this emu might work");*/
     /*put_s(1, "--------------------------------");*/
     // set the screen base to 31 (0x600F800) and char base to 0 (0x6000000)

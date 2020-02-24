@@ -20,3 +20,18 @@ void put_s(int row, const char *text) {
         put_c(i, row, text[i]);
     }
 }
+
+int screen_line = 0;
+void put_l(const char *text) {
+    put_s(screen_line++, text);
+
+    if (screen_line > 10) {
+        clear();
+    }
+}
+
+void clear() {
+    screen_line = 0;
+    *((u32 *)MAP_BASE_ADR(31)) = 0;
+    CpuFastSet( MAP_BASE_ADR(31), MAP_BASE_ADR(31), FILL | COPY32 | (0x800/4));
+}

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gbc/cpu.h"
+#include "gbc_cpu.h"
 
 typedef void (*gbc_operator)(gbc_cpu *cpu);
 
