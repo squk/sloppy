@@ -1,0 +1,54 @@
+#pragma once
+
+// IO ports
+#define IO_JOYPAD  0xFF00
+#define IO_SIODATA 0xFF01
+#define IO_SIOCONT 0xFF02
+#define IO_DIVIDER 0xFF04
+#define IO_TIMECNT 0xFF05
+#define IO_TIMEMOD 0xFF06
+#define IO_TIMCONT 0xFF07
+#define IO_IFLAGS  0xFF0F
+
+// video registers
+#define IO_LCDCONT 0xFF40
+#define IO_LCDSTAT 0xFF41
+
+#define IO_SCROLLY 0xFF42
+#define IO_SCROLLX 0xFF43
+
+#define IO_CURLINE 0xFF44
+#define IO_CMPLINE 0xFF45
+
+#define IO_BGRDPAL 0xFF47
+#define IO_OBJ0PAL 0xFF48
+#define IO_OBJ1PAL 0xFF49
+
+#define IO_WNDPOSY 0xFF4A
+#define IO_WNDPOSX 0xFF4B
+
+#define IO_DMACONT 0xFF46
+#define IO_IENABLE 0xFFFF
+
+// sound registers
+#define IO_SNDREG10 0xFF10
+#define IO_SNDREG11 0xFF11
+#define IO_SNDREG12 0xFF12
+#define IO_SNDREG13 0xFF13
+#define IO_SNDREG14 0xFF14
+#define IO_SNDREG21 0xFF16
+#define IO_SNDREG22 0xFF17
+#define IO_SNDREG23 0xFF18
+#define IO_SNDREG24 0xFF19
+#define IO_SNDREG30 0xFF1A
+#define IO_SNDREG31 0xFF1B
+#define IO_SNDREG32 0xFF1C
+#define IO_SNDREG33 0xFF1D
+#define IO_SNDREG34 0xFF1E
+#define IO_SNDREG41 0xFF20
+#define IO_SNDREG42 0xFF21
+#define IO_SNDREG43 0xFF22
+#define IO_SNDREG44 0xFF23
+#define IO_SNDREG50 0xFF24
+#define IO_SNDREG51 0xFF25
+#define IO_SNDREG52 0xFF26
