@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "gbc_mmu.h"
+#include "gbc_io.h"
 
 // also from https://github.com/drhelius/Gearboy/blob/master/src/Memory.h lol
 const u8 kInitialValuesForFFXX[256] = {
@@ -44,6 +45,18 @@ const u8 kInitialValuesForColorFFXX[256] = {
 
 void gbc_mmu_init(gbc_mmu *mmu){
     mmu->in_bios = true;
+
+    memset(mmu->bios, 0, sizeof mmu->bios);
+    memset(mmu->rom, 0, sizeof mmu-> rom);
+    memset(mmu->vram, 0, sizeof mmu->vram);
+    memset(mmu->wram, 0, sizeof mmu->wram);
+    memset(mmu->echo, 0, sizeof mmu->echo);
+    memset(mmu->oam, 0, sizeof mmu->oam);
+    memset(mmu->io, 0, sizeof mmu->io);
+    memset(mmu->hram, 0, sizeof mmu->hram);
+    memset(mmu->zram, 0, sizeof mmu->zram);
+
+    memcpy(mmu->rom, kInitialValuesForFFXX, 256);
 }
 
 u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
@@ -65,8 +78,8 @@ u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
     if (address < 0xFEA0) {
         return &mmu->oam[address & 0xFF];
     }
-    if (address < 0xFF00) {
-        return &mmu->oam[address & 0xFF];
+  if (address < 0xFF00) {
+        return &mmu->oam[address & 0xFF]; // LCDCONT at 0xFF40
     }
     if (address < 0xFF80) {
         return &mmu->io[address & 0xFF];
