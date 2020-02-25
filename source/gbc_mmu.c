@@ -56,12 +56,43 @@ void gbc_mmu_init(gbc_mmu *mmu){
     memset(mmu->hram, 0, sizeof mmu->hram);
     memset(mmu->zram, 0, sizeof mmu->zram);
 
-    memcpy(mmu->rom, kInitialValuesForFFXX, 256);
+    write_u8(mmu, 0xFF05, 0x00);
+	write_u8(mmu, 0xFF06, 0x00);
+	write_u8(mmu, 0xFF07, 0x00);
+	write_u8(mmu, 0xFF10, 0x80);
+	write_u8(mmu, 0xFF11, 0xBF);
+	write_u8(mmu, 0xFF12, 0xF3);
+	write_u8(mmu, 0xFF14, 0xBF);
+	write_u8(mmu, 0xFF16, 0x3F);
+	write_u8(mmu, 0xFF17, 0x00);
+	write_u8(mmu, 0xFF19, 0xBF);
+	write_u8(mmu, 0xFF1A, 0x7F);
+	write_u8(mmu, 0xFF1B, 0xFF);
+	write_u8(mmu, 0xFF1C, 0x9F);
+	write_u8(mmu, 0xFF1E, 0xBF);
+	write_u8(mmu, 0xFF20, 0xFF);
+	write_u8(mmu, 0xFF21, 0x00);
+	write_u8(mmu, 0xFF22, 0x00);
+	write_u8(mmu, 0xFF23, 0xBF);
+	write_u8(mmu, 0xFF24, 0x77);
+	write_u8(mmu, 0xFF25, 0xF3);
+	write_u8(mmu, 0xFF26, 0xF1);
+	write_u8(mmu, 0xFF40, 0x91);
+	write_u8(mmu, 0xFF42, 0x00);
+	write_u8(mmu, 0xFF43, 0x00);
+	write_u8(mmu, 0xFF45, 0x00);
+	write_u8(mmu, 0xFF47, 0xFC);
+	write_u8(mmu, 0xFF48, 0xFF);
+	write_u8(mmu, 0xFF49, 0xFF);
+	write_u8(mmu, 0xFF4A, 0x00);
+	write_u8(mmu, 0xFF4B, 0x00);
+	write_u8(mmu, 0xFFFF, 0x00);    
+    /*memcpy(mmu->rom, kInitialValuesForFFXX, 256);*/
 }
 
 u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
     if (address < 0x100 && mmu->in_bios) {
-        return mmu->bios[address];
+        return &mmu->bios[address];
     }
     if (address < 0x8000) {
         return &mmu->rom[address];
@@ -102,18 +133,18 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
 u16 read_u16(gbc_mmu *mmu , u16 address) {
     u8 *ptr = get_address_ptr(mmu, address);
     u16 val;
-    memcpy(&val, *ptr, sizeof(u16));
+    memcpy(&val, ptr, sizeof(u16));
 
     return val;
 }
 
 void write_u16(gbc_mmu *mmu , u16 address, u16 val) {
     u8 *ptr = get_address_ptr(mmu, address);
-    memcpy(ptr, val, sizeof(u16));
+    memcpy(ptr, &val, sizeof(u16));
 }
 
 bool read_bit(gbc_mmu *mmu, u16 address, u8 bit) {
-    return (read_u8(mmu, address) & bit > 0);
+    return ((read_u8(mmu, address) & bit) > 0);
 }
 
 void set_bit(gbc_mmu *mmu, u16 address, u8 bit) {

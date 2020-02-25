@@ -3,6 +3,7 @@
 
 void cli_clear();
 void cli_print(int x, int y, const char *msg);
+void cli_printl(const char *msg);
 void cli_n(char msg[]);
 
 #endif

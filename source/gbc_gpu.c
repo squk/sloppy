@@ -419,20 +419,20 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 		// update CURLINE REG
 		gpu->cur_line = (gpu->cur_line + 1);// % LINES;
 		if (gpu->cur_line == gpu->cmp_line) {
-			set_bit(gpu->mmu, &gpu->lcd_stat, MASK_LCDSTAT_COINCIDENCE_FLAG);
+			set_bit(gpu->mmu, gpu->lcd_stat, MASK_LCDSTAT_COINCIDENCE_FLAG);
 			if (read_bit(gpu->mmu, gpu->lcd_stat,
 					    MASK_LCDSTAT_LYC_LY_COINCIDENCE_INTERRUPT)) {
 				set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
 			}
 		} else {
-			unset_bit(gpu->mmu, &gpu->lcd_stat, MASK_LCDSTAT_COINCIDENCE_FLAG);
+			unset_bit(gpu->mmu, gpu->lcd_stat, MASK_LCDSTAT_COINCIDENCE_FLAG);
 		}
 
 		if (gpu->cur_line < SIZE_Y) {
 			gpu->lcd_stat = (gpu->lcd_stat & 0xF3) | 0x02;
 			// Set Mode Flag to OAM at LCDSTAT
-			unset_bit(gpu->mmu, &gpu->lcd_stat, MASK_LCDSTAT_MODE_FLAG);
-			set_bit(gpu->mmu, &gpu->lcd_stat, OPT_MODE_OAM);
+			unset_bit(gpu->mmu, gpu->lcd_stat, MASK_LCDSTAT_MODE_FLAG);
+			set_bit(gpu->mmu, gpu->lcd_stat, OPT_MODE_OAM);
 			// Interrupt OAM
 			if (read_bit(gpu->mmu, gpu->lcd_stat,
 					    MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
@@ -449,8 +449,8 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 		if (gpu->cur_line < SIZE_Y) {
 			gpu->lcd_stat = (gpu->lcd_stat & 0xF3) | 0x03;
 			// Set Mode Flag to OAM VRAM at LCDSTAT
-			unset_bit(gpu->mmu, &gpu->lcd_stat, MASK_LCDSTAT_MODE_FLAG);
-			set_bit(gpu->mmu, &gpu->lcd_stat, OPT_MODE_OAM_VRAM);
+			unset_bit(gpu->mmu, gpu->lcd_stat, MASK_LCDSTAT_MODE_FLAG);
+			set_bit(gpu->mmu, gpu->lcd_stat, OPT_MODE_OAM_VRAM);
 		}
 		gpu->oam_vram += DUR_LINE;
 	}
@@ -460,8 +460,8 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 		if (gpu->cur_line < SIZE_Y) {
 			gpu->lcd_stat = (gpu->lcd_stat & 0xF3) | 0x00;
 			// Set Mode Flag to HBLANK at LCDSTAT
-			unset_bit(gpu->mmu, &gpu->lcd_stat, MASK_LCDSTAT_MODE_FLAG);
-			set_bit(gpu->mmu, &gpu->lcd_stat, OPT_MODE_HBLANK);
+			unset_bit(gpu->mmu, gpu->lcd_stat, MASK_LCDSTAT_MODE_FLAG);
+			set_bit(gpu->mmu, gpu->lcd_stat, OPT_MODE_HBLANK);
 			// Interrupt HBlank
 			if (read_bit(gpu->mmu, gpu->lcd_stat, MASK_LCDSTAT_MODE_0_HBLANK_INTERRUPT)) {
 				set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
@@ -475,8 +475,8 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
         put_l("vblank mode 1");
 		gpu->lcd_stat = (gpu->lcd_stat & 0xF3) | 0x01;
 		// Set Mode Flag to VBLANK at LCDSTAT
-		unset_bit(gpu->mmu, &gpu->lcd_stat, MASK_LCDSTAT_MODE_FLAG);
-		set_bit(gpu->mmu, &gpu->lcd_stat, OPT_MODE_VBLANK);
+		unset_bit(gpu->mmu, gpu->lcd_stat, MASK_LCDSTAT_MODE_FLAG);
+		set_bit(gpu->mmu, gpu->lcd_stat, OPT_MODE_VBLANK);
 		// Interrupt VBlank
 		set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_VBLANK);
 		if (read_bit(gpu->mmu, gpu->lcd_stat, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
