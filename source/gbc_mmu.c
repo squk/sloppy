@@ -99,3 +99,16 @@ void write_u16(gbc_mmu *mmu , u16 address, u16 val) {
     memcpy(ptr, val, sizeof(u16));
 }
 
+bool read_bit(gbc_mmu *mmu, u16 address, u8 bit) {
+    return (read_u8(mmu, address) & bit > 0);
+}
+
+void set_bit(gbc_mmu *mmu, u16 address, u8 bit) {
+    u8 *ptr = get_address_ptr(mmu, address);
+    *ptr |= bit;
+}
+
+void unset_bit(gbc_mmu *mmu, u16 address, u8 bit) {
+    u8 *ptr = get_address_ptr(mmu, address);
+    *ptr &= ~bit;
+}

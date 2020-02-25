@@ -37,3 +37,7 @@ u8 read_u8(gbc_mmu *mmu , u16 address);
 void write_u8(gbc_mmu *mmu , u16 address, u8 val);
 u16 read_u16(gbc_mmu *mmu , u16 address);
 void write_u16(gbc_mmu *mmu , u16 address, u16 val);
+
+bool read_bit(gbc_mmu *mmu , u16 address, u8 bit);
+void set_bit(gbc_mmu *mmu, u16 address, u8 bit);
+void unset_bit(gbc_mmu *mmu, u16 address, u8 bit);
