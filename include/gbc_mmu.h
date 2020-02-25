@@ -1,5 +1,6 @@
 #pragma once
 
+#define MEM_OAM 0xFE00
 // 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 // 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
 // 8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
@@ -14,11 +15,13 @@
 // FFFF        Interrupt Enable Register
 typedef struct {
     u8 bios[0x100];
-    u8 rom0[0x4000];
-    u8 rom1[0x4000];
+    u8 rom[0x8000];
     u8 vram[0x2000];
-    u8 wram0[0x2000];
-    u8 wram1[0x2000]; // shadow
+    u8 wram[0x4000];
+    u8 echo[0x4000];
+    u8 oam[0xA0];
+    u8 io[0x80];
+    u8 hram[0x80];
     u8 zram[0xFFFF];
 
     bool in_bios;
