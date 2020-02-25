@@ -1,4 +1,5 @@
 #include "gbc_ops.h"
+#include "text.h"
 
 // pointers to make the ops more concise
 u8 *a, *b, *c, *d, *e, *f, *h, *l, *m;
@@ -582,15 +583,15 @@ void POP_AF(gbc_cpu* cpu) { *f=read_u8(cpu->mmu,*sp); (*sp)++; *a=read_u8(cpu->m
 void JP_a16(gbc_cpu* cpu) { *pc = read_u16(cpu->mmu,*pc); *m=3; };
 void JP_HL(gbc_cpu* cpu) { *pc=(*h<<8)+*l; *m=1; };
 void JP_NZ_a16(gbc_cpu* cpu) { *m=3; if((*f&0x80)==0x00) { *pc=read_u16(cpu->mmu,*pc); *m++; } else (*pc)+=2; };
-void JP_Znn(gbc_cpu* cpu)  { *m=3; if((*f&0x80)==0x80) { *pc=read_u16(cpu->mmu,*pc); *m++; } else (*pc)+=2; };
+void JP_Znn(gbc_cpu* cpu) { *m=3; if((*f&0x80)==0x80) { *pc=read_u16(cpu->mmu,*pc); *m++; } else (*pc)+=2; };
 void JP_NC_a16(gbc_cpu* cpu) { *m=3; if((*f&0x10)==0x00) { *pc=read_u16(cpu->mmu,*pc); *m++; } else (*pc)+=2; };
-void JP_Cnn(gbc_cpu* cpu)  { *m=3; if((*f&0x10)==0x10) { *pc=read_u16(cpu->mmu,*pc); *m++; } else (*pc)+=2; };
+void JP_Cnn(gbc_cpu* cpu) { *m=3; if((*f&0x10)==0x10) { *pc=read_u16(cpu->mmu,*pc); *m++; } else (*pc)+=2; };
 
 void JR_r8(gbc_cpu* cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; (*pc)+=i; *m++; };
 void JR_NZ_r8(gbc_cpu* cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; if((*f&0x80)==0x00) { (*pc)+=i; *m++; } };
-void JR_Z_r8(gbc_cpu* cpu)  { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; if((*f&0x80)==0x80) { (*pc)+=i; *m++; } };
+void JR_Z_r8(gbc_cpu* cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; if((*f&0x80)==0x80) { (*pc)+=i; *m++; } };
 void JR_NC_r8(gbc_cpu* cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; if((*f&0x10)==0x00) { (*pc)+=i; *m++; } };
-void JR_C_r8(gbc_cpu* cpu)  { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; if((*f&0x10)==0x10) { (*pc)+=i; *m++; } };
+void JR_C_r8(gbc_cpu* cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; if((*f&0x10)==0x10) { (*pc)+=i; *m++; } };
 
 /*void DJNZn(gbc_cpu* cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; *b--; if(*b) { (*pc)+=i; *m++; } };*/
 

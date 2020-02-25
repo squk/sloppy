@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gbc_cpu.h"
+#include "debug_gbc_ops.h"
 
 typedef void (*gbc_operator)(gbc_cpu *cpu);
 
@@ -698,3 +699,55 @@ static const gbc_operator CB_OPS[256] = {
     &SET_6_B, &SET_6_C, &SET_6_D, &SET_6_E, &SET_6_H, &SET_6_L, &SET_6_M, &SET_6_A,
     &SET_7_B, &SET_7_C, &SET_7_D, &SET_7_E, &SET_7_H, &SET_7_L, &SET_7_M, &SET_7_A,
 };
+
+static const gbc_operator *DEBUG_OPS[256] = {
+	// 00
+	&p_NOP,		&p_LD_BC_d16,	&p_LD_mBC_A,	&p_INC_BC,		&p_INC_B,	&p_DEC_B,	&p_LD_B_d8,	&p_RLCA,
+	&p_XX/*&p_LDmmSP*/,	&p_ADD_HL_BC,	&p_LD_A_mBC,	&p_DEC_BC,		&p_INC_C,	&p_DEC_C,	&p_LD_C_d8,	&p_RRCA,
+	// 10
+	&p_XX/*DJNZn, STOP*/,		&p_LD_DE_d16,	&p_LD_mDE_A,	&p_INC_DE,		&p_INC_D,	&p_DEC_D,	&p_LD_D_d8,	&p_RLA,
+	&p_JR_r8,		&p_ADD_HL_DE,	&p_LD_A_mDE,	&p_DEC_DE,		&p_INC_E,	&p_DEC_E,	&p_LD_E_d8,	&p_RRA,
+	// 20
+	&p_JR_NZ_r8,		&p_LD_HL_d16,	&p_LD_mHLI_A,	&p_INC_mHL,		&p_INC_H,	&p_DEC_H,	&p_LD_H_d8,	&p_DAA,
+	&p_JR_Z_r8,		&p_ADD_HL_HL,	&p_LD_A_mHLI,	&p_DEC_HL,		&p_INC_L,	&p_DEC_L,	&p_LD_L_d8,	&p_CPL,
+	// 30
+	&p_JR_NC_r8,		&p_LD_SP_d16,	&p_LD_mHLD_A,	&p_INC_SP,		&p_INC_mHL,	&p_DEC_mHL,	&p_LD_HL_d8,	&p_SCF,
+	&p_JR_C_r8,		&p_ADD_HL_SP,	&p_LD_A_mHLD,	&p_DEC_SP,		&p_INC_A,	&p_DEC_A,	&p_LD_A_d8,	&p_CCF,
+	// 40
+	&p_LD_B_B,	&p_LD_B_C,	&p_LD_B_D,	&p_LD_B_E,	&p_LD_B_H,	&p_LD_B_L,	&p_LD_B_mHL,	&p_LD_B_A,
+	&p_LD_C_B,	&p_LD_C_C,	&p_LD_C_D,	&p_LD_C_E,	&p_LD_C_H,	&p_LD_C_L,	&p_LD_C_mHL,	&p_LD_C_A,
+	// 50
+	&p_LD_D_B,	&p_LD_D_C,	&p_LD_D_D,	&p_LD_D_E,	&p_LD_D_H,	&p_LD_D_L,	&p_LD_D_mHL,	&p_LD_D_A,
+	&p_LD_E_B,	&p_LD_E_C,	&p_LD_E_D,	&p_LD_E_E,	&p_LD_E_H,	&p_LD_E_L,	&p_LD_E_mHL,	&p_LD_E_A,
+	// 60
+	&p_LD_H_B,	&p_LD_H_C,	&p_LD_H_D,	&p_LD_H_E,	&p_LD_H_H,	&p_LD_H_L,	&p_LD_H_mHL,	&p_LD_H_A,
+	&p_LD_L_B,	&p_LD_L_C,	&p_LD_L_C,	&p_LD_L_E,	&p_LD_L_H,	&p_LD_L_L,	&p_LD_L_mHL,	&p_LD_L_A,
+	// 70
+	&p_LD_mHL_B,	&p_LD_mHL_C,	&p_LD_mHL_D,	&p_LD_mHL_D,	&p_LD_mHL_H,	&p_LD_mHL_L,	&p_HALT,		&p_LD_mHL_A,
+	&p_LD_A_B,	&p_LD_A_C,	&p_LD_A_D,	&p_LD_A_E,	&p_LD_A_H,	&p_LD_A_L,	&p_LD_A_mHL,	&p_LD_A_A,
+	// 80
+	&p_ADD_B,	&p_ADD_C,	&p_ADD_D,	&p_ADD_E,	&p_ADD_H,	&p_ADD_L,	&p_ADD_mHL,		&p_ADD_A,
+	&p_ADC_B,	&p_ADC_C,	&p_ADC_D,	&p_ADC_E,	&p_ADC_H,	&p_ADC_L,	&p_ADC_mHL,		&p_ADC_A,
+	// 90
+	&p_SUB_B,	&p_SUB_C,	&p_SUB_D,	&p_SUB_E,	&p_SUB_H,	&p_SUB_L,	&p_SUB_mHL,		&p_SUB_A,
+	&p_SBC_B,	&p_SBC_C,	&p_SBC_D,	&p_SBC_E,	&p_SBC_H,	&p_SBC_L,	&p_SBC_mHL,		&p_SBC_A,
+	// A0
+	&p_AND_B,	&p_AND_C,	&p_AND_D,	&p_AND_E,	&p_AND_H,	&p_AND_L,	&p_AND_mHL,		&p_AND_A,
+	&p_XOR_B,	&p_XOR_C,	&p_XOR_D,	&p_XOR_E,	&p_XOR_H,	&p_XOR_L,	&p_XOR_mHL,		&p_XOR_A,
+	// B0
+	&p_OR_B,		&p_OR_C,		&p_OR_D,		&p_OR_E,		&p_OR_H,		&p_OR_L,		&p_OR_mHL,		&p_OR_A,
+	&p_CP_B,		&p_CP_C,		&p_CP_D,		&p_CP_E,		&p_CP_H,		&p_CP_L,		&p_CP_mHL,		&p_CP_A,
+	// C0
+	&p_RET_NZ,		&p_POP_BC,		&p_JP_NZ_a16,	&p_JP_a16,		&p_CALL_NZ_a16,	&p_PUSH_BC,	&p_ADD_d8,		&p_RST_00H,
+	&p_RET_Z,		&p_RET,		&p_JP_Znn,		&p_MAPcb,		&p_CALL_Z_a16,	&p_CALL_a16,	&p_ADC_d8,		&p_RST_08H,
+	// D0
+	&p_RET_NC,		&p_POP_DE,		&p_JP_NC_a16,	&p_XX,		&p_CALL_NC_a16,	&p_PUSH_DE,	&p_SUB_d8,		&p_RST_10H,
+	&p_RET_C,		&p_RET_I,		&p_JP_Cnn,		&p_XX,		&p_CALL_C_a16,	&p_XX,		&p_SBC_d8,		&p_RST_18H,
+	// E0
+	&p_LDH_a8_A,	&p_POP_HL,		&p_LD_mC_A,	&p_XX,		&p_XX,		&p_PUSH_HL,	&p_AND_d8,		&p_RST_20H,
+	&p_ADD_SP_d8,	&p_JP_HL,		&p_LD_a16_A,		&p_XX,		&p_XX,		&p_XX,		&p_XOR_d8,		&p_RST_28H,
+	// F0
+	&p_LDH_A_a8,	&p_POP_AF,		&p_LD_A_mC,	&p_DI,		&p_XX,		&p_PUSH_AF,	&p_OR_d8,		&p_RST_30H,
+	&p_LD_HL_SP_r8,	&p_XX,		&p_LD_A_a16,		&p_EI,		&p_XX,		&p_XX,		&p_CP_d8,		&p_RST_38H
+};
+
