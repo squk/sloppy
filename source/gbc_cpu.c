@@ -32,26 +32,25 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     int instr = 0;
     while(1) {
         instr++;
-        put_l(s);
         // Fetch and execute instruction
         u8 opcode = read_u8(cpu->mmu, cpu->registers.pc++);
         void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
         (funcPtr)(cpu);
 
-        if (instr % 10000 == 0) {
-            clear();
-            sprintf(s, "I#:%d     PC: %d", instr, cpu->registers.pc);
-            sprintf(s, "OP: %x", opcode);
-            put_l(s);
-            sprintf(s, "A: %x    B: %x    C: %x", cpu->registers.a, cpu->registers.b, cpu->registers.c);
-            put_l(s);
-            sprintf(s, "D: %x    E: %x    F: %x", cpu->registers.d, cpu->registers.e, cpu->registers.f);
-            put_l(s);
-            sprintf(s, "H: %x    L: %x    M: %x", cpu->registers.h, cpu->registers.e, cpu->registers.clk.m);
-            put_l(s);
-            sprintf(s, "T: %x    SP: %x    PC: %x", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
-            put_l(s);
-        }
+        /*if (instr % 10000 == 0) {*/
+            /*clear();*/
+            /*sprintf(s, "I#:%d     PC: %d", instr, cpu->registers.pc);*/
+            /*sprintf(s, "OP: %x", opcode);*/
+            /*put_l(s);*/
+            /*sprintf(s, "A: %x    B: %x    C: %x", cpu->registers.a, cpu->registers.b, cpu->registers.c);*/
+            /*put_l(s);*/
+            /*sprintf(s, "D: %x    E: %x    F: %x", cpu->registers.d, cpu->registers.e, cpu->registers.f);*/
+            /*put_l(s);*/
+            /*sprintf(s, "H: %x    L: %x    M: %x", cpu->registers.h, cpu->registers.e, cpu->registers.clk.m);*/
+            /*put_l(s);*/
+            /*sprintf(s, "T: %x    SP: %x    PC: %x", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);*/
+            /*put_l(s);*/
+        /*}*/
 
         /*put_c(screen_line-1, 5, 'E');*/
 
@@ -59,5 +58,6 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
         cpu->clk.m += cpu->registers.clk.m;
         cpu->clk.t += cpu->registers.clk.t;
         /*VBlankIntrWait();*/
+        gpu_start_frame(cpu->gpu);
     }
 }
