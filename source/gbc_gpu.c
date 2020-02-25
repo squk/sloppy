@@ -113,17 +113,19 @@ void gpu_start_frame(gbc_gpu *gpu) {
 	}
     /*put_l("bop");*/
 	u8 r = gpu_run(gpu, 0);
-    char s[80];
-    sprintf(s, "r:%d", r);
-    put_l(s);
+    /*char s[80];*/
+    /*sprintf(s, "r:%d", r);*/
+    /*put_l(s);*/
 }
 
 // TODO: cleanup and optimize
 void gpu_draw_line_fb(gbc_gpu *gpu, u8 line) {
 	for (u8 x = 0; x < SIZE_X; x++) {
-        /*u8 row_index = line * SIZE_X;*/
-		/*u8 *px = gpu->fb[row_index + x];*/
+        u8 row_index = line * SIZE_X;
+
+        u8 *px_ptr = &gpu->fb[row_index + x];
 		u8 px = gpu->bg_disp[line * 256 + x];
+
 		u16 cpx = RGB8(px, px, px);
 
 		if (gpu->win_disp[line * 256 + x] < 8) {
@@ -140,6 +142,8 @@ void gpu_draw_line_fb(gbc_gpu *gpu, u8 line) {
         char s[80];
         sprintf(s, "PX: %x, CPX: %x", px, cpx);
         put_l(s);
+
+        *px_ptr = px;
 	}
     /*memcpy(MODE3_FB, &gpu->fb, SIZE_X*SIZE_Y);*/
 }
@@ -388,17 +392,16 @@ void gpu_draw_line(gbc_gpu *gpu, u8 line) {
 }
 
 u8 gpu_run(gbc_gpu *gpu, int cycles) {
-    put_l("RUNNING");
-    char s[80];
-    /*sprintf(s, "acessing address %x", IO_LCDCONT);*/
-    put_l(s);
+    /*char s[80];*/
+    /*sprintf(s, "LCDCONT: %0b", read_u8(gpu->mmu, IO_LCDCONT));*/
+    /*put_l(s);*/
 
 	if (!read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
 		gpu->reset = 1;
         return 0;
 	}
 	if (gpu->reset) {
-        put_l("RESET");
+        /*put_l("RESET");*/
 		gpu->reset = 0;
         return 1;
 	}
@@ -410,7 +413,6 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	gpu->vblank -= cycles;
     put_l("cycles-");
 
-    while(1){VBlankIntrWait();}
 	// OAM mode 2
 	if (gpu->oam <= 0) {
         put_l("oam mode 2");
