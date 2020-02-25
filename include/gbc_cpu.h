@@ -1,6 +1,7 @@
 #pragma once
 #include <gba_base.h>
 
+#include "gbc_gpu.h"
 #include "gbc_mmu.h"
 
 typedef struct {
@@ -38,6 +39,7 @@ typedef struct {
     gbc_cpu_rsv rsv;
 
     gbc_mmu *mmu;
+    gbc_gpu *gpu;
 } gbc_cpu;
 
 void gbc_cpu_reset(gbc_cpu *cpu);
