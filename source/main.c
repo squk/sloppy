@@ -28,7 +28,7 @@ int main(void) {
     // set screen H and V scroll positions
     BG_OFFSET[0].x = 0; BG_OFFSET[0].y = 0;
 
-    /*put_s(0, "TEMW - this emu might work");*/
+    put_l("TEMW - this emu might work");
     /*put_s(0, "TEMW - this emu might work");*/
     /*put_s(1, "--------------------------------");*/
     // set the screen base to 31 (0x600F800) and char base to 0 (0x6000000)
@@ -36,9 +36,6 @@ int main(void) {
 
     // screen mode & background to display
     SetMode( MODE_0 | BG0_ON );
+    /*SetMode( MODE_4 | BG3_ON );*/
     emu_run();
-
-    while (1) {
-        VBlankIntrWait();
-    }
 }
