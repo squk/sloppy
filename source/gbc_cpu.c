@@ -5,6 +5,7 @@
 #include "gbc_ops.h"
 #include "gbc_io.h"
 #include "text.h"
+#include "console.h"
 
 void gbc_cpu_reset(gbc_cpu *cpu) {
     cpu->registers.a = 0;
@@ -40,47 +41,42 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
     cpu->mmu->in_bios = false;
 }
 
+void gbc_registers_debug(gbc_cpu *cpu, u8 opcode, int instr) {
+    char s[80];
+    cli_clear();
+    sprintf(s, "i: %d   OP: %x", instr, opcode);
+    cli_printl(s);
+    sprintf(s, "A: %x    B: %x    C: %x", cpu->registers.a, cpu->registers.b, cpu->registers.c);
+    cli_printl(s);
+    sprintf(s, "D: %x    E: %x    F: %x", cpu->registers.d, cpu->registers.e, cpu->registers.f);
+    cli_printl(s);
+    sprintf(s, "H: %x    L: %x    M: %x", cpu->registers.h, cpu->registers.e, cpu->registers.clk.m);
+    cli_printl(s);
+    sprintf(s, "T: %x    SP: %x    PC: %x", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
+    cli_printl(s);
+    sprintf(s, "ROM: %x     fb[0]: %x", &cpu->mmu->rom, cpu->gpu->fb[0]);
+    cli_printl(s);
+    sprintf(s, "LCDCONT: %x", read_u8(cpu->mmu, IO_LCDCONT));
+    cli_printl(s);
+}
+
 void gbc_cpu_loop(gbc_cpu *cpu) {
     execute_init(cpu);
 
     char s[80];
     int max = 100;
     int instr = 0;
-    /*sprintf(s, "LCDCONT: %x", get_address_ptr(cpu->mmu, IO_LCDCONT));*/
-    /*put_l(s);*/
-    /*sprintf(s, "ROM: %x", &cpu->mmu->rom);*/
-    /*put_l(s);*/
 
+    gbc_registers_debug(cpu, -1, instr);
     while(1) {
         instr++;
         // Fetch and execute instruction
         u8 opcode = read_u8(cpu->mmu, cpu->registers.pc++);
-        for(u8 i=0; i<60; i++) {VBlankIntrWait();}
         void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
         (funcPtr)(cpu);
-
-        /*if (instr % 101 == 0) {*/
-            sprintf(s, "op: %x    &fb:%x    fb: %x", opcode, &cpu->gpu->fb, cpu->gpu->fb[0]);
-            put_l(s);
-        /*}*/
-
-        /*if (instr % 100 == 0) {*/
-            /*clear();*/
-            /*sprintf(s, "OP: %x", opcode);*/
-            /*put_l(s);*/
-            /*sprintf(s, "A: %x    B: %x    C: %x", cpu->registers.a, cpu->registers.b, cpu->registers.c);*/
-            /*put_l(s);*/
-            /*sprintf(s, "D: %x    E: %x    F: %x", cpu->registers.d, cpu->registers.e, cpu->registers.f);*/
-            /*put_l(s);*/
-            /*sprintf(s, "H: %x    L: %x    M: %x", cpu->registers.h, cpu->registers.e, cpu->registers.clk.m);*/
-            /*put_l(s);*/
-            /*sprintf(s, "T: %x    SP: %x    PC: %x", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);*/
-            /*put_l(s);*/
-            /*sprintf(s, "ROM: %x", &cpu->mmu->rom);*/
-            /*put_l(s);*/
-            /*sprintf(s, "LCDCONT: %x", read_u8(cpu->mmu, IO_LCDCONT));*/
-            /*put_l(s);*/
-        /*}*/
+        if (instr % 500 == 0 || (instr > 2000 && instr % 50 == 0)) {
+            gbc_registers_debug(cpu, opcode, instr);
+        }
 
         /*put_c(screen_line-1, 5, 'E');*/
 
@@ -90,3 +86,4 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
         gpu_start_frame(cpu->gpu);
     }
 }
+

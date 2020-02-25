@@ -7,26 +7,28 @@
 
 #include <stdio.h>
 
+u8 cli_line = 0;
+
 void cli_clear() {
+    cli_line = 0;
 	// ansi escape sequence to clear screen and home cursor
 	// /x1b[line;columnH
-	iprintf("\x1b[2J");
+    iprintf("\x1b[2J");
+    /**((u32 *)MAP_BASE_ADR(31)) = 0;*/
+    /*CpuFastSet( MAP_BASE_ADR(31), MAP_BASE_ADR(31), FILL | COPY32 | (0x800/4));*/
 }
 
-
-u8 line = 0;
 
 void cli_print(int x, int y, const char *msg) {
     char s[80];
-	sprintf(s, "\x1b[%d;%dH%s", x, y, msg);
+	sprintf(s, "\x1b[%d;%dH%s", y, x, msg);
 	iprintf(s);
 }
 
-// print on current line and move cursor to next line
-void cli_n(const char msg[]) {
-    if (line > 9) {
+void cli_printl(const char *text) {
+    cli_print(0, cli_line++, text);
+
+    if (cli_line > 18) {
         cli_clear();
     }
-    cli_print(0, line, msg);
-    line++;
 }
