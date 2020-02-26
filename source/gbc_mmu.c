@@ -55,39 +55,6 @@ void gbc_mmu_init(gbc_mmu *mmu){
     memset(mmu->io, 0, sizeof mmu->io);
     memset(mmu->hram, 0, sizeof mmu->hram);
     memset(mmu->zram, 0, sizeof mmu->zram);
-
-    write_u8(mmu, 0xFF05, 0x00);
-	write_u8(mmu, 0xFF06, 0x00);
-	write_u8(mmu, 0xFF07, 0x00);
-	write_u8(mmu, 0xFF10, 0x80);
-	write_u8(mmu, 0xFF11, 0xBF);
-	write_u8(mmu, 0xFF12, 0xF3);
-	write_u8(mmu, 0xFF14, 0xBF);
-	write_u8(mmu, 0xFF16, 0x3F);
-	write_u8(mmu, 0xFF17, 0x00);
-	write_u8(mmu, 0xFF19, 0xBF);
-	write_u8(mmu, 0xFF1A, 0x7F);
-	write_u8(mmu, 0xFF1B, 0xFF);
-	write_u8(mmu, 0xFF1C, 0x9F);
-	write_u8(mmu, 0xFF1E, 0xBF);
-	write_u8(mmu, 0xFF20, 0xFF);
-	write_u8(mmu, 0xFF21, 0x00);
-	write_u8(mmu, 0xFF22, 0x00);
-	write_u8(mmu, 0xFF23, 0xBF);
-	write_u8(mmu, 0xFF24, 0x77);
-	write_u8(mmu, 0xFF25, 0xF3);
-	write_u8(mmu, 0xFF26, 0xF1);
-	write_u8(mmu, 0xFF40, 0x91);
-	write_u8(mmu, 0xFF42, 0x00);
-	write_u8(mmu, 0xFF43, 0x00);
-	write_u8(mmu, 0xFF45, 0x00);
-	write_u8(mmu, 0xFF47, 0xFC);
-	write_u8(mmu, 0xFF48, 0xFF);
-	write_u8(mmu, 0xFF49, 0xFF);
-	write_u8(mmu, 0xFF4A, 0x00);
-	write_u8(mmu, 0xFF4B, 0x00);
-	write_u8(mmu, 0xFFFF, 0x00);    
-    /*memcpy(mmu->rom, kInitialValuesForFFXX, 256);*/
 }
 
 u8* get_address_ptr(gbc_mmu *mmu , u16 address) {

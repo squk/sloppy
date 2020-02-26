@@ -28,7 +28,7 @@ void cli_print(int x, int y, const char *msg) {
 void cli_printl(const char *text) {
     cli_print(0, cli_line++, text);
 
-    if (cli_line > 18) {
+    if (cli_line > 22) {
         cli_clear();
     }
 }

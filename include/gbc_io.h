@@ -17,8 +17,8 @@
 #define IO_SCROLLY 0xFF42
 #define IO_SCROLLX 0xFF43
 
-#define IO_CURLINE 0xFF44
-#define IO_CMPLINE 0xFF45
+#define IO_CURLINE 0xFF44 // LY
+#define IO_CMPLINE 0xFF45 // LYC
 
 #define IO_BGRDPAL 0xFF47
 #define IO_OBJ0PAL 0xFF48
