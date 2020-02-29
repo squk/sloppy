@@ -1,6 +1,7 @@
 #include <gba_base.h>
 #include <string.h>
 
+#include "console.h"
 #include "gbc_mmu.h"
 #include "gbc_io.h"
 
@@ -50,7 +51,6 @@ void gbc_mmu_init(gbc_mmu *mmu){
     memset(mmu->rom, 0, sizeof mmu-> rom);
     memset(mmu->vram, 0, sizeof mmu->vram);
     memset(mmu->wram, 0, sizeof mmu->wram);
-    memset(mmu->echo, 0, sizeof mmu->echo);
     memset(mmu->oam, 0, sizeof mmu->oam);
     memset(mmu->io, 0, sizeof mmu->io);
     memset(mmu->hram, 0, sizeof mmu->hram);
@@ -64,20 +64,23 @@ u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
     if (address < 0x8000) {
         return &mmu->rom[address];
     }
+    if (address < 0xA000) {
+        return &mmu->vram[address & 0x1FFF];
+    }
     if (address < 0xC000) {
-        /*return &mmu->rom[address];*/
+        return &mmu->eram[address & 0x1FFF];
     }
     if (address < 0xE000) {
         return &mmu->wram[address & 0x1FFF];
     }
     if (address < 0xF000) {
-        return &mmu->echo[address & 0x1FFF];
+        return &mmu->wram[address & 0x1FFF]; // echo
     }
     if (address < 0xFEA0) {
         return &mmu->oam[address & 0xFF];
     }
-  if (address < 0xFF00) {
-        return &mmu->oam[address & 0xFF]; // LCDCONT at 0xFF40
+    if (address < 0xFF00) { // Not Usable
+        return &mmu->zram[address & 0xFF];
     }
     if (address < 0xFF80) {
         return &mmu->io[address & 0xFF];
@@ -94,20 +97,24 @@ u8 read_u8(gbc_mmu *mmu , u16 address) {
 
 void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     u8 *ptr = get_address_ptr(mmu, address);
+    if (address == 0xFF50 && val == 0xA) {
+        mmu->in_bios = false;
+        cli_printl("OUT OF BIOS");
+    }
     *ptr = val;
 }
 
 u16 read_u16(gbc_mmu *mmu , u16 address) {
-    u8 *ptr = get_address_ptr(mmu, address);
-    u16 val;
-    memcpy(&val, ptr, sizeof(u16));
-
-    return val;
+    // swap bits for little-endian
+    uint16_t temp = ((u16)read_u8(mmu, address+1) << 8) + (u16)read_u8(mmu, address);
+    /*uint16_t temp =  ((u16)read_u8(mmu, address+1) << 8) & (u16)read_u8(mmu, address);*/
+    return temp;
 }
 
 void write_u16(gbc_mmu *mmu , u16 address, u16 val) {
-    u8 *ptr = get_address_ptr(mmu, address);
-    memcpy(ptr, &val, sizeof(u16));
+    // swap bits for little-endian
+     write_u8(mmu, address, (u8)(val));
+     write_u8(mmu, address+1, (u8)(val >> 8));
 }
 
 bool read_bit(gbc_mmu *mmu, u16 address, u8 bit) {

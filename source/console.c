@@ -11,11 +11,7 @@ u8 cli_line = 0;
 
 void cli_clear() {
     cli_line = 0;
-	// ansi escape sequence to clear screen and home cursor
-	// /x1b[line;columnH
     iprintf("\x1b[2J");
-    /**((u32 *)MAP_BASE_ADR(31)) = 0;*/
-    /*CpuFastSet( MAP_BASE_ADR(31), MAP_BASE_ADR(31), FILL | COPY32 | (0x800/4));*/
 }
 
 
@@ -28,7 +24,7 @@ void cli_print(int x, int y, const char *msg) {
 void cli_printl(const char *text) {
     cli_print(0, cli_line++, text);
 
-    if (cli_line > 22) {
+    if (cli_line > 18) {
         cli_clear();
     }
 }

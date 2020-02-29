@@ -1,6 +1,7 @@
 #include <gba_base.h>
 #include <gba_systemcalls.h>
 #include <gba_video.h>
+
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
@@ -50,14 +51,19 @@ void gpu_write_u8(gbc_gpu *gpu, u16 address, u8 v) {
 		    break;
 		case IO_SCROLLY:
 			write_u8(gpu->mmu, IO_SCROLLY, v);
+			break;
 		case IO_SCROLLX:
 			write_u8(gpu->mmu, IO_SCROLLX, v);
+			break;
 		case IO_WNDPOSY:
 			write_u8(gpu->mmu, IO_WNDPOSX, v);
+			break;
 		case IO_WNDPOSX:
 			write_u8(gpu->mmu, IO_WNDPOSX, v);
+			break;
 	    case IO_LCDSTAT:
 		    write_u8(gpu->mmu, IO_LCDSTAT, (read_u8(gpu->mmu, IO_LCDSTAT) & 0x07) | (v & 0xF8));
+			break;
 	    default:
 		    break;
 	}
@@ -92,10 +98,6 @@ u8 gpu_read_u8(gbc_gpu *gpu, u16 address) {
 
 void gpu_start_frame(gbc_gpu *gpu) {
 	int i, j;
-	//write_u8(gpu->mmu, oam, TL_OAM);
-	//write_u8(gpu->mmu, oam_vram, TL_OAM_VRAM);
-	//write_u8(gpu->mmu, hblank, TL_HBLANK);
-	//write_u8(gpu->mmu, vblank, TF_VBLANK);
 
 	// set win and obj to transparent
 	for (i = 0; i < 256; i++) {
@@ -109,9 +111,6 @@ void gpu_start_frame(gbc_gpu *gpu) {
 		}
 	}
 	u8 r = gpu_run(gpu, 0);
-    /*char s[80];*/
-    /*sprintf(s, "r:%d", r);*/
-    /*cli_printl(s);*/
 }
 
 // TODO: cleanup and optimize
@@ -137,7 +136,8 @@ void gpu_draw_line_fb(gbc_gpu *gpu, u8 line) {
         *px_ptr = px;
 	}
 
-	memcpy(gpu->fb, 0, sizeof gpu->fb);
+	/*cli_printl("fb write");*/
+	/*memcpy(gpu->fb, 0, sizeof gpu->fb);*/
 	for (u8 x = 0; x < SIZE_X; x++) {
         u8 padding = 80;
         u8 row_index = line * SIZE_X + padding;
@@ -150,7 +150,6 @@ void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
 	u8 oam_row, obj_line;
 	u8 obj_line_a, obj_line_b;
 	int16_t obj;
-	/*int16_t obj;*/
 
 	switch (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
         case OPT_BG_Tile_Map_0:
@@ -315,12 +314,15 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 		if((objs[i].y != 0) && (objs[i].y < SPRITE_END_Y) &&
 				(objs[i].y <= line) && ((objs[i].y + obj_height) > line)) {
 			objs_line[objs_line_len++] = &objs[i];
-			/*
-			   printf("Object %d:\n", objs[i].id);
-			   printf("x: %02X, y: %02X, pat: %02X\n",
-			   objs[i].x, objs[i].y, objs[i].pat);
-			   printf("\n");
-			   */
+
+            u8 s[80];
+            sprintf(s, "mode clk: %d", gpu->mode_clock);
+            cli_printl(s);
+            sprintf(s, "Object %d:\n", objs[i].id);
+            cli_printl(s);
+            sprintf(s, "x: %02X, y: %02X, pat: %02X\n", objs[i].x, objs[i].y, objs[i].pat);
+            cli_printl(s);
+
 			//return;
 		}
 	}
@@ -421,19 +423,18 @@ The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 i
 Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
 */
 u8 gpu_run(gbc_gpu *gpu, int cycles) {
-	if (!read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
-		gpu->reset = 1;
+    char s[80];
+    if (!read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
+        gpu->reset = 1;
         return 0;
-	}
+    }
 	if (gpu->reset) {
-        /*cli_printl("RESET");*/
 		gpu->reset = 0;
         return 1;
 	}
 
 	gpu->mode_clock += cycles;
 
-	// OAM mode 2
 	if (gpu->mode_clock > LCD_LINE_CYCLES) {
 	    gpu->mode_clock -= LCD_LINE_CYCLES;
 
@@ -452,11 +453,11 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 
 	    // VBLANK
 	    if (read_u8(gpu->mmu, IO_CURLINE) == SIZE_Y) {
+            cli_printl("vblank");
 	        write_u8(gpu->mmu, IO_LCDSTAT, (read_u8(gpu->mmu, IO_LCDSTAT) & 0xF3) | 0x01);
 	        // Set Mode Flag to VBLANK at LCDSTAT
 	        unset_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
 	        set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_VBLANK);
-            //gb_reg.IF |= VBLANK_INTR;
 
 	        // Interrupt VBlank
 	        set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_VBLANK);
@@ -466,6 +467,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	    }
         // Normal line
 	    else if (read_u8(gpu->mmu, IO_CURLINE) < SIZE_Y) {
+            cli_printl("normal line");
             if (read_u8(gpu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
             }
@@ -477,8 +479,8 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	    }
 	}
 	// OAM
-    else if (read_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK)
-            && gpu->mode_clock >= LCD_MODE_2_CYCLES) {
+    else if (read_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && gpu->mode_clock >= LCD_MODE_2_CYCLES) {
+        cli_printl("oam");
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
 
 		if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
@@ -487,6 +489,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
     }
     // Update LCD
     else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && gpu->mode_clock >= LCD_MODE_2_CYCLES) {
+        cli_printl("updating LCD");
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
 		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
     }

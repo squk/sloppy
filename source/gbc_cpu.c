@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <gba.h>
+#include <time.h>
+
+#include "gba_timing.h"
+#include "gba_input.h"
 
 #include "gbc_cpu.h"
 #include "gbc_ops.h"
@@ -68,7 +72,7 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
 	write_u8(cpu->mmu, 0xFF49, 0xFF);
 	write_u8(cpu->mmu, 0xFF4A, 0x00);
 	write_u8(cpu->mmu, 0xFF4B, 0x00);
-	write_u8(cpu->mmu, 0xFFFF, 0x00);    
+	write_u8(cpu->mmu, 0xFFFF, 0x00);
 
     cpu->mmu->in_bios = false;
 }
@@ -87,10 +91,66 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode, int instr) {
     cli_printl(s);
     sprintf(s, "ROM: %x     fb[]: %x", &cpu->mmu->rom, cpu->gpu->fb[SIZE_X/2]);
     cli_printl(s);
-    /*sprintf(s, "LCDCONT: %x", read_u8(cpu->mmu, IO_LCDCONT));*/
-    /*cli_printl(s);*/
-    sprintf(s, "$FF00+$47: %x", read_u8(cpu->mmu, 0xFF00+0x47));
-    cli_printl(s);
+}
+
+void gbc_cpu_step(gbc_cpu *cpu) {
+	if((cpu->IME || cpu->HALT) && (cpu->IF & cpu->IE & ANY_INTR)) {
+		cpu->HALT = 0;
+
+		if(cpu->IME) {
+			cli_printl("Interrupt Master Enable");
+			/* Disable interrupts */
+			cpu->IME = 0;
+
+			/* Push Program Counter */
+			write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc >> 8);
+			write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc & 0xFF);
+
+			/* Call interrupt handler if required. */
+			if(cpu->IF & cpu->IE & VBLANK_INTR) {
+				cpu->registers.pc = VBLANK_INTR_ADDR;
+				cpu->IF ^= VBLANK_INTR;
+			}
+			else if(cpu->IF & cpu->IE & LCDC_INTR) {
+				cpu->registers.pc = LCDC_INTR_ADDR;
+				cpu->IF ^= LCDC_INTR;
+			}
+			else if(cpu->IF & cpu->IE & TIMER_INTR) {
+				cpu->registers.pc = TIMER_INTR_ADDR;
+				cpu->IF ^= TIMER_INTR;
+			}
+			else if(cpu->IF & cpu->IE & SERIAL_INTR) {
+				cpu->registers.pc = SERIAL_INTR_ADDR;
+				cpu->IF ^= SERIAL_INTR;
+			}
+			else if(cpu->IF & cpu->IE & CONTROL_INTR) {
+				cpu->registers.pc = CONTROL_INTR_ADDR;
+				cpu->IF ^= CONTROL_INTR;
+			}
+		}
+	}
+
+    // Fetch and execute instruction
+    u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
+    key_poll();
+    u8 lcdcont = read_u8(cpu->mmu, IO_LCDCONT);
+    if (lcdcont != 0) {
+        char s[80]; sprintf(s, "lcdcont %x", lcdcont); cli_printl(s);
+        /*for(u8 i=0; i<120; i++) { VBlankIntrWait(); }*/
+    }
+    if (key_state(KEY_START) || (cpu->registers.pc > 0x5b && cpu->registers.pc < 0x7f )) {
+        char s[80]; sprintf(s, "op: %s, PC:%x", OPS_STR[opcode], cpu->registers.pc-1); cli_printl(s);
+        for(u8 i=0; i<120; i++) { VBlankIntrWait(); }
+    }
+    void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
+    (funcPtr)(cpu);
+    /*cli_clear();*/
+    /*gbc_registers_debug(cpu, opcode, 0);*/
+
+    // Add execution time to the CPU clk
+    cpu->clk.m += cpu->registers.clk.m;
+    cpu->clk.t += cpu->registers.clk.t;
+    gpu_run(cpu->gpu, cpu->registers.clk.m);
 }
 
 void gbc_cpu_loop(gbc_cpu *cpu) {
@@ -98,32 +158,17 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     gpu_start_frame(cpu->gpu);
 
     char s[80];
-    int max = 100;
     int instr = 0;
 
-    gbc_registers_debug(cpu, -1, instr);
-    //SetMode(MODE_3 | BG2_ON); for(u8 y=0; y<160; y++) { for(u8 x=0; x<240; x++) { MODE3_FB[y][x] = RGB8(40, 40, 40); } }
+    //gbc_registers_debug(cpu, -1, instr);
+    /*SetMode(MODE_3 | BG2_ON);*/
+    /*for(u8 y=0; y<160; y++) { for(u8 x=0; x<240; x++) { MODE3_FB[y][x] = RGB8(40, 40, 40); } }*/
     while(1) {
         instr++;
-        // Fetch and execute instruction
-        u8 opcode = read_u8(cpu->mmu, cpu->registers.pc++);
-        void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
-        (funcPtr)(cpu);
-
-        //gbc_registers_debug(cpu, opcode, instr);
-
-        //if (DivMod(instr, 500) == 0) {
-        //}
-        if (cpu->gpu->fb[0] != 0) {
-            sprintf(s, "%d: fb[]: %x", instr, cpu->gpu->fb[0]);
-            cli_printl(s);
+        gbc_cpu_step(cpu);
+        if (cpu->gpu->fb[5] != 0) {
+            char s[80]; sprintf(s, "fb: %x", cpu->gpu->fb[5]); cli_printl(s);
         }
-
-        // Add execution time to the CPU clk
-        cpu->clk.m += cpu->registers.clk.m;
-        cpu->clk.t += cpu->registers.clk.t;
-        gpu_run(cpu->gpu, cpu->registers.clk.m);
-        //for(u8 i=0; i<80; i++) { VBlankIntrWait(); }
+        //
     }
 }
-
