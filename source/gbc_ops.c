@@ -123,8 +123,8 @@ void LD_HL_d8(gbc_cpu *cpu) { write_u8(cpu->mmu,(*h<<8)+*l, read_u8(cpu->mmu, *p
 void LD_mBC_A(gbc_cpu *cpu) { write_u8(cpu->mmu,(*b<<8)+*c, *a); *m=2; };
 void LD_mDE_A(gbc_cpu *cpu) { write_u8(cpu->mmu,(*d<<8)+*e, *a); *m=2; };
 
-void LD_d16_A(gbc_cpu *cpu) { write_u8(cpu->mmu, read_u16(cpu->mmu, *pc), *a); (*pc)+=2; *m=4; };
-void D_A_d16(gbc_cpu *cpu) { *a=read_u8(cpu->mmu, read_u16(cpu->mmu, *pc)); (*pc)+=2; *m=4; };
+/*void LD_d16_A(gbc_cpu *cpu) { write_u8(cpu->mmu, read_u16(cpu->mmu, *pc), *a); (*pc)+=2; *m=4; };*/
+/*void LD_A_d16(gbc_cpu *cpu) { *a=read_u8(cpu->mmu, read_u16(cpu->mmu, *pc)); (*pc)+=2; *m=4; };*/
 
 void LD_A_mBC(gbc_cpu *cpu) { *a=read_u8(cpu->mmu,(*b<<8)+*c); *m=2; };
 void LD_A_mDE(gbc_cpu *cpu) { *a=read_u8(cpu->mmu,(*d<<8)+*e); *m=2; };
@@ -133,9 +133,9 @@ void LD_A_a16(gbc_cpu *cpu) { *a=read_u8(cpu->mmu,read_u16(cpu->mmu,*pc)); (*pc)
 void LD_a16_A(gbc_cpu *cpu) { write_u8(cpu->mmu,read_u16(cpu->mmu,*pc), *a); (*pc)+=2; *m=4; };
 void LD_a16_SP(gbc_cpu *cpu) { write_u8(cpu->mmu,read_u16(cpu->mmu,*pc), *sp); (*pc)+=2; *m=5; };
 
-void LD_BC_d16(gbc_cpu *cpu) { *c=read_u8(cpu->mmu, *pc); *b=read_u8(cpu->mmu, *pc); (*pc)+=2; *m=3; };
-void LD_DE_d16(gbc_cpu *cpu) { *e=read_u8(cpu->mmu, *pc); *d=read_u8(cpu->mmu, *pc); (*pc)+=2; *m=3; };
-void LD_HL_d16(gbc_cpu *cpu) { *l=read_u8(cpu->mmu, *pc); *h=read_u8(cpu->mmu, *pc); (*pc)+=2; *m=3; };
+void LD_BC_d16(gbc_cpu *cpu) { *c=read_u8(cpu->mmu, (*pc)++); *b=read_u8(cpu->mmu, (*pc)++); *m=3; };
+void LD_DE_d16(gbc_cpu *cpu) { *e=read_u8(cpu->mmu, (*pc)++); *d=read_u8(cpu->mmu, (*pc)++); *m=3; };
+void LD_HL_d16(gbc_cpu *cpu) { *l=read_u8(cpu->mmu, (*pc)++); *h=read_u8(cpu->mmu, (*pc)++); *m=3; };
 
 void LD_SP_d16(gbc_cpu *cpu) { *sp=read_u16(cpu->mmu, *pc); *pc +=2; *m=3; };
 
@@ -603,7 +603,10 @@ void CALL_NZ_a16(gbc_cpu *cpu) { *m=3; if((*f&0x80)==0x00) { *sp-=2; write_u16(c
 void CALL_Z_a16(gbc_cpu *cpu) { *m=3; if((*f&0x80)==0x80) { *sp-=2; write_u16(cpu->mmu,*sp,*pc+2); *pc=read_u16(cpu->mmu,*pc); (*m)+=2; } else (*pc)+=2; };
 void CALL_NC_a16(gbc_cpu *cpu) { *m=3; if((*f&0x10)==0x00) { *sp-=2; write_u16(cpu->mmu,*sp,*pc+2); *pc=read_u16(cpu->mmu,*pc); (*m)+=2; } else (*pc)+=2; };
 void CALL_C_a16(gbc_cpu *cpu) { *m=3; if((*f&0x10)==0x10) { *sp-=2; write_u16(cpu->mmu,*sp,*pc+2); *pc=read_u16(cpu->mmu,*pc); (*m)+=2; } else (*pc)+=2; };
-void RET(gbc_cpu *cpu) { *pc=read_u16(cpu->mmu,*sp); *sp+=2; *m=3; };
+void RET(gbc_cpu *cpu) { *pc=read_u16(cpu->mmu,*sp);
+char s[80]; sprintf(s, "ret PC: %x", *pc); cli_printl(s);
+
+    *sp+=2; *m=3; };
 void RET_I(gbc_cpu *cpu) { /*rrs(cpu);*/ *pc=read_u16(cpu->mmu,*sp); cpu->IME = 1; *sp+=2; *m=3; };
 void RET_NZ(gbc_cpu *cpu) { *m=1; if((*f&0x80)==0x00) { *pc=read_u16(cpu->mmu,*sp); *sp+=2; (*m)+=2; } };
 void RET_Z(gbc_cpu *cpu) { *m=1; if((*f&0x80)==0x80) { *pc=read_u16(cpu->mmu,*sp); *sp+=2; (*m)+=2; } };

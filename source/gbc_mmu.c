@@ -106,14 +106,14 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
 
 u16 read_u16(gbc_mmu *mmu , u16 address) {
     // swap bits for little-endian
-    uint16_t temp = ((u16)read_u8(mmu, address+1) << 8) + (u16)read_u8(mmu, address);
-    /*uint16_t temp =  ((u16)read_u8(mmu, address+1) << 8) & (u16)read_u8(mmu, address);*/
+    uint16_t temp = read_u8(mmu, address);
+    temp |= read_u8(mmu, address+1) << 8;
     return temp;
 }
 
 void write_u16(gbc_mmu *mmu , u16 address, u16 val) {
     // swap bits for little-endian
-     write_u8(mmu, address, (u8)(val));
+     write_u8(mmu, address, val & 0xFF);
      write_u8(mmu, address+1, (u8)(val >> 8));
 }
 

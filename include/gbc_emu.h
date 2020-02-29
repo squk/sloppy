@@ -47,9 +47,6 @@ void emu_test() {
     gbc_cpu_reset(&cpu);
     char s[80];
 
-
-    sprintf(s, "rom[0]: %x", mmu.rom[0x0]);
-    cli_printl(s);
     //sprintf(s, "rom[0x100]: %x", mmu.rom[0x100]);
     //cli_printl(s);
 

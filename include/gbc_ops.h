@@ -100,8 +100,8 @@ void LD_HL_d8(gbc_cpu *cpu);
 void LD_mBC_A(gbc_cpu *cpu);
 void LD_mDE_A(gbc_cpu *cpu);
 
-void LD_d16_A(gbc_cpu *cpu);
-void D_A_d16(gbc_cpu *cpu);
+//void LD_d16_A(gbc_cpu *cpu);
+//void LD_A_d16(gbc_cpu *cpu);
 
 void LD_A_mBC(gbc_cpu *cpu);
 void LD_A_mDE(gbc_cpu *cpu);
@@ -606,7 +606,7 @@ static const gbc_operator OPS[256] = {
 	&XX/*DJNZn, STOP*/,		&LD_DE_d16,	&LD_mDE_A,	&INC_DE,		&INC_D,	&DEC_D,	&LD_D_d8,	&RLA,
 	&JR_r8,		&ADD_HL_DE,	&LD_A_mDE,	&DEC_DE,		&INC_E,	&DEC_E,	&LD_E_d8,	&RRA,
 	// 20
-	&JR_NZ_r8,		&LD_HL_d16,	&LD_mHLI_A,	&INC_mHL,		&INC_H,	&DEC_H,	&LD_H_d8,	&DAA,
+	&JR_NZ_r8,		&LD_HL_d16,	&LD_mHLI_A,	&INC_HL,		&INC_H,	&DEC_H,	&LD_H_d8,	&DAA,
 	&JR_Z_r8,		&ADD_HL_HL,	&LD_A_mHLI,	&DEC_HL,		&INC_L,	&DEC_L,	&LD_L_d8,	&CPL,
 	// 30
 	&JR_NC_r8,		&LD_SP_d16,	&LD_mHLD_A,	&INC_SP,		&INC_mHL,	&DEC_mHL,	&LD_HL_d8,	&SCF,
@@ -654,10 +654,10 @@ static const char *OPS_STR[256] = {
   "NOP",     "LD_BC_d16",   "LD_mBC_A",   "INC_BC",     "INC_B",   "DEC_B",   "LD_B_d8",   "RLCA",
   "LD_a16_SP",   "ADD_HL_BC",   "LD_A_mBC",   "DEC_BC",     "INC_C",   "DEC_C",   "LD_C_d8",   "RRCA",
   // 10
-  &XX/*DJNZn, STOP*/,    "LD_DE_d16",   "LD_mDE_A",   "INC_DE",     "INC_D",   "DEC_D",   "LD_D_d8",   "RLA",
+  "XX STOP",    "LD_DE_d16",   "LD_mDE_A",   "INC_DE",     "INC_D",   "DEC_D",   "LD_D_d8",   "RLA",
   "JR_r8",     "ADD_HL_DE",   "LD_A_mDE",   "DEC_DE",     "INC_E",   "DEC_E",   "LD_E_d8",   "RRA",
   // 20
-  "JR_NZ_r8",     "LD_HL_d16",   "LD_mHLI_A",   "INC_mHL",     "INC_H",   "DEC_H",   "LD_H_d8",   "DAA",
+  "JR_NZ_r8",     "LD_HL_d16",   "LD_mHLI_A",   "INC_HL",     "INC_H",   "DEC_H",   "LD_H_d8",   "DAA",
   "JR_Z_r8",     "ADD_HL_HL",   "LD_A_mHLI",   "DEC_HL",     "INC_L",   "DEC_L",   "LD_L_d8",   "CPL",
   // 30
   "JR_NC_r8",     "LD_SP_d16",   "LD_mHLD_A",   "INC_SP",     "INC_mHL",   "DEC_mHL",   "LD_HL_d8",   "SCF",

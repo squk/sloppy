@@ -93,6 +93,24 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode, int instr) {
     cli_printl(s);
 }
 
+void d_pc_eq(u8 opcode, u8 pc, u8 eq) {
+    if (opcode == 0)
+        return;
+    /*pc--;*/
+    if (pc == eq) {
+        char s[80]; sprintf(s, "OP: %s, PC:%x", OPS_STR[opcode], pc); cli_printl(s);
+    }
+}
+
+void d_pc_r(u8 opcode, u8 pc, u8 low, u8 high) {
+    if (opcode == 0)
+        return;
+    pc--;
+    if (pc > low && pc < high) {
+        char s[80]; sprintf(s, "OP: %s, PC:%x", OPS_STR[opcode], pc); cli_printl(s);
+    }
+}
+
 void gbc_cpu_step(gbc_cpu *cpu) {
 	if((cpu->IME || cpu->HALT) && (cpu->IF & cpu->IE & ANY_INTR)) {
 		cpu->HALT = 0;
@@ -138,10 +156,11 @@ void gbc_cpu_step(gbc_cpu *cpu) {
         char s[80]; sprintf(s, "lcdcont %x", lcdcont); cli_printl(s);
         /*for(u8 i=0; i<120; i++) { VBlankIntrWait(); }*/
     }
-    if (key_state(KEY_START) || (cpu->registers.pc > 0x5b && cpu->registers.pc < 0x7f )) {
-        char s[80]; sprintf(s, "op: %s, PC:%x", OPS_STR[opcode], cpu->registers.pc-1); cli_printl(s);
-        for(u8 i=0; i<120; i++) { VBlankIntrWait(); }
-    }
+    /*d_pc_eq(opcode, cpu->registers.pc, 0x3e);*/
+    /*d_pc_eq(opcode, cpu->registers.pc, 0x4b);*/
+    d_pc_r(opcode, cpu->registers.pc, 0x90, 0x100);
+    d_pc_r(opcode, cpu->registers.pc, 0x4a, 0x50);
+
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
     /*cli_clear();*/
