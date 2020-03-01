@@ -730,13 +730,6 @@ void RET(gbc_cpu *cpu) {
 void JP_C_a16(gbc_cpu *cpu) { *m=3; if((*f&FLAG_C)==0x10) { *pc=read_u16(cpu->mmu,*pc); (*m)++; } else (*pc)+=2; };
 void JP_Z_a16(gbc_cpu *cpu) { *m=3; if((*f&FLAG_Z)==FLAG_Z) { *pc=read_u16(cpu->mmu,*pc); (*m)++; } else (*pc)+=2; };
 
-void JR_NC_r8(gbc_cpu *cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; if((*f&FLAG_C)==0x00) { (*pc)+=i; (*m)++; } };
-/*void JR_Z_r8(gbc_cpu *cpu)  { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; if((*f&0x80)==0x80) { (*pc)+=i; (*m)++; } };*/
-
-
-
-
-
 void JP_NC_a16(gbc_cpu *cpu) {
 	if(!FC()) {
 		u16 temp =  read_u8(cpu->mmu, *pc++);

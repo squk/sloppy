@@ -188,7 +188,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
         /*for(u8 i=0; i<120; i++) { VBlankIntrWait(); }*/
     }
     d_pc_eq(cpu, opcode, 0x57); // LCDCONT enabled here
-    /*d_pc_eq_v(cpu, opcode, 0xfa);*/
+    d_pc_eq_v(cpu, opcode, 0xfa);
     /*d_pc_eq(cpu, opcode, 0x4b);*/
     /*d_pc_r(cpu, opcode, 0x90, 0x100);*/
     d_pc_r(cpu, opcode, 0xe0, 0xFF);
