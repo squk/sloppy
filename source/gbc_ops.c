@@ -209,7 +209,7 @@ void ADD_HL_BC(gbc_cpu *cpu) { u16 hl=(*h<<8)+*l; hl+=(*b<<8)+*c; if(hl>65535) *
 void ADD_HL_DE(gbc_cpu *cpu) { u16 hl=(*h<<8)+*l; hl+=(*d<<8)+*e; if(hl>65535) *f|=FLAG_C; else *f&=0xEF; *h=(hl>>8)&255; *l=hl&255; *m=3; };
 void ADD_HL_HL(gbc_cpu *cpu) { u16 hl=(*h<<8)+*l; hl+=(*h<<8)+*l; if(hl>65535) *f|=FLAG_C; else *f&=0xEF; *h=(hl>>8)&255; *l=hl&255; *m=3; };
 void ADD_HL_SP(gbc_cpu *cpu) { u16 hl=(*h<<8)+*l; hl+=*sp; if(hl>65535) *f|=FLAG_C; else *f&=0xEF; *h=(hl>>8)&255; *l=hl&255; *m=3; };
-void ADD_SP_d8(gbc_cpu *cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *sp+=i; *m=4; };
+void ADD_SP_d8(gbc_cpu *cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; (*sp)+=i; *m=4; };
 
 // ADC_A_X
 void ADC_A(gbc_cpu *cpu) { u8 i=*a; *a+=*a; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^*a^i)&0x10) *f|=FLAG_H; *m=1; };
@@ -682,7 +682,7 @@ void JR_C_r8(gbc_cpu *cpu)  {
 
 
 void CALL_a16(gbc_cpu *cpu) {
-    *sp-=2;
+    (*sp)-=2;
     write_u16(cpu->mmu,*sp,*pc+2);
     *pc=read_u16(cpu->mmu,*pc);
     *m=5;
@@ -691,7 +691,7 @@ void CALL_a16(gbc_cpu *cpu) {
 void CALL_NZ_a16(gbc_cpu *cpu) {
     *m=3;
     if((*f&FLAG_Z)==0x00) {
-        *sp-=2;
+        (*sp)-=2;
         write_u16(cpu->mmu,*sp,*pc+2);
         *pc=read_u16(cpu->mmu,*pc);
         (*m)+=2;
@@ -701,7 +701,7 @@ void CALL_NZ_a16(gbc_cpu *cpu) {
 void CALL_Z_a16(gbc_cpu *cpu) {
     *m=3;
     if((*f&FLAG_Z)==FLAG_Z) {
-        *sp-=2;
+        (*sp)-=2;
         write_u16(cpu->mmu,*sp,*pc+2);
         *pc=read_u16(cpu->mmu,*pc);
         (*m)+=2;
@@ -711,7 +711,7 @@ void CALL_Z_a16(gbc_cpu *cpu) {
 void CALL_NC_a16(gbc_cpu *cpu) {
     *m=3;
     if((*f&FLAG_C)==0x00) {
-        *sp-=2;
+        (*sp)-=2;
         write_u16(cpu->mmu,*sp,*pc+2);
         *pc=read_u16(cpu->mmu,*pc);
         (*m)+=2;
@@ -721,7 +721,7 @@ void CALL_NC_a16(gbc_cpu *cpu) {
 void CALL_C_a16(gbc_cpu *cpu) {
     *m=3;
     if((*f&FLAG_C)==0x10) {
-        *sp-=2;
+        (*sp)-=2;
         write_u16(cpu->mmu,*sp,*pc+2);
         *pc=read_u16(cpu->mmu,*pc);
         (*m)+=2;
@@ -736,20 +736,20 @@ void RET(gbc_cpu *cpu) {
     (*sp)+=2;
     *m=3;
 };
-void RET_I(gbc_cpu *cpu) { /*rrs(cpu);*/ *pc=read_u16(cpu->mmu,*sp); cpu->IME = 1; *sp+=2; *m=3; };
-void RET_NZ(gbc_cpu *cpu) { *m=1; if((*f&FLAG_Z)==0x00) { *pc=read_u16(cpu->mmu,*sp); *sp+=2; (*m)+=2; } };
-void RET_Z(gbc_cpu *cpu) { *m=1; if((*f&FLAG_Z)==FLAG_Z) { *pc=read_u16(cpu->mmu,*sp); *sp+=2; (*m)+=2; } };
-void RET_NC(gbc_cpu *cpu) { *m=1; if((*f&FLAG_C)==0x00) { *pc=read_u16(cpu->mmu,*sp); *sp+=2; (*m)+=2; } };
-void RET_C(gbc_cpu *cpu) { *m=1; if((*f&FLAG_C)==0x10) { *pc=read_u16(cpu->mmu,*sp); *sp+=2; (*m)+=2; } };
+void RET_I(gbc_cpu *cpu) { /*rrs(cpu);*/ *pc=read_u16(cpu->mmu,*sp); cpu->IME = 1; (*sp)+=2; *m=3; };
+void RET_NZ(gbc_cpu *cpu) { *m=1; if((*f&FLAG_Z)==0x00) { *pc=read_u16(cpu->mmu,*sp); (*sp)+=2; (*m)+=2; } };
+void RET_Z(gbc_cpu *cpu) { *m=1; if((*f&FLAG_Z)==FLAG_Z) { *pc=read_u16(cpu->mmu,*sp); (*sp)+=2; (*m)+=2; } };
+void RET_NC(gbc_cpu *cpu) { *m=1; if((*f&FLAG_C)==0x00) { *pc=read_u16(cpu->mmu,*sp); (*sp)+=2; (*m)+=2; } };
+void RET_C(gbc_cpu *cpu) { *m=1; if((*f&FLAG_C)==0x10) { *pc=read_u16(cpu->mmu,*sp); (*sp)+=2; (*m)+=2; } };
 
-void RST_00H(gbc_cpu *cpu) { rsv(cpu); *sp-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x00; *m=3; };
-void RST_08H(gbc_cpu *cpu) { rsv(cpu); *sp-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x08; *m=3; };
-void RST_10H(gbc_cpu *cpu) { rsv(cpu); *sp-=2; write_u16(cpu->mmu,*sp,*pc); *pc=FLAG_C; *m=3; };
-void RST_18H(gbc_cpu *cpu) { rsv(cpu); *sp-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x18; *m=3; };
-void RST_20H(gbc_cpu *cpu) { rsv(cpu); *sp-=2; write_u16(cpu->mmu,*sp,*pc); *pc=FLAG_H; *m=3; };
-void RST_28H(gbc_cpu *cpu) { rsv(cpu); *sp-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x28; *m=3; };
-void RST_30H(gbc_cpu *cpu) { rsv(cpu); *sp-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x30; *m=3; };
-void RST_38H(gbc_cpu *cpu) { rsv(cpu); *sp-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x38; *m=3; };
+void RST_00H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x00; *m=3; };
+void RST_08H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x08; *m=3; };
+void RST_10H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=FLAG_C; *m=3; };
+void RST_18H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x18; *m=3; };
+void RST_20H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=FLAG_H; *m=3; };
+void RST_28H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x28; *m=3; };
+void RST_30H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x30; *m=3; };
+void RST_38H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x38; *m=3; };
 
 void NOP(gbc_cpu *cpu) { *m=1; };
 
