@@ -4,6 +4,11 @@
 #include "gbc_gpu.h"
 #include "gbc_mmu.h"
 
+#define FLAG_Z 0x80
+#define FLAG_N 0x40
+#define FLAG_H 0x20
+#define FLAG_C 0x10
+
 typedef struct {
     // two types of timeclocks in the Z80
     int m;

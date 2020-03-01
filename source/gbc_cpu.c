@@ -11,6 +11,19 @@
 #include "text.h"
 #include "console.h"
 
+bool FZ(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
+bool FN(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }
+bool FH(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
+bool FC(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == FLAG_C; }
+
+void set_f(gbc_cpu *cpu, u8 flag) {
+    cpu->registers.f |= (1 << flag);
+}
+
+void unset_f(gbc_cpu *cpu, u8 flag) {
+    cpu->registers.f &= ~(1 << flag);
+}
+
 void gbc_cpu_reset(gbc_cpu *cpu) {
     cpu->registers.a = 0;
     cpu->registers.b = 0;
