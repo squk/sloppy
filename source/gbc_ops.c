@@ -736,7 +736,7 @@ void RET(gbc_cpu *cpu) {
     (*sp)+=2;
     *m=3;
 };
-void RET_I(gbc_cpu *cpu) { /*rrs(cpu);*/ *pc=read_u16(cpu->mmu,*sp); cpu->IME = 1; (*sp)+=2; *m=3; };
+void RET_I(gbc_cpu *cpu) { rrs(cpu); *pc=read_u16(cpu->mmu,*sp); cpu->IME = 1; (*sp)+=2; *m=3; };
 void RET_NZ(gbc_cpu *cpu) { *m=1; if((*f&FLAG_Z)==0x00) { *pc=read_u16(cpu->mmu,*sp); (*sp)+=2; (*m)+=2; } };
 void RET_Z(gbc_cpu *cpu) { *m=1; if((*f&FLAG_Z)==FLAG_Z) { *pc=read_u16(cpu->mmu,*sp); (*sp)+=2; (*m)+=2; } };
 void RET_NC(gbc_cpu *cpu) { *m=1; if((*f&FLAG_C)==0x00) { *pc=read_u16(cpu->mmu,*sp); (*sp)+=2; (*m)+=2; } };

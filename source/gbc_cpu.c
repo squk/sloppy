@@ -17,11 +17,16 @@ bool FH(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
 bool FC(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == FLAG_C; }
 
 void set_f(gbc_cpu *cpu, u8 flag) {
-    cpu->registers.f |= (1 << flag);
+    cpu->registers.f |= flag;
 }
 
 void unset_f(gbc_cpu *cpu, u8 flag) {
-    cpu->registers.f &= ~(1 << flag);
+    cpu->registers.f &= ~flag;
+}
+
+void put_f(gbc_cpu *cpu, u8 flag, bool val) {
+    if (val) set_f(cpu, flag);
+    else unset_f(cpu, flag);
 }
 
 void gbc_cpu_reset(gbc_cpu *cpu) {
@@ -102,24 +107,26 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode, int instr) {
     cli_printl(s);
     sprintf(s, "T: %x    SP: %x    PC: %x", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
     cli_printl(s);
-    sprintf(s, "ROM: %x     fb[]: %x", &cpu->mmu->rom, cpu->gpu->fb[SIZE_X/2]);
+    sprintf(s, "[0xfa]: %x     fb[]: %x", read_u8(cpu->mmu, 0xfa) , cpu->gpu->fb[SIZE_X/2]);
     cli_printl(s);
 }
 
-void d_pc_eq(u8 opcode, u8 pc, u8 eq) {
+void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
     if (opcode == 0)
         return;
-    /*pc--;*/
-    if (pc == eq) {
+    u8 pc = cpu->registers.pc;
+    pc--;
+    if (cpu->mmu->in_bios && pc == eq) {
         char s[80]; sprintf(s, "OP: %s, PC:%x", OPS_STR[opcode], pc); cli_printl(s);
     }
 }
 
-void d_pc_r(u8 opcode, u8 pc, u8 low, u8 high) {
+void d_pc_r(gbc_cpu *cpu, u8 opcode, u8 low, u8 high) {
     if (opcode == 0)
         return;
+    u8 pc = cpu->registers.pc;
     pc--;
-    if (pc > low && pc < high) {
+    if (cpu->mmu->in_bios && pc > low && pc < high) {
         char s[80]; sprintf(s, "OP: %s, PC:%x", OPS_STR[opcode], pc); cli_printl(s);
     }
 }
@@ -169,13 +176,16 @@ void gbc_cpu_step(gbc_cpu *cpu) {
         char s[80]; sprintf(s, "lcdcont %x", lcdcont); cli_printl(s);
         /*for(u8 i=0; i<120; i++) { VBlankIntrWait(); }*/
     }
-    /*d_pc_eq(opcode, cpu->registers.pc, 0x3e);*/
+    /*d_pc_eq(opcode, cpu->registers.pc, 0xa7);*/
     /*d_pc_eq(opcode, cpu->registers.pc, 0x4b);*/
-    d_pc_r(opcode, cpu->registers.pc, 0x90, 0x100);
-    d_pc_r(opcode, cpu->registers.pc, 0x4a, 0x50);
+    /*d_pc_r(opcode, cpu->registers.pc, 0x90, 0x100);*/
+    d_pc_r(cpu, opcode, 0xF7, 0xFF);
 
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
+    if (cpu->registers.pc >=0xfe) {
+        gbc_registers_debug(cpu, opcode, 0);
+    }
     /*cli_clear();*/
     /*gbc_registers_debug(cpu, opcode, 0);*/
 
@@ -192,6 +202,8 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     char s[80];
     int instr = 0;
 
+    sprintf(s, "[0xfa]: %x     fb[]: %x", read_u8(cpu->mmu, 0xfa) , cpu->gpu->fb[SIZE_X/2]);
+    cli_printl(s);
     //gbc_registers_debug(cpu, -1, instr);
     /*SetMode(MODE_3 | BG2_ON);*/
     /*for(u8 y=0; y<160; y++) { for(u8 x=0; x<240; x++) { MODE3_FB[y][x] = RGB8(40, 40, 40); } }*/

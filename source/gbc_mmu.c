@@ -97,7 +97,7 @@ u8 read_u8(gbc_mmu *mmu , u16 address) {
 
 void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     u8 *ptr = get_address_ptr(mmu, address);
-    if (address == 0xFF50 && val == 0xA) {
+    if (address == 0xFF50) {
         mmu->in_bios = false;
         cli_printl("OUT OF BIOS");
     }
@@ -105,7 +105,7 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
 }
 
 u16 read_u16(gbc_mmu *mmu , u16 address) {
-    // swap bits for little-endian
+    // swap bytes for little-endian
     uint16_t temp = read_u8(mmu, address);
     temp |= read_u8(mmu, address+1) << 8;
     return temp;

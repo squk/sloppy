@@ -24,11 +24,12 @@ int main(void) {
         REG_IME = 1;
 
         set_pallete(PALETTE_0);
+        emu_test();
 
     } else {
         SetMode( MODE_4 | BG3_ON );
+        emu_run();
     }
 
     // screen mode & background to display
-    emu_test();
 }
