@@ -744,9 +744,9 @@ void RET_C(gbc_cpu *cpu) { *m=1; if((*f&FLAG_C)==0x10) { *pc=read_u16(cpu->mmu,*
 
 void RST_00H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x00; *m=3; };
 void RST_08H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x08; *m=3; };
-void RST_10H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=FLAG_C; *m=3; };
+void RST_10H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x10; *m=3; };
 void RST_18H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x18; *m=3; };
-void RST_20H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=FLAG_H; *m=3; };
+void RST_20H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x20; *m=3; };
 void RST_28H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x28; *m=3; };
 void RST_30H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x30; *m=3; };
 void RST_38H(gbc_cpu *cpu) { rsv(cpu); (*sp)-=2; write_u16(cpu->mmu,*sp,*pc); *pc=0x38; *m=3; };
