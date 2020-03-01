@@ -91,6 +91,12 @@ u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
     return &mmu->zram[address & 0x7F]; // zero page
 }
 
+void load_rom(gbc_mmu *mmu, const void *src, size_t n) {
+    u8 offset = 0x100;
+    src += offset;
+    memcpy(mmu->rom, src, n-offset);
+}
+
 u8 read_u8(gbc_mmu *mmu , u16 address) {
     return *get_address_ptr(mmu, address);
 }

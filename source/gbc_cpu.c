@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <gba.h>
 #include <time.h>
+#include <string.h>
 
 #include "gba_timing.h"
 #include "gba_input.h"
@@ -121,6 +122,16 @@ void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
     }
 }
 
+void d_pc_eq_v(gbc_cpu *cpu, u8 opcode, u8 eq) {
+    if (opcode == 0)
+        return;
+    u8 pc = cpu->registers.pc;
+    pc--;
+    if (cpu->mmu->in_bios && pc == eq) {
+        gbc_registers_debug(cpu, opcode, 0);
+    }
+}
+
 void d_pc_r(gbc_cpu *cpu, u8 opcode, u8 low, u8 high) {
     if (opcode == 0)
         return;
@@ -176,11 +187,14 @@ void gbc_cpu_step(gbc_cpu *cpu) {
         char s[80]; sprintf(s, "lcdcont %x", lcdcont); cli_printl(s);
         /*for(u8 i=0; i<120; i++) { VBlankIntrWait(); }*/
     }
-    d_pc_eq(opcode, cpu->registers.pc, 0x57); // LCDCONT enabled here
-    /*d_pc_eq(opcode, cpu->registers.pc, 0x4b);*/
-    /*d_pc_r(opcode, cpu->registers.pc, 0x90, 0x100);*/
-    d_pc_r(cpu, opcode, 0xF7, 0xFF);
+    d_pc_eq(cpu, opcode, 0x57); // LCDCONT enabled here
+    /*d_pc_eq_v(cpu, opcode, 0xfa);*/
+    /*d_pc_eq(cpu, opcode, 0x4b);*/
+    /*d_pc_r(cpu, opcode, 0x90, 0x100);*/
+    /*d_pc_r(cpu, opcode, 0xe0, 0xFF);*/
+    d_pc_r(cpu, opcode, 0x21, 0xFF);
 
+    /*cli_printl(OPS_STR[opcode]);*/
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
     if (cpu->registers.pc >=0xfe) {
@@ -199,11 +213,28 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     execute_init(cpu);
     gpu_start_frame(cpu->gpu);
 
-    char s[80];
     int instr = 0;
 
-    sprintf(s, "[0xfa]: %x     fb[]: %x", read_u8(cpu->mmu, 0xfa) , cpu->gpu->fb[SIZE_X/2]);
-    cli_printl(s);
+    /*char z[80];*/
+    /*u8 logo[0x30] = {0};*/
+    /*int l_start = 0x104;*/
+    /*int l_end = 0x134;*/
+    /*for (int i=l_start; i<l_end; i++) {*/
+        /*[>sprintf(z, "read_u8: %x    %x", i, i-l_start);<]*/
+        /*[>cli_printl(z);<]*/
+        /*[>VBlankIntrWait();<]*/
+        /*logo[i-l_start] = read_u8(cpu->mmu, i);*/
+    /*}*/
+
+    /*for (u8 i=0; i<6; i++) {*/
+        /*for (u8 j=0; j<8; j++) {*/
+            /*char s[2] = {0};*/
+            /*sprintf(s, "%x", logo[(i*8)+j]);*/
+            /*cli_print(j*3, i+1, s);*/
+        /*}*/
+    /*}*/
+    /*while(1) {}*/
+
     //gbc_registers_debug(cpu, -1, instr);
     /*SetMode(MODE_3 | BG2_ON);*/
     /*for(u8 y=0; y<160; y++) { for(u8 x=0; x<240; x++) { MODE3_FB[y][x] = RGB8(40, 40, 40); } }*/
@@ -213,6 +244,5 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
         if (cpu->gpu->fb[5] != 0) {
             char s[80]; sprintf(s, "fb: %x", cpu->gpu->fb[5]); cli_printl(s);
         }
-        //
     }
 }
