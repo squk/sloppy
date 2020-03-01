@@ -176,7 +176,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
         char s[80]; sprintf(s, "lcdcont %x", lcdcont); cli_printl(s);
         /*for(u8 i=0; i<120; i++) { VBlankIntrWait(); }*/
     }
-    /*d_pc_eq(opcode, cpu->registers.pc, 0xa7);*/
+    d_pc_eq(opcode, cpu->registers.pc, 0x57); // LCDCONT enabled here
     /*d_pc_eq(opcode, cpu->registers.pc, 0x4b);*/
     /*d_pc_r(opcode, cpu->registers.pc, 0x90, 0x100);*/
     d_pc_r(cpu, opcode, 0xF7, 0xFF);
