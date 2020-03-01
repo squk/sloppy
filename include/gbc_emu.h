@@ -25,11 +25,10 @@ void emu_run() {
     cpu.gpu = &gpu;
 
     gbc_mmu_init(&mmu);
-    //CpuFastSet(tetris_gb_bin, (u8*)mmu.rom, (tetris_gb_bin_size / 4) | COPY32);
-    //CpuFastSet(cpu_instrs_gb_bin, (u8*)mmu.rom, (cpu_instrs_gb_bin_size / 4) | COPY32);
-    memcpy(mmu.rom, DMG_ROM_bin, DMG_ROM_bin_size);
     gbc_cpu_reset(&cpu);
     gbc_cpu_set_boot_state(&cpu);
+    CpuFastSet(tetris_gb_bin, (u8*)mmu.rom, (tetris_gb_bin_size / 4) | COPY32);
+    //CpuFastSet(cpu_instrs_gb_bin, (u8*)mmu.rom, (cpu_instrs_gb_bin_size / 4) | COPY32);
 
     gbc_cpu_loop(&cpu);
 }

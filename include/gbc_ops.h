@@ -143,7 +143,7 @@ void ADD_D(gbc_cpu* cpu);
 void ADD_E(gbc_cpu* cpu);
 void ADD_H(gbc_cpu* cpu);
 void ADD_L(gbc_cpu* cpu);
-void ADD_mHL(gbc_cpu* cpu);
+void ADD_A_mHL(gbc_cpu* cpu);
 void ADD_d8(gbc_cpu* cpu);
 
 void ADD_HL_BC(gbc_cpu* cpu);
@@ -624,7 +624,7 @@ static const gbc_operator OPS[256] = {
 	&LD_mHL_B,	&LD_mHL_C,	&LD_mHL_D,	&LD_mHL_D,	&LD_mHL_H,	&LD_mHL_L,	&HALT,		&LD_mHL_A,
 	&LD_A_B,	&LD_A_C,	&LD_A_D,	&LD_A_E,	&LD_A_H,	&LD_A_L,	&LD_A_mHL,	&LD_A_A,
 	// 80
-	&ADD_B,	&ADD_C,	&ADD_D,	&ADD_E,	&ADD_H,	&ADD_L,	&ADD_mHL,		&ADD_A,
+	&ADD_B,	&ADD_C,	&ADD_D,	&ADD_E,	&ADD_H,	&ADD_L,	&ADD_A_mHL,		&ADD_A,
 	&ADC_B,	&ADC_C,	&ADC_D,	&ADC_E,	&ADC_H,	&ADC_L,	&ADC_mHL,		&ADC_A,
 	// 90
 	&SUB_B,	&SUB_C,	&SUB_D,	&SUB_E,	&SUB_H,	&SUB_L,	&SUB_mHL,		&SUB_A,
@@ -675,7 +675,7 @@ static const char *OPS_STR[256] = {
   "LD_mHL_B",   "LD_mHL_C",   "LD_mHL_D",   "LD_mHL_D",   "LD_mHL_H",   "LD_mHL_L",   "HALT",     "LD_mHL_A",
   "LD_A_B",   "LD_A_C",   "LD_A_D",   "LD_A_E",   "LD_A_H",   "LD_A_L",   "LD_A_mHL",   "LD_A_A",
   // 80
-  "ADD_B",   "ADD_C",   "ADD_D",   "ADD_E",   "ADD_H",   "ADD_L",   "ADD_mHL",     "ADD_A",
+  "ADD_B",   "ADD_C",   "ADD_D",   "ADD_E",   "ADD_H",   "ADD_L",   "ADD_A_mHL",     "ADD_A",
   "ADC_B",   "ADC_C",   "ADC_D",   "ADC_E",   "ADC_H",   "ADC_L",   "ADC_mHL",     "ADC_A",
   // 90
   "SUB_B",   "SUB_C",   "SUB_D",   "SUB_E",   "SUB_H",   "SUB_L",   "SUB_mHL",     "SUB_A",
