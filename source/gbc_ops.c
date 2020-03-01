@@ -34,7 +34,7 @@ void execute_init(gbc_cpu *cpu) { //
  */
 
 // load n into register (n = 8-bit immediate value)
-// checked 
+// checked
 void LD_A_d8(gbc_cpu *cpu) { *a=read_u8(cpu->mmu, *pc); (*pc)++; *m=2; };
 void LD_B_d8(gbc_cpu *cpu) { *b=read_u8(cpu->mmu, *pc); (*pc)++; *m=2; };
 void LD_C_d8(gbc_cpu *cpu) { *c=read_u8(cpu->mmu, *pc); (*pc)++; *m=2; };
@@ -615,10 +615,10 @@ void PUSH_DE(gbc_cpu *cpu) { (*sp)--; write_u8(cpu->mmu,*sp,*d); (*sp)--; write_
 void PUSH_HL(gbc_cpu *cpu) { (*sp)--; write_u8(cpu->mmu,*sp,*h); (*sp)--; write_u8(cpu->mmu,*sp,*l); *m=3; };
 void PUSH_AF(gbc_cpu *cpu) { (*sp)--; write_u8(cpu->mmu,*sp,*a); (*sp)--; write_u8(cpu->mmu,*sp,*f); *m=3; };
 
-void POP_BC(gbc_cpu *cpu) { *c=read_u8(cpu->mmu,*sp++); *b=read_u8(cpu->mmu,*sp); (*sp)++; *m=3; };
-void POP_DE(gbc_cpu *cpu) { *e=read_u8(cpu->mmu,*sp++); *d=read_u8(cpu->mmu,*sp); (*sp)++; *m=3; };
-void POP_HL(gbc_cpu *cpu) { *l=read_u8(cpu->mmu,*sp++); *h=read_u8(cpu->mmu,*sp); (*sp)++; *m=3; };
-void POP_AF(gbc_cpu *cpu) { *f=read_u8(cpu->mmu,*sp++); *a=read_u8(cpu->mmu,*sp); (*sp)++; *m=3; };
+void POP_BC(gbc_cpu *cpu) { *c=read_u8(cpu->mmu,(*sp)++); *b=read_u8(cpu->mmu,(*sp)++); *m=3; };
+void POP_DE(gbc_cpu *cpu) { *e=read_u8(cpu->mmu,(*sp)++); *d=read_u8(cpu->mmu,(*sp)++); *m=3; };
+void POP_HL(gbc_cpu *cpu) { *l=read_u8(cpu->mmu,(*sp)++); *h=read_u8(cpu->mmu,(*sp)++); *m=3; };
+void POP_AF(gbc_cpu *cpu) { *f=read_u8(cpu->mmu,(*sp)++); *a=read_u8(cpu->mmu,(*sp)++); *m=3; };
 
 void JP_a16(gbc_cpu *cpu) { *pc = read_u16(cpu->mmu,*pc); *m=3; };
 void JP_HL(gbc_cpu *cpu) { *pc=(*h<<8)+*l; *m=1; };
