@@ -191,15 +191,15 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     /*d_pc_eq_v(cpu, opcode, 0xfa);*/
     /*d_pc_eq(cpu, opcode, 0x4b);*/
     /*d_pc_r(cpu, opcode, 0x90, 0x100);*/
-    /*d_pc_r(cpu, opcode, 0xe0, 0xFF);*/
-    d_pc_r(cpu, opcode, 0x21, 0xFF);
+    d_pc_r(cpu, opcode, 0xe0, 0xFF);
+    /*d_pc_r(cpu, opcode, 0x21, 0xFF);*/
 
     /*cli_printl(OPS_STR[opcode]);*/
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
-    if (cpu->registers.pc >=0xfe) {
-        gbc_registers_debug(cpu, opcode, 0);
-    }
+    /*if (cpu->registers.pc >=0xfe && cpu->registers.pc <= 0x100) {*/
+        /*gbc_registers_debug(cpu, opcode, 0);*/
+    /*}*/
     /*cli_clear();*/
     /*gbc_registers_debug(cpu, opcode, 0);*/
 

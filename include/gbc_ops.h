@@ -557,9 +557,9 @@ void POP_AF(gbc_cpu* cpu);
 void JP_a16(gbc_cpu* cpu);
 void JP_HL(gbc_cpu* cpu);
 void JP_NZ_a16(gbc_cpu* cpu);
-void JP_Znn(gbc_cpu* cpu) ;
+void JP_Z_a16(gbc_cpu* cpu) ;
 void JP_NC_a16(gbc_cpu* cpu);
-void JP_Cnn(gbc_cpu* cpu) ;
+void JP_C_a16(gbc_cpu* cpu) ;
 
 void JR_r8(gbc_cpu* cpu);
 void JR_NZ_r8(gbc_cpu* cpu);
@@ -637,10 +637,10 @@ static const gbc_operator OPS[256] = {
 	&CP_B,		&CP_C,		&CP_D,		&CP_E,		&CP_H,		&CP_L,		&CP_mHL,		&CP_A,
 	// C0
 	&RET_NZ,		&POP_BC,		&JP_NZ_a16,	&JP_a16,		&CALL_NZ_a16,	&PUSH_BC,	&ADD_d8,		&RST_00H,
-	&RET_Z,		&RET,		&JP_Znn,		&MAPcb,		&CALL_Z_a16,	&CALL_a16,	&ADC_d8,		&RST_08H,
+	&RET_Z,		&RET,		&JP_Z_a16,		&MAPcb,		&CALL_Z_a16,	&CALL_a16,	&ADC_d8,		&RST_08H,
 	// D0
 	&RET_NC,		&POP_DE,		&JP_NC_a16,	&XX,		&CALL_NC_a16,	&PUSH_DE,	&SUB_d8,		&RST_10H,
-	&RET_C,		&RET_I,		&JP_Cnn,		&XX,		&CALL_C_a16,	&XX,		&SBC_d8,		&RST_18H,
+	&RET_C,		&RET_I,		&JP_C_a16,		&XX,		&CALL_C_a16,	&XX,		&SBC_d8,		&RST_18H,
 	// E0
 	&LDH_a8_A,	&POP_HL,		&LD_mC_A,	&XX,		&XX,		&PUSH_HL,	&AND_d8,		&RST_20H,
 	&ADD_SP_d8,	&JP_HL,		&LD_a16_A,		&XX,		&XX,		&XX,		&XOR_d8,		&RST_28H,
@@ -688,10 +688,10 @@ static const char *OPS_STR[256] = {
   "CP_B",     "CP_C",     "CP_D",     "CP_E",     "CP_H",     "CP_L",     "CP_mHL",     "CP_A",
   // C0
   "RET_NZ",     "POP_BC",     "JP_NZ_a16",   "JP_a16",     "CALL_NZ_a16",   "PUSH_BC",   "ADD_d8",     "RST_00H",
-  "RET_Z",     "RET",     "JP_Znn",     "MAPcb",     "CALL_Z_a16",   "CALL_a16",   "ADC_d8",     "RST_08H",
+  "RET_Z",     "RET",     "JP_Z_a16",     "MAPcb",     "CALL_Z_a16",   "CALL_a16",   "ADC_d8",     "RST_08H",
   // D0
   "RET_NC",     "POP_DE",     "JP_NC_a16",   "XX",     "CALL_NC_a16",   "PUSH_DE",   "SUB_d8",     "RST_10H",
-  "RET_C",     "RET_I",     "JP_Cnn",     "XX",     "CALL_C_a16",   "XX",     "SBC_d8",     "RST_18H",
+  "RET_C",     "RET_I",     "JP_C_a16",     "XX",     "CALL_C_a16",   "XX",     "SBC_d8",     "RST_18H",
   // E0
   "LDH_a8_A",   "POP_HL",     "LD_mC_A",   "XX",     "XX",     "PUSH_HL",   "AND_d8",     "RST_20H",
   "ADD_SP_d8",   "JP_HL",     "LD_a16_A",     "XX",     "XX",     "XX",     "XOR_d8",     "RST_28H",
