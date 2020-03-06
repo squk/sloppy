@@ -184,23 +184,7 @@ void ADD_D(gbc_cpu *cpu) { u8 i=*a; (*a)+=*d; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=
 void ADD_E(gbc_cpu *cpu) { u8 i=*a; (*a)+=*e; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*e^i)&0x10) *f|=FLAG_H; *m=1; };
 void ADD_H(gbc_cpu *cpu) { u8 i=*a; (*a)+=*h; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*h^i)&0x10) *f|=FLAG_H; *m=1; };
 void ADD_L(gbc_cpu *cpu) { u8 i=*a; (*a)+=*l; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*l^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADD_A_mHL(gbc_cpu *cpu) {
-	/*u8 hl = read_u8(cpu->mmu, (*h<<8)+*l);*/
-
-	/*u16 temp = *a + hl;*/
-	/*put_f(cpu, FLAG_Z, ((temp & 0xFF) == 0x00));*/
-	/*unset_f(cpu, FLAG_N);*/
-    /*put_f(cpu, FLAG_H, (*a ^ hl ^ temp) & 0x10);*/
-    /*put_f(cpu, FLAG_C, (temp & 0xFF00));*/
-	/**a = (temp & 0xFF);*/
-    u8 i=*a;
-    u8 r=read_u8(cpu->mmu,(*h<<8)+*l);
-    *a+=r;
-    *f=(*a>255)?FLAG_C:0;
-    if(!*a) *f|=FLAG_Z;
-    if((*a^i^r)&0x10) *f|=FLAG_H;
-    *m=2;
-};
+void ADD_A_mHL(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,(*h<<8)+*l); *a+=r; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^i^r)&0x10) *f|=FLAG_H; *m=2; };
 
 void ADD_d8(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,*pc); (*a)+=r; (*pc)++; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^i^r)&0x10) *f|=FLAG_H; *m=2; };
 
@@ -793,6 +777,6 @@ void MAPcb(gbc_cpu *cpu) {
 };
 
 void XX(gbc_cpu *cpu) {
-    /*u8 opcode = read_u8(cpu->mmu, *pc-1);*/
-    /*printf("ERROR: OPCODE UNIMPLEMETED %x?\n", opcode);*/
+    u8 opcode = read_u8(cpu->mmu, *pc-1);
+    printf("ERROR: OPCODE UNIMPLEMETED %x?\n", opcode);
 }

@@ -33,7 +33,7 @@ const u8 kInitialValuesForColorFFXX[256];
 void gbc_mmu_init(gbc_mmu *mmu);
 u8* get_address_ptr(gbc_mmu *mmu , u16 address);
 
-void load_rom(gbc_mmu *mmu, const void *src, size_t n);
+void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n);
 
 u8 read_u8(gbc_mmu *mmu , u16 address);
 void write_u8(gbc_mmu *mmu , u16 address, u8 val);

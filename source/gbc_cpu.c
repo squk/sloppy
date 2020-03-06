@@ -95,6 +95,7 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
     printf("D: %x    E: %x    F: %x\n", cpu->registers.d, cpu->registers.e, cpu->registers.f);
     printf("H: %x    L: %x    M: %x\n", cpu->registers.h, cpu->registers.l, cpu->registers.clk.m);
     printf("T: %x    SP: %x    PC: %x\n", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
+    printf("press enter\n");
     getchar();
 }
 
@@ -131,6 +132,8 @@ bool vram_cleared = false;
 bool hit_at = false;
 bool init_tile_map = false;
 bool hit_screen_frame = false;
+bool started_logo_scroll = false;
+int hit_cp = 0;
 
 void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     /*gbc_registers_debug(cpu, opcode);*/
@@ -169,19 +172,23 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
         printf("initializing logo scrolling\n");
     }
     if (old_pc == 0x0068 && !hit_screen_frame) {
-        printf("wait for screen frame...");
+        printf("wait for screen frame...\n");
         hit_screen_frame = true;
     }
-    if (old_pc == 0x0072) {
+    if (old_pc == 0x0072 && !started_logo_scroll) {
         printf("starting logo scroll\n");
+        started_logo_scroll = true;
     }
     if (old_pc == 0x0095) {
         printf("Graphic routine\n");
     }
+    if (old_pc == 0x00ed) {
+        printf("%d/30\n", ++hit_cp);
+    }
     if (old_pc == 0x00e0) {
         printf("Nintendo logo comparison routine\n");
     }
-    if (old_pc == 0x00fa) {
+    if (old_pc == 0x00f9) {
         printf("lock up?\n");
     }
 }
@@ -249,6 +256,35 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     gpu_run(cpu->gpu, cpu->registers.clk.m);
 }
 
+void validate_memory(gbc_cpu *cpu) {
+    size_t logo_size = 0x30;
+    u16 bios_start = 0x00A8;
+    u16 rom_start = 0x0104;
+
+    for (u8 i=0; i < logo_size; i++) {
+        u8 bios_val = read_u8(cpu->mmu, bios_start+i);
+        u8 rom_val = read_u8(cpu->mmu, rom_start+i);
+        if (bios_val != rom_val) {
+            printf("lock up will occur at pc=0x00e9.  mismatch 0x%x bios:0x%x rom:0x%x\n", i, bios_val, rom_val);
+        }
+    }
+
+    size_t checksum_size = 0x19;
+    u16 checksum_start = 0x0134;
+    u8 sum = 0;
+    for (u8 i=0; i <= checksum_size; i++) {
+        s8 v = read_u8(cpu->mmu, checksum_start+i);
+        sum += v;
+        printf("%x   %x\n", checksum_start+i, sum);
+    }
+    if (sum != 0x0) {
+        printf("checksum failed at 0x%x\n", checksum_start);
+    }
+
+/*0x00A8 to 0x00D7*/
+/*0x0104 to 0x0133*/
+}
+
 void gbc_cpu_loop(gbc_cpu *cpu) {
     printf("init cpu loop\n");
 
@@ -256,6 +292,7 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     gpu_start_frame(cpu->gpu);
     printf("begin cpu loop\n");
 
+    validate_memory(cpu);
     while(1) {
         gbc_cpu_step(cpu);
     }
