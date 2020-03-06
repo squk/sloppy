@@ -1,16 +1,9 @@
 #include <stdio.h>
-#include <gba.h>
-#include <time.h>
 #include <string.h>
-
-#include "gba_timing.h"
-#include "gba_input.h"
 
 #include "gbc_cpu.h"
 #include "gbc_ops.h"
 #include "gbc_io.h"
-#include "text.h"
-#include "console.h"
 
 bool FZ(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
 bool FN(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }
@@ -96,20 +89,14 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
     cpu->mmu->in_bios = false;
 }
 
-void gbc_registers_debug(gbc_cpu *cpu, u8 opcode, int instr) {
-    char s[80];
-    sprintf(s, "i: %d   OP: %x", instr, opcode);
-    cli_printl(s);
-    sprintf(s, "A: %x    B: %x    C: %x", cpu->registers.a, cpu->registers.b, cpu->registers.c);
-    cli_printl(s);
-    sprintf(s, "D: %x    E: %x    F: %x", cpu->registers.d, cpu->registers.e, cpu->registers.f);
-    cli_printl(s);
-    sprintf(s, "H: %x    L: %x    M: %x", cpu->registers.h, cpu->registers.e, cpu->registers.clk.m);
-    cli_printl(s);
-    sprintf(s, "T: %x    SP: %x    PC: %x", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
-    cli_printl(s);
-    sprintf(s, "[0xfa]: %x     fb[]: %x", read_u8(cpu->mmu, 0xfa) , cpu->gpu->fb[SIZE_X/2]);
-    cli_printl(s);
+void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
+    printf("OP: %x   %s\n", opcode, OPS_STR[opcode]);
+    printf("A: %x    B: %x    C: %x\n", cpu->registers.a, cpu->registers.b, cpu->registers.c);
+    printf("D: %x    E: %x    F: %x\n", cpu->registers.d, cpu->registers.e, cpu->registers.f);
+    printf("H: %x    L: %x    M: %x\n", cpu->registers.h, cpu->registers.l, cpu->registers.clk.m);
+    printf("T: %x    SP: %x    PC: %x\n", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
+    printf("press enter\n");
+    getchar();
 }
 
 void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
@@ -118,7 +105,7 @@ void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
     u8 pc = cpu->registers.pc;
     pc--;
     if (cpu->mmu->in_bios && pc == eq) {
-        char s[80]; sprintf(s, "OP: %s, PC:%x", OPS_STR[opcode], pc); cli_printl(s);
+         printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);
     }
 }
 
@@ -128,17 +115,81 @@ void d_pc_eq_v(gbc_cpu *cpu, u8 opcode, u8 eq) {
     u8 pc = cpu->registers.pc;
     pc--;
     if (cpu->mmu->in_bios && pc == eq) {
-        gbc_registers_debug(cpu, opcode, 0);
+        gbc_registers_debug(cpu, opcode);
     }
 }
 
-void d_pc_r(gbc_cpu *cpu, u8 opcode, u8 low, u8 high) {
-    if (opcode == 0)
-        return;
-    u8 pc = cpu->registers.pc;
+void d_pc_r(gbc_cpu *cpu, u16 pc, u8 opcode, u8 low, u8 high) {
     pc--;
-    if (cpu->mmu->in_bios && pc > low && pc < high) {
-        char s[80]; sprintf(s, "OP: %s, PC:%x", OPS_STR[opcode], pc); cli_printl(s);
+    if (cpu->mmu->in_bios && pc >= low && pc <= high) {
+        gbc_registers_debug(cpu, opcode);
+        /*printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);*/
+    }
+}
+
+bool setup_stack = false;
+bool vram_cleared = false;
+bool hit_at = false;
+bool init_tile_map = false;
+bool hit_screen_frame = false;
+bool started_logo_scroll = false;
+int hit_cp = 0;
+
+void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
+    /*gbc_registers_debug(cpu, opcode);*/
+    old_pc--;
+
+    if (old_pc == 0x0000 && !setup_stack) {
+        printf("%s: setup stack: sp(%x), expected sp(fffe)\n", OPS_STR[opcode], cpu->registers.sp);
+        setup_stack = true;
+    }
+    if (old_pc == 0x000a && !vram_cleared) {
+        bool done = true;
+        for (int i=0x9FFF; i>=0x8000; i--) {
+            u8 b = read_u8(cpu->mmu, i);
+            if (b != 0x0) {
+                done = false;
+                break;
+            }
+        }
+        if (done) {
+            printf("vram cleared %s\n", OPS_STR[opcode]);
+            vram_cleared = true;
+        }
+    }
+    if (old_pc == 0x001d && !hit_at) {
+        printf("%s: setup BG palette\n", OPS_STR[opcode]);
+    }
+    if (old_pc == 0x003e && !hit_at) {
+        printf("%s: load bytes into vram for @\n", OPS_STR[opcode]);
+        hit_at = true;
+    }
+    if (old_pc == 0x0053 && !init_tile_map) {
+        printf("%s: initializing tile map\n", OPS_STR[opcode]);
+        init_tile_map = true;
+    }
+    if (old_pc == 0x0055) {
+        printf("initializing logo scrolling\n");
+    }
+    if (old_pc == 0x0068 && !hit_screen_frame) {
+        printf("wait for screen frame...\n");
+        hit_screen_frame = true;
+    }
+    if (old_pc == 0x0072 && !started_logo_scroll) {
+        printf("starting logo scroll\n");
+        started_logo_scroll = true;
+    }
+    if (old_pc == 0x0095) {
+        printf("Graphic routine\n");
+    }
+    if (old_pc == 0x00ed) {
+        printf("%d/30\n", ++hit_cp);
+    }
+    if (old_pc == 0x00e0) {
+        printf("Nintendo logo comparison routine\n");
+    }
+    if (old_pc == 0x00f9) {
+        printf("lock up?\n");
     }
 }
 
@@ -147,7 +198,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 		cpu->HALT = 0;
 
 		if(cpu->IME) {
-			cli_printl("Interrupt Master Enable");
+			printf("Interrupt Master Enable\n");
 			/* Disable interrupts */
 			cpu->IME = 0;
 
@@ -181,27 +232,23 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    key_poll();
-    u8 lcdcont = read_u8(cpu->mmu, IO_LCDCONT);
-    if (lcdcont != 0) {
-        char s[80]; sprintf(s, "lcdcont %x", lcdcont); cli_printl(s);
-        /*for(u8 i=0; i<120; i++) { VBlankIntrWait(); }*/
-    }
-    d_pc_eq(cpu, opcode, 0x57); // LCDCONT enabled here
-    d_pc_eq_v(cpu, opcode, 0xfa);
-    /*d_pc_eq(cpu, opcode, 0x4b);*/
-    /*d_pc_r(cpu, opcode, 0x90, 0x100);*/
-    d_pc_r(cpu, opcode, 0xe0, 0xFF);
-    /*d_pc_r(cpu, opcode, 0x21, 0xFF);*/
 
-    /*cli_printl(OPS_STR[opcode]);*/
+    /*u8 lcdcont = read_u8(cpu->mmu, IO_LCDCONT);*/
+    /*u8 logo[0x30] = {0};*/
+    /*int l_start = 0x104;*/
+    /*int l_end = 0x134;*/
+    /*for (int i=l_start; i<l_end; i++) {*/
+        /*logo[i-l_start] = read_u8(cpu->mmu, i);*/
+    /*}*/
+
+    u16 old_pc = cpu->registers.pc;
+
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
-    /*if (cpu->registers.pc >=0xfe && cpu->registers.pc <= 0x100) {*/
-        /*gbc_registers_debug(cpu, opcode, 0);*/
-    /*}*/
-    /*cli_clear();*/
-    /*gbc_registers_debug(cpu, opcode, 0);*/
+
+    /*d_pc_r(cpu, old_pc, opcode, 0x64, 0x68);*/
+    /*printf("%x   %s\n", cpu->registers.pc, OPS_STR[opcode]);*/
+    debug_dmg_bootrom(cpu, old_pc, opcode);
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
@@ -209,40 +256,44 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     gpu_run(cpu->gpu, cpu->registers.clk.m);
 }
 
+void validate_memory(gbc_cpu *cpu) {
+    size_t logo_size = 0x30;
+    u16 bios_start = 0x00A8;
+    u16 rom_start = 0x0104;
+
+    for (u8 i=0; i < logo_size; i++) {
+        u8 bios_val = read_u8(cpu->mmu, bios_start+i);
+        u8 rom_val = read_u8(cpu->mmu, rom_start+i);
+        if (bios_val != rom_val) {
+            printf("lock up will occur at pc=0x00e9.  mismatch 0x%x bios:0x%x rom:0x%x\n", i, bios_val, rom_val);
+        }
+    }
+
+    size_t checksum_size = 0x19;
+    u16 checksum_start = 0x0134;
+    u8 sum = 0;
+    for (u8 i=0; i <= checksum_size; i++) {
+        s8 v = read_u8(cpu->mmu, checksum_start+i);
+        sum += v;
+        printf("%x   %x\n", checksum_start+i, sum);
+    }
+    if (sum != 0x0) {
+        printf("checksum failed at 0x%x\n", checksum_start);
+    }
+
+/*0x00A8 to 0x00D7*/
+/*0x0104 to 0x0133*/
+}
+
 void gbc_cpu_loop(gbc_cpu *cpu) {
+    printf("init cpu loop\n");
+
     execute_init(cpu);
     gpu_start_frame(cpu->gpu);
+    printf("begin cpu loop\n");
 
-    int instr = 0;
-
-    /*char z[80];*/
-    /*u8 logo[0x30] = {0};*/
-    /*int l_start = 0x104;*/
-    /*int l_end = 0x134;*/
-    /*for (int i=l_start; i<l_end; i++) {*/
-        /*[>sprintf(z, "read_u8: %x    %x", i, i-l_start);<]*/
-        /*[>cli_printl(z);<]*/
-        /*[>VBlankIntrWait();<]*/
-        /*logo[i-l_start] = read_u8(cpu->mmu, i);*/
-    /*}*/
-
-    /*for (u8 i=0; i<6; i++) {*/
-        /*for (u8 j=0; j<8; j++) {*/
-            /*char s[2] = {0};*/
-            /*sprintf(s, "%x", logo[(i*8)+j]);*/
-            /*cli_print(j*3, i+1, s);*/
-        /*}*/
-    /*}*/
-    /*while(1) {}*/
-
-    //gbc_registers_debug(cpu, -1, instr);
-    /*SetMode(MODE_3 | BG2_ON);*/
-    /*for(u8 y=0; y<160; y++) { for(u8 x=0; x<240; x++) { MODE3_FB[y][x] = RGB8(40, 40, 40); } }*/
+    validate_memory(cpu);
     while(1) {
-        instr++;
         gbc_cpu_step(cpu);
-        if (cpu->gpu->fb[5] != 0) {
-            char s[80]; sprintf(s, "fb: %x", cpu->gpu->fb[5]); cli_printl(s);
-        }
     }
 }

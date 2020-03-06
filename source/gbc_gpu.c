@@ -1,15 +1,15 @@
-#include <gba_base.h>
-#include <gba_systemcalls.h>
-#include <gba_video.h>
+/*#include <gba_base.h>*/
+/*#include <gba_systemcalls.h>*/
+/*#include <gba_video.h>*/
 
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
 
+#include "types.h"
 #include "gbc_gpu.h"
 #include "gbc_io.h"
 #include "gbc_mmu.h"
-#include "text.h"
 
 #define LCD_LINE_CYCLES     456
 
@@ -136,20 +136,20 @@ void gpu_draw_line_fb(gbc_gpu *gpu, u8 line) {
         *px_ptr = px;
 	}
 
-	/*cli_printl("fb write");*/
+    printf("fb write\n");
 	/*memcpy(gpu->fb, 0, sizeof gpu->fb);*/
-	for (u8 x = 0; x < SIZE_X; x++) {
-        u8 padding = 80;
-        u8 row_index = line * SIZE_X + padding;
-        MODE3_FB[row_index][x + padding] = gpu->fb[row_index + x]; // 80 = padding
-    }
+	/*for (u8 x = 0; x < SIZE_X; x++) {*/
+        /*u8 padding = 80;*/
+        /*u8 row_index = line * SIZE_X + padding;*/
+        /*MODE3_FB[row_index][x + padding] = gpu->fb[row_index + x]; // 80 = padding*/
+    /*}*/
 }
 
 void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
 	u16 bg_tile_map, tile_data;
 	u8 oam_row, obj_line;
 	u8 obj_line_a, obj_line_b;
-	int16_t obj;
+	s16 obj;
 
 	switch (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
         case OPT_BG_Tile_Map_0:
@@ -169,8 +169,11 @@ void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
             break;
 	}
 
-	oam_row = (u8)Div(line + read_u8(gpu->mmu, IO_SCROLLY), 8);
-	obj_line = (u8)DivMod(line + read_u8(gpu->mmu, IO_SCROLLY), 8);
+	// optimization for GBA. it's ARM CPU struggled with div and mod operators
+	/*oam_row = (u8)Div(line + read_u8(gpu->mmu, IO_SCROLLY), 8);*/
+	/*obj_line = (u8)DivMod(line + read_u8(gpu->mmu, IO_SCROLLY), 8);*/
+    oam_row = (u8)((line + read_u8(gpu->mmu, IO_SCROLLY)) / 8);
+    obj_line = (u8)((line + read_u8(gpu->mmu, IO_SCROLLY)) % 8);
 
 	u8 i, j;
 	for (i = 0; i < 32; i++) {
@@ -195,7 +198,7 @@ void gpu_draw_line_win(gbc_gpu *gpu, u8 line) {
 	u16 win_tile_map, tile_data;
 	u8 oam_row, obj_line;
 	u8 obj_line_a, obj_line_b;
-	int16_t obj;
+	s16 obj;
 
 	if (read_u8(gpu->mmu, IO_WNDPOSY)  > line || read_u8(gpu->mmu, IO_WNDPOSX) > SIZE_X) {
 		return;
@@ -219,9 +222,11 @@ void gpu_draw_line_win(gbc_gpu *gpu, u8 line) {
 		    break;
 	}
 
-	// TODO
-	oam_row = Div((u8)(line - read_u8(gpu->mmu, IO_WNDPOSY)), 8);
-	obj_line = DivMod((u8)(line - read_u8(gpu->mmu, IO_WNDPOSY)), 8);
+	// optimization for GBA. it's ARM CPU struggled with div and mod operators
+	/*oam_row = Div((u8)(line - read_u8(gpu->mmu, IO_WNDPOSY)), 8);*/
+	/*obj_line = DivMod((u8)(line - read_u8(gpu->mmu, IO_WNDPOSY)), 8);*/
+	oam_row = (u8)((line - read_u8(gpu->mmu, IO_WNDPOSY)) / 8);
+	obj_line = (u8)((line - read_u8(gpu->mmu, IO_WNDPOSY)) % 8);
 	u8 i, j;
 	for (i = 0; i < (SIZE_X - (read_u8(gpu->mmu, IO_WNDPOSX) - 8)) / 8 + 1; i++) {
 		if (tile_data == 0x9000) {
@@ -315,15 +320,11 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 				(objs[i].y <= line) && ((objs[i].y + obj_height) > line)) {
 			objs_line[objs_line_len++] = &objs[i];
 
-            u8 s[80];
-            sprintf(s, "mode clk: %d", gpu->mode_clock);
-            cli_printl(s);
-            sprintf(s, "Object %d:\n", objs[i].id);
-            cli_printl(s);
-            sprintf(s, "x: %02X, y: %02X, pat: %02X\n", objs[i].x, objs[i].y, objs[i].pat);
-            cli_printl(s);
+            printf("mode clk: %d\n", gpu->mode_clock);
+            printf("Object %d:\n", objs[i].id);
+            printf("x: %02X, y: %02X, pat: %02X\n", objs[i].x, objs[i].y, objs[i].pat);
 
-			//return;
+            /*return;*/
 		}
 	}
 
@@ -376,6 +377,7 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 }
 
 void gpu_draw_line(gbc_gpu *gpu, u8 line) {
+    printf("gpu_draw_line\n");
 	if (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
 		gpu_draw_line_bg(gpu, line);
 	}
@@ -423,7 +425,6 @@ The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 i
 Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
 */
 u8 gpu_run(gbc_gpu *gpu, int cycles) {
-    char s[80];
     if (!read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
         gpu->reset = 1;
         return 0;
@@ -453,7 +454,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 
 	    // VBLANK
 	    if (read_u8(gpu->mmu, IO_CURLINE) == SIZE_Y) {
-            cli_printl("vblank");
+            /*printf("vblank\n");*/
 	        write_u8(gpu->mmu, IO_LCDSTAT, (read_u8(gpu->mmu, IO_LCDSTAT) & 0xF3) | 0x01);
 	        // Set Mode Flag to VBLANK at LCDSTAT
 	        unset_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
@@ -467,7 +468,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	    }
         // Normal line
 	    else if (read_u8(gpu->mmu, IO_CURLINE) < SIZE_Y) {
-            cli_printl("normal line");
+            /*printf("normal line\n");*/
             if (read_u8(gpu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
             }
@@ -480,7 +481,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	}
 	// OAM
     else if (read_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && gpu->mode_clock >= LCD_MODE_2_CYCLES) {
-        cli_printl("oam");
+        printf("oam\n");
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
 
 		if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
@@ -489,7 +490,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
     }
     // Update LCD
     else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && gpu->mode_clock >= LCD_MODE_2_CYCLES) {
-        cli_printl("updating LCD");
+        printf("updating LCD\n");
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
 		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
     }
@@ -505,14 +506,14 @@ unsigned long gbcToRgb32(unsigned const bgr15) {
         | (r * 3 + g * 2 + b * 11) >> 1;
 }
 
-u16 rgb32ToRgb16(u32 rgb32) {
-    int red = red / 8;
-    int green = green / 4;
-    int blue = blue / 8;
-    return RGB8(red, green, blue);
-}
+/*u16 rgb32ToRgb16(u32 rgb32) {*/
+    /*int red = red / 8;*/
+    /*int green = green / 4;*/
+    /*int blue = blue / 8;*/
+    /*return RGB8(red, green, blue);*/
+/*}*/
 
-u16 color_dmg_to_gba(unsigned const bgr15) {
-    return rgb32ToRgb16(gbcToRgb32(bgr15));
-    //return gbcToRgb32(bgr15);
-}
+/*u16 color_dmg_to_gba(unsigned const bgr15) {*/
+    /*return rgb32ToRgb16(gbcToRgb32(bgr15));*/
+    /*//return gbcToRgb32(bgr15);*/
+/*}*/

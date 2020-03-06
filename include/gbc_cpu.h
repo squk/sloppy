@@ -1,6 +1,6 @@
 #pragma once
-#include <gba_base.h>
 
+#include "types.h"
 #include "gbc_gpu.h"
 #include "gbc_mmu.h"
 
@@ -54,5 +54,18 @@ typedef struct {
     gbc_gpu *gpu;
 } gbc_cpu;
 
+bool FZ(gbc_cpu *cpu);
+bool FN(gbc_cpu *cpu);
+bool FH(gbc_cpu *cpu);
+bool FC(gbc_cpu *cpu);
+
+void unset_f(gbc_cpu *cpu, u8 flag);
+void set_f(gbc_cpu *cpu, u8 flag);
+void put_f(gbc_cpu *cpu, u8 flag, bool val);
+
 void gbc_cpu_reset(gbc_cpu *cpu);
+void gbc_cpu_set_boot_state(gbc_cpu *cpu);
+
+void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode);
+void gbc_cpu_step(gbc_cpu *cpu);
 void gbc_cpu_loop(gbc_cpu *cpu);

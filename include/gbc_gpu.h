@@ -42,6 +42,9 @@
 
 #define TRANSPARENT 8
 
+#define RGB5(r,g,b)	((r)|((g)<<5)|((b)<<10))
+#define RGB8(r,g,b)	( (((b)>>3)<<10) | (((g)>>3)<<5) | ((r)>>3) )
+
 typedef struct {
 	uint8_t id;
 	uint8_t x;

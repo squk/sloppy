@@ -1,12 +1,10 @@
 #include <stdio.h>
 
 #include "gbc_ops.h"
-#include "text.h"
-#include "console.h"
 
 // pointers to make the ops more concise
 u8 *a, *b, *c, *d, *e, *f, *h, *l;
-u8 *pc, *sp;
+u16 *pc, *sp;
 int *m;
 
 void execute_init(gbc_cpu *cpu) { //
@@ -120,8 +118,9 @@ void LD_mBC_A(gbc_cpu *cpu) { write_u8(cpu->mmu,(*b<<8)+*c, *a); *m=2; };
 void LD_mDE_A(gbc_cpu *cpu) { write_u8(cpu->mmu,(*d<<8)+*e, *a); *m=2; };
 void LD_mHL_L(gbc_cpu *cpu) { write_u8(cpu->mmu,(*h<<8)+*l,*l); *m=2; };
 void LD_mHLI_A(gbc_cpu *cpu) { write_u8(cpu->mmu,(*h<<8)+*l, *a); *l=(*l+1)&255; if(!*l) *h=(*h+1)&255; *m=2; }
-void LD_mHLD_A(gbc_cpu *cpu) { write_u8(cpu->mmu,(*h<<8)+*l, *a); *l=(*l-1)&255; if(*l==255) *h=(*h-1)&255; *m=2; };
 void LD_mC_A(gbc_cpu *cpu) { write_u8(cpu->mmu,0xFF00+*c,*a); *m=2; };
+
+void LD_mHLD_A(gbc_cpu *cpu) { write_u8(cpu->mmu,(*h<<8)+*l, *a); *l=(*l-1)&255; if(*l==255) *h=(*h-1)&255; *m=2; };
 
 void LD_HL_d8(gbc_cpu *cpu) { write_u8(cpu->mmu,(*h<<8)+*l, read_u8(cpu->mmu, *pc)); (*pc)++; *m=3; };
 
@@ -133,9 +132,9 @@ void LD_A_mBC(gbc_cpu *cpu) { *a=read_u8(cpu->mmu,(*b<<8)+*c); *m=2; };
 void LD_A_mDE(gbc_cpu *cpu) { *a=read_u8(cpu->mmu,(*d<<8)+*e); *m=2; };
 
 void LD_A_a16(gbc_cpu *cpu) {
-	u16 addr = read_u8(cpu, (*pc)++);
-	addr |= read_u8(cpu, (*pc)++) << 8;
-	*a = read_u8(cpu, addr);
+	u16 addr = read_u8(cpu->mmu, (*pc)++);
+	addr |= read_u8(cpu->mmu, (*pc)++) << 8;
+	*a = read_u8(cpu->mmu, addr);
     *m=4;
 };
 
@@ -159,14 +158,14 @@ void LD_BC_d16(gbc_cpu *cpu) { *c=read_u8(cpu->mmu, (*pc)++); *b=read_u8(cpu->mm
 void LD_DE_d16(gbc_cpu *cpu) { *e=read_u8(cpu->mmu, (*pc)++); *d=read_u8(cpu->mmu, (*pc)++); *m=3; };
 void LD_HL_d16(gbc_cpu *cpu) { *l=read_u8(cpu->mmu, (*pc)++); *h=read_u8(cpu->mmu, (*pc)++); *m=3; };
 
-void LD_SP_d16(gbc_cpu *cpu) { *sp=read_u16(cpu->mmu, *pc); *pc +=2; *m=3; };
+void LD_SP_d16(gbc_cpu *cpu) { *sp=read_u16(cpu->mmu, *pc); (*pc)+=2; *m=3; };
 
 void LD_A_mHLI(gbc_cpu *cpu) { *a=read_u8(cpu->mmu,(*h<<8)+*l); *l=(*l+1)&255; if(!*l) *h=(*h+1)&255; *m=2; };
 
 void LD_A_mHLD(gbc_cpu *cpu) { *a=read_u8(cpu->mmu,(*h<<8)+*l); *l=(*l-1)&255; if(*l==255) *h=(*h-1)&255; *m=2; };
 
-void LDH_a8_A(gbc_cpu *cpu) { write_u8(cpu->mmu,0xFF00+read_u8(cpu->mmu,*pc),*a); (*pc)++; *m=3; };
-void LDH_A_a8(gbc_cpu *cpu) { *a=read_u8(cpu->mmu,0xFF00+read_u8(cpu->mmu,*pc)); (*pc)++; *m=3; };
+void LDH_a8_A(gbc_cpu *cpu) { write_u8(cpu->mmu, 0xFF00 | read_u8(cpu->mmu, (*pc)++), *a); *m=3; };
+void LDH_A_a8(gbc_cpu *cpu) { *a = read_u8(cpu->mmu, 0xFF00 | read_u8(cpu->mmu, (*pc)++));};
 void LD_HL_SP_r8(gbc_cpu *cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; i+=*sp; *h=(i>>8)&255; *l=i&255; *m=3; };
 void LD_A_mC(gbc_cpu *cpu) { *a=read_u8(cpu->mmu,0xFF00+*c); *m=2; };
 
@@ -178,32 +177,16 @@ void SWAP_E(gbc_cpu *cpu) { u8 tr=*e; *e=((tr&0xF)<<4)|((tr&0xF0)>>4); *f=*e?0:F
 void SWAP_H(gbc_cpu *cpu) { u8 tr=*h; *h=((tr&0xF)<<4)|((tr&0xF0)>>4); *f=*h?0:FLAG_Z; *m=1; };
 void SWAP_L(gbc_cpu *cpu) { u8 tr=*l; *l=((tr&0xF)<<4)|((tr&0xF0)>>4); *f=*l?0:FLAG_Z; *m=1; };
 
-void ADD_A(gbc_cpu *cpu) { u8 i=*a; *a+=*a; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*a^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADD_B(gbc_cpu *cpu) { u8 i=*a; *a+=*b; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*b^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADD_C(gbc_cpu *cpu) { u8 i=*a; *a+=*c; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*c^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADD_D(gbc_cpu *cpu) { u8 i=*a; *a+=*d; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*d^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADD_E(gbc_cpu *cpu) { u8 i=*a; *a+=*e; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*e^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADD_H(gbc_cpu *cpu) { u8 i=*a; *a+=*h; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*h^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADD_L(gbc_cpu *cpu) { u8 i=*a; *a+=*l; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*l^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADD_A_mHL(gbc_cpu *cpu) {
-	u8 hl = read_u8(cpu->mmu, (*h<<8)+*l);
+void ADD_A(gbc_cpu *cpu) { u8 i=*a; (*a)+=*a; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*a^i)&0x10) *f|=FLAG_H; *m=1; };
+void ADD_B(gbc_cpu *cpu) { u8 i=*a; (*a)+=*b; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*b^i)&0x10) *f|=FLAG_H; *m=1; };
+void ADD_C(gbc_cpu *cpu) { u8 i=*a; (*a)+=*c; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*c^i)&0x10) *f|=FLAG_H; *m=1; };
+void ADD_D(gbc_cpu *cpu) { u8 i=*a; (*a)+=*d; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*d^i)&0x10) *f|=FLAG_H; *m=1; };
+void ADD_E(gbc_cpu *cpu) { u8 i=*a; (*a)+=*e; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*e^i)&0x10) *f|=FLAG_H; *m=1; };
+void ADD_H(gbc_cpu *cpu) { u8 i=*a; (*a)+=*h; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*h^i)&0x10) *f|=FLAG_H; *m=1; };
+void ADD_L(gbc_cpu *cpu) { u8 i=*a; (*a)+=*l; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^*l^i)&0x10) *f|=FLAG_H; *m=1; };
+void ADD_A_mHL(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,(*h<<8)+*l); *a+=r; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^i^r)&0x10) *f|=FLAG_H; *m=2; };
 
-	u16 temp = *a + hl;
-	put_f(cpu, FLAG_Z, ((temp & 0xFF) == 0x00));
-	unset_f(cpu, FLAG_N);
-    put_f(cpu, FLAG_H, (*a ^ hl ^ temp) & 0x10);
-    put_f(cpu, FLAG_C, (temp & 0xFF00));
-	*a = (temp & 0xFF);
-    /*u8 i=*a;*/
-    /*u8 r=read_u8(cpu->mmu,(*h<<8)+*l);*/
-    /**a+=r;*/
-    /**f=(*a>255)?FLAG_C:0;*/
-    /*if(!*a) *f|=FLAG_Z;*/
-    /*if((*a^i^r)&0x10) *f|=FLAG_H;*/
-    *m=2;
-};
-
-void ADD_d8(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,*pc); *a+=r; (*pc)++; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^i^r)&0x10) *f|=FLAG_H; *m=2; };
+void ADD_d8(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,*pc); (*a)+=r; (*pc)++; *f=(*a>255)?FLAG_C:0; if(!*a) *f|=FLAG_Z; if((*a^i^r)&0x10) *f|=FLAG_H; *m=2; };
 
 void ADD_HL_BC(gbc_cpu *cpu) { u16 hl=(*h<<8)+*l; hl+=(*b<<8)+*c; if(hl>65535) *f|=FLAG_C; else *f&=0xEF; *h=(hl>>8)&255; *l=hl&255; *m=3; };
 void ADD_HL_DE(gbc_cpu *cpu) { u16 hl=(*h<<8)+*l; hl+=(*d<<8)+*e; if(hl>65535) *f|=FLAG_C; else *f&=0xEF; *h=(hl>>8)&255; *l=hl&255; *m=3; };
@@ -212,15 +195,15 @@ void ADD_HL_SP(gbc_cpu *cpu) { u16 hl=(*h<<8)+*l; hl+=*sp; if(hl>65535) *f|=FLAG
 void ADD_SP_d8(gbc_cpu *cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; (*sp)+=i; *m=4; };
 
 // ADC_A_X
-void ADC_A(gbc_cpu *cpu) { u8 i=*a; *a+=*a; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^*a^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADC_B(gbc_cpu *cpu) { u8 i=*a; *a+=*b; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^*b^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADC_C(gbc_cpu *cpu) { u8 i=*a; *a+=*c; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^*c^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADC_D(gbc_cpu *cpu) { u8 i=*a; *a+=*d; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^*d^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADC_E(gbc_cpu *cpu) { u8 i=*a; *a+=*e; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^*e^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADC_H(gbc_cpu *cpu) { u8 i=*a; *a+=*h; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^*h^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADC_L(gbc_cpu *cpu) { u8 i=*a; *a+=*l; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^*l^i)&0x10) *f|=FLAG_H; *m=1; };
-void ADC_mHL(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,(*h<<8)+*l); *a+=r; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^r^i)&0x10) *f|=FLAG_H; *m=2; };
-void ADC_d8(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,*pc); *a+=r; (*pc)++; *a+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^r^i)&0x10) *f|=FLAG_H; *m=2; };
+void ADC_A(gbc_cpu *cpu) { u8 i=*a; (*a)+=*a; (*a)+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) (*f)|=FLAG_Z; if((*a^*a^i)&0x10) (*f)|=FLAG_H; *m=1; };
+void ADC_B(gbc_cpu *cpu) { u8 i=*a; (*a)+=*b; (*a)+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) (*f)|=FLAG_Z; if((*a^*b^i)&0x10) (*f)|=FLAG_H; *m=1; };
+void ADC_C(gbc_cpu *cpu) { u8 i=*a; (*a)+=*c; (*a)+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) (*f)|=FLAG_Z; if((*a^*c^i)&0x10) (*f)|=FLAG_H; *m=1; };
+void ADC_D(gbc_cpu *cpu) { u8 i=*a; (*a)+=*d; (*a)+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) (*f)|=FLAG_Z; if((*a^*d^i)&0x10) (*f)|=FLAG_H; *m=1; };
+void ADC_E(gbc_cpu *cpu) { u8 i=*a; (*a)+=*e; (*a)+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) (*f)|=FLAG_Z; if((*a^*e^i)&0x10) (*f)|=FLAG_H; *m=1; };
+void ADC_H(gbc_cpu *cpu) { u8 i=*a; (*a)+=*h; (*a)+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) (*f)|=FLAG_Z; if((*a^*h^i)&0x10) (*f)|=FLAG_H; *m=1; };
+void ADC_L(gbc_cpu *cpu) { u8 i=*a; (*a)+=*l; (*a)+=(*f&FLAG_C)?1:0; *f=(*a>255)?0x10:0; if(!*a) (*f)|=FLAG_Z; if((*a^*l^i)&0x10) (*f)|=FLAG_H; *m=1; };
+void ADC_mHL(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,(*h<<8)+*l); (*a)+=r; (*a)+=(*f&FLAG_C)?1:0; (*f)=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^r^i)&0x10) *f|=FLAG_H; *m=2; };
+void ADC_d8(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,*pc); (*a)+=r; (*pc)++; (*a)+=(*f&FLAG_C)?1:0; (*f)=(*a>255)?0x10:0; if(!*a) *f|=FLAG_Z; if((*a^r^i)&0x10) *f|=FLAG_H; *m=2; };
 
 void SUB_A(gbc_cpu *cpu) { u8 i=*a; *a-=*a; *f=(*a<0)?0x50:FLAG_N; if(!*a) *f|=FLAG_Z; if((*a^*a^i)&FLAG_C) *f|=FLAG_H; *m=1; };
 void SUB_B(gbc_cpu *cpu) { u8 i=*a; *a-=*b; *f=(*a<0)?0x50:FLAG_N; if(!*a) *f|=FLAG_Z; if((*a^*b^i)&FLAG_C) *f|=FLAG_H; *m=1; };
@@ -243,15 +226,15 @@ void SBC_mHL(gbc_cpu *cpu) { u8 ra=*a; u8 rm=read_u8(cpu->mmu,(*h<<8)+*l); *a-=r
 
 void SBC_d8(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,*pc); *a-=r; (*pc)++; *a-=(*f&FLAG_C)?1:0; *f=(*a<0)?0x50:FLAG_N; if(!*a) *f|=FLAG_Z; if((*a^*f^i)&0x10) *f|=FLAG_H; *m=2; };
 
-void CP_A(gbc_cpu *cpu) { u8 i=*a; i-=*a; *f=(i<0)?0x50:FLAG_N; i&=255; if(!i) *f|=FLAG_Z; if((*a^*a^i)&FLAG_C) *f|=FLAG_H; *m=1; };
-void CP_B(gbc_cpu *cpu) { u8 i=*a; i-=*b; *f=(i<0)?0x50:FLAG_N; i&=255; if(!i) *f|=FLAG_Z; if((*a^*b^i)&FLAG_C) *f|=FLAG_H; *m=1; };
-void CP_C(gbc_cpu *cpu) { u8 i=*a; i-=*c; *f=(i<0)?0x50:FLAG_N; i&=255; if(!i) *f|=FLAG_Z; if((*a^*c^i)&FLAG_C) *f|=FLAG_H; *m=1; };
-void CP_D(gbc_cpu *cpu) { u8 i=*a; i-=*d; *f=(i<0)?0x50:FLAG_N; i&=255; if(!i) *f|=FLAG_Z; if((*a^*d^i)&FLAG_C) *f|=FLAG_H; *m=1; };
-void CP_E(gbc_cpu *cpu) { u8 i=*a; i-=*e; *f=(i<0)?0x50:FLAG_N; i&=255; if(!i) *f|=FLAG_Z; if((*a^*e^i)&FLAG_C) *f|=FLAG_H; *m=1; };
-void CP_H(gbc_cpu *cpu) { u8 i=*a; i-=*h; *f=(i<0)?0x50:FLAG_N; i&=255; if(!i) *f|=FLAG_Z; if((*a^*h^i)&FLAG_C) *f|=FLAG_H; *m=1; };
-void CP_L(gbc_cpu *cpu) { u8 i=*a; i-=*l; *f=(i<0)?0x50:FLAG_N; i&=255; if(!i) *f|=FLAG_Z; if((*a^*l^i)&FLAG_C) *f|=FLAG_H; *m=1; };
-void CP_mHL(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,(*h<<8)+*l); i-=r; *f=(i<0)?0x50:FLAG_N; i&=255; if(!i) *f|=FLAG_Z; if((*a^i^r)&FLAG_C) *f|=FLAG_H; *m=2; };
-void CP_d8(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,*pc); i-=r; (*pc)++; *f=(i<0)?0x50:FLAG_N; i&=255; if(!i) *f|=FLAG_Z; if((*a^i^r)&FLAG_C) *f|=FLAG_H; *m=2; };
+void CP_A(gbc_cpu *cpu) { u8 i=*a; i-=*a; (*f)=(i<0)?0x50:FLAG_N; i&=255; if(!i) (*f)|=FLAG_Z; if((*a^*a^i)&FLAG_C) (*f)|=FLAG_H; (*m)=1; };
+void CP_B(gbc_cpu *cpu) { u8 i=*a; i-=*b; (*f)=(i<0)?0x50:FLAG_N; i&=255; if(!i) (*f)|=FLAG_Z; if((*a^*b^i)&FLAG_C) (*f)|=FLAG_H; (*m)=1; };
+void CP_C(gbc_cpu *cpu) { u8 i=*a; i-=*c; (*f)=(i<0)?0x50:FLAG_N; i&=255; if(!i) (*f)|=FLAG_Z; if((*a^*c^i)&FLAG_C) (*f)|=FLAG_H; (*m)=1; };
+void CP_D(gbc_cpu *cpu) { u8 i=*a; i-=*d; (*f)=(i<0)?0x50:FLAG_N; i&=255; if(!i) (*f)|=FLAG_Z; if((*a^*d^i)&FLAG_C) (*f)|=FLAG_H; (*m)=1; };
+void CP_E(gbc_cpu *cpu) { u8 i=*a; i-=*e; (*f)=(i<0)?0x50:FLAG_N; i&=255; if(!i) (*f)|=FLAG_Z; if((*a^*e^i)&FLAG_C) (*f)|=FLAG_H; (*m)=1; };
+void CP_H(gbc_cpu *cpu) { u8 i=*a; i-=*h; (*f)=(i<0)?0x50:FLAG_N; i&=255; if(!i) (*f)|=FLAG_Z; if((*a^*h^i)&FLAG_C) (*f)|=FLAG_H; (*m)=1; };
+void CP_L(gbc_cpu *cpu) { u8 i=*a; i-=*l; (*f)=(i<0)?0x50:FLAG_N; i&=255; if(!i) (*f)|=FLAG_Z; if((*a^*l^i)&FLAG_C) (*f)|=FLAG_H; (*m)=1; };
+void CP_mHL(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,(*h<<8)+*l); i-=r; (*f)=(i<0)?0x50:FLAG_N; i&=255; if(!i) (*f)|=FLAG_Z; if((*a^i^r)&FLAG_C) (*f)|=FLAG_H; (*m)=2; };
+void CP_d8(gbc_cpu *cpu) { u8 i=*a; u8 r=read_u8(cpu->mmu,*pc); i-=r; (*pc)++; (*f)=(i<0)?0x50:FLAG_N; i&=255; if(!i) (*f)|=FLAG_Z; if((*a^i^r)&FLAG_C) (*f)|=FLAG_H; (*m)=2; };
 
 
 void DAA(gbc_cpu *cpu) { u8 i=*a; if((*f&FLAG_H)||((*a&15)>9)) *a+=6; *f&=0xEF; if((*f&FLAG_H)||(i>0x99)) { *a+=0x60; *f|=FLAG_C; } *m=1; };
@@ -625,25 +608,28 @@ void JP_HL(gbc_cpu *cpu) { *pc=(*h<<8)+*l; *m=1; };
 void JP_NZ_a16(gbc_cpu *cpu) { *m=3; if((*f&FLAG_Z)==0x00) { *pc=read_u16(cpu->mmu,*pc); (*m)++; } else (*pc)+=2; };
 void JP_Cnn(gbc_cpu *cpu) { *m=3; if((*f&FLAG_C)==0x10) { *pc=read_u16(cpu->mmu,*pc); (*m)++; } else (*pc)+=2; };
 
-void JR_r8(gbc_cpu *cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; (*pc)+=i; (*m)++; };
+void JR_r8(gbc_cpu *cpu) {
+    int8_t temp = (int8_t) read_u8(cpu->mmu, (*pc)++);
+    (*pc) += temp;
+    (*m) += 4;
+};
 
 // checked
 void JR_NZ_r8(gbc_cpu *cpu) {
-    if(!FZ()) {
-        u8 temp=read_u8(cpu->mmu,*pc);
+    if(!FZ(cpu)) {
+        s8 temp=read_u8(cpu->mmu,*pc);
         (*pc)++;
-        *pc+=temp;
-        *m+=4;
+        (*pc)+=temp;
+        (*m)+=4;
     } else {
         (*pc)++;
     }
 }
 void JR_Z_r8(gbc_cpu *cpu)  {
-    u8 i=read_u8(cpu->mmu,*pc);
-    if(FZ()){
-        int8_t temp = (int8_t) read_u8(cpu, (*pc)++);
+    if(FZ(cpu)){
+        int8_t temp = (int8_t) read_u8(cpu->mmu, (*pc)++);
         (*pc) += temp;
-        *m += 4;
+        (*m) += 4;
     } else {
         (*pc)++;
     }
@@ -719,9 +705,8 @@ void CALL_C_a16(gbc_cpu *cpu) {
 };
 
 void RET(gbc_cpu *cpu) {
-    char s[80]; sprintf(s, "ret PC: %x", *pc); cli_printl(s);
-    u16 temp = read_u8(cpu, (*sp)++);
-    temp |= read_u8(cpu, (*sp)++) << 8;
+    u16 temp = read_u8(cpu->mmu, (*sp)++);
+    temp |= read_u8(cpu->mmu, (*sp)++) << 8;
     (*pc) = temp;
     (*sp)+=2;
     *m=3;
@@ -731,7 +716,7 @@ void JP_C_a16(gbc_cpu *cpu) { *m=3; if((*f&FLAG_C)==0x10) { *pc=read_u16(cpu->mm
 void JP_Z_a16(gbc_cpu *cpu) { *m=3; if((*f&FLAG_Z)==FLAG_Z) { *pc=read_u16(cpu->mmu,*pc); (*m)++; } else (*pc)+=2; };
 
 void JP_NC_a16(gbc_cpu *cpu) {
-	if(!FC()) {
+	if(!FC(cpu)) {
 		u16 temp =  read_u8(cpu->mmu, *pc++);
 		temp |=  read_u8(cpu->mmu, *pc++) << 8;
 		*pc = temp;
@@ -788,15 +773,10 @@ void rrs(gbc_cpu *cpu) {
 void MAPcb(gbc_cpu *cpu) {
 	u8 i=read_u8(cpu->mmu, (*pc)++);
 	*pc &= 65535;
-    char s[80];
-    /*sprintf(s, "MAPcb: %x", i);*/
-    /*cli_printl(s);*/
 	if(CB_OPS[i]) CB_OPS[i](cpu);
 };
 
 void XX(gbc_cpu *cpu) {
     u8 opcode = read_u8(cpu->mmu, *pc-1);
-    char s[80];
-    sprintf(s, "ERROR: OPCODE UNIMPLEMETED %x?", opcode);
-    cli_printl(s);
+    printf("ERROR: OPCODE UNIMPLEMETED %x?\n", opcode);
 }
