@@ -10,7 +10,6 @@
 #include "gbc_gpu.h"
 #include "gbc_io.h"
 #include "gbc_mmu.h"
-#include "text.h"
 
 #define LCD_LINE_CYCLES     456
 

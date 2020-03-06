@@ -1,16 +1,10 @@
 #include <stdio.h>
-#include <gba.h>
 #include <time.h>
 #include <string.h>
-
-#include "gba_timing.h"
-#include "gba_input.h"
 
 #include "gbc_cpu.h"
 #include "gbc_ops.h"
 #include "gbc_io.h"
-#include "text.h"
-#include "console.h"
 
 bool FZ(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
 bool FN(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }

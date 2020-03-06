@@ -56,3 +56,4 @@ typedef struct {
 
 void gbc_cpu_reset(gbc_cpu *cpu);
 void gbc_cpu_loop(gbc_cpu *cpu);
+void gbc_cpu_set_boot_state(gbc_cpu *cpu);

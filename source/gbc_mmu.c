@@ -92,7 +92,7 @@ u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
 }
 
 void load_rom(gbc_mmu *mmu, const void *src, size_t n) {
-    u8 offset = 0x100;
+    int offset = 0x100;
     src += offset;
     memcpy(mmu->rom, src, n-offset);
 }

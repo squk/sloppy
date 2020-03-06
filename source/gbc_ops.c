@@ -1,8 +1,6 @@
 #include <stdio.h>
 
 #include "gbc_ops.h"
-#include "text.h"
-#include "console.h"
 
 // pointers to make the ops more concise
 u8 *a, *b, *c, *d, *e, *f, *h, *l;
