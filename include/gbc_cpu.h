@@ -1,6 +1,6 @@
 #pragma once
-#include <gba_base.h>
 
+#include "types.h"
 #include "gbc_gpu.h"
 #include "gbc_mmu.h"
 

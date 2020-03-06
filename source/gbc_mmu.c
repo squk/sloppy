@@ -1,9 +1,9 @@
-#include <gba_base.h>
 #include <string.h>
 
-#include "console.h"
+#include "types.h"
 #include "gbc_mmu.h"
 #include "gbc_io.h"
+/*#include "console.h"*/
 
 // also from https://github.com/drhelius/Gearboy/blob/master/src/Memory.h lol
 const u8 kInitialValuesForFFXX[256] = {
@@ -105,7 +105,7 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     u8 *ptr = get_address_ptr(mmu, address);
     if (address == 0xFF50) {
         mmu->in_bios = false;
-        cli_printl("OUT OF BIOS");
+        /*cli_printl("OUT OF BIOS");*/
     }
     *ptr = val;
 }

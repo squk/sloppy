@@ -1,11 +1,12 @@
-#include <gba_base.h>
-#include <gba_systemcalls.h>
-#include <gba_video.h>
+/*#include <gba_base.h>*/
+/*#include <gba_systemcalls.h>*/
+/*#include <gba_video.h>*/
 
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
 
+#include "types.h"
 #include "gbc_gpu.h"
 #include "gbc_io.h"
 #include "gbc_mmu.h"
@@ -138,11 +139,11 @@ void gpu_draw_line_fb(gbc_gpu *gpu, u8 line) {
 
 	/*cli_printl("fb write");*/
 	/*memcpy(gpu->fb, 0, sizeof gpu->fb);*/
-	for (u8 x = 0; x < SIZE_X; x++) {
-        u8 padding = 80;
-        u8 row_index = line * SIZE_X + padding;
-        MODE3_FB[row_index][x + padding] = gpu->fb[row_index + x]; // 80 = padding
-    }
+	/*for (u8 x = 0; x < SIZE_X; x++) {*/
+        /*u8 padding = 80;*/
+        /*u8 row_index = line * SIZE_X + padding;*/
+        /*MODE3_FB[row_index][x + padding] = gpu->fb[row_index + x]; // 80 = padding*/
+    /*}*/
 }
 
 void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
@@ -512,7 +513,7 @@ u16 rgb32ToRgb16(u32 rgb32) {
     return RGB8(red, green, blue);
 }
 
-u16 color_dmg_to_gba(unsigned const bgr15) {
-    return rgb32ToRgb16(gbcToRgb32(bgr15));
-    //return gbcToRgb32(bgr15);
-}
+/*u16 color_dmg_to_gba(unsigned const bgr15) {*/
+    /*return rgb32ToRgb16(gbcToRgb32(bgr15));*/
+    /*//return gbcToRgb32(bgr15);*/
+/*}*/

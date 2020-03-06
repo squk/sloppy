@@ -1,12 +1,10 @@
 #pragma once
 
-#include <gba_base.h>
-#include <gba_video.h>
-#include <gba_systemcalls.h>
 
 #include <stdio.h>
 #include <string.h>
 
+#include "types.h"
 #include "gbc_cpu.h"
 #include "gbc_gpu.h"
 #include "gbc_mmu.h"
