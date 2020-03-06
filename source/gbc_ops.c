@@ -624,7 +624,11 @@ void JP_HL(gbc_cpu *cpu) { *pc=(*h<<8)+*l; *m=1; };
 void JP_NZ_a16(gbc_cpu *cpu) { *m=3; if((*f&FLAG_Z)==0x00) { *pc=read_u16(cpu->mmu,*pc); (*m)++; } else (*pc)+=2; };
 void JP_Cnn(gbc_cpu *cpu) { *m=3; if((*f&FLAG_C)==0x10) { *pc=read_u16(cpu->mmu,*pc); (*m)++; } else (*pc)+=2; };
 
-void JR_r8(gbc_cpu *cpu) { u8 i=read_u8(cpu->mmu,*pc); if(i>127) i=-((~i+1)&255); (*pc)++; *m=2; (*pc)+=i; (*m)++; };
+void JR_r8(gbc_cpu *cpu) {
+    int8_t temp = (int8_t) read_u8(cpu->mmu, (*pc)++);
+    (*pc) += temp;
+    (*m) += 4;
+};
 
 // checked
 void JR_NZ_r8(gbc_cpu *cpu) {
