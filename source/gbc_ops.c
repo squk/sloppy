@@ -717,7 +717,6 @@ void CALL_C_a16(gbc_cpu *cpu) {
 };
 
 void RET(gbc_cpu *cpu) {
-    char s[80]; sprintf(s, "ret PC: %x", *pc); cli_printl(s);
     u16 temp = read_u8(cpu, (*sp)++);
     temp |= read_u8(cpu, (*sp)++) << 8;
     (*pc) = temp;
@@ -788,13 +787,13 @@ void MAPcb(gbc_cpu *cpu) {
 	*pc &= 65535;
     char s[80];
     /*sprintf(s, "MAPcb: %x", i);*/
-    /*cli_printl(s);*/
+    /*printf(s);*/
 	if(CB_OPS[i]) CB_OPS[i](cpu);
 };
 
 void XX(gbc_cpu *cpu) {
     u8 opcode = read_u8(cpu->mmu, *pc-1);
     char s[80];
-    sprintf(s, "ERROR: OPCODE UNIMPLEMETED %x?", opcode);
-    cli_printl(s);
+    sprintf(s, "ERROR: OPCODE UNIMPLEMETED %x?\n", opcode);
+    printf(s);
 }
