@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "types.h"
+#include "tetris_gb.h"
 #include "gbc_cpu.h"
 #include "gbc_gpu.h"
 #include "gbc_mmu.h"
@@ -32,6 +33,7 @@ void emu_run() {
 }
 
 void emu_test() {
+    printf("starting CPU loop");
     gbc_cpu cpu;
     gbc_gpu gpu;
     gbc_mmu mmu;
@@ -42,10 +44,6 @@ void emu_test() {
 
     gbc_mmu_init(&mmu);
     gbc_cpu_reset(&cpu);
-    char s[80];
-
-    sprintf(s, "rom[0x104]: %x", mmu.rom[0x104]);
-    //cli_printl(s);
 
     u8 bios[512] =
     {0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
@@ -67,6 +65,7 @@ void emu_test() {
     memcpy(mmu.bios, bios, 512);
     mmu.in_bios = true;
     //gbc_cpu_set_boot_state(&cpu);
+    load_rom(&mmu, data_tetris_gb_bin, data_tetris_gb_bin_len);
     //load_rom(&mmu, tetris_gb_bin, tetris_gb_bin_size);
     //load_rom(&mmu, cpu_instrs_gb_bin, cpu_instrs_gb_bin_size);
 

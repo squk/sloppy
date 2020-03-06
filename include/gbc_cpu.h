@@ -54,6 +54,15 @@ typedef struct {
     gbc_gpu *gpu;
 } gbc_cpu;
 
+bool FZ(gbc_cpu *cpu);
+bool FN(gbc_cpu *cpu);
+bool FH(gbc_cpu *cpu);
+bool FC(gbc_cpu *cpu);
+
+void unset_f(gbc_cpu *cpu, u8 flag);
+void set_f(gbc_cpu *cpu, u8 flag);
+void put_f(gbc_cpu *cpu, u8 flag, bool val);
+
 void gbc_cpu_reset(gbc_cpu *cpu);
 void gbc_cpu_loop(gbc_cpu *cpu);
 void gbc_cpu_set_boot_state(gbc_cpu *cpu);

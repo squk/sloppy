@@ -90,20 +90,12 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
     cpu->mmu->in_bios = false;
 }
 
-void gbc_registers_debug(gbc_cpu *cpu, u8 opcode, int instr) {
-    char s[80];
-    sprintf(s, "i: %d   OP: %x", instr, opcode);
-    printf(s);
-    sprintf(s, "A: %x    B: %x    C: %x", cpu->registers.a, cpu->registers.b, cpu->registers.c);
-    printf(s);
-    sprintf(s, "D: %x    E: %x    F: %x", cpu->registers.d, cpu->registers.e, cpu->registers.f);
-    printf(s);
-    sprintf(s, "H: %x    L: %x    M: %x", cpu->registers.h, cpu->registers.e, cpu->registers.clk.m);
-    printf(s);
-    sprintf(s, "T: %x    SP: %x    PC: %x", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
-    printf(s);
-    sprintf(s, "[0xfa]: %x     fb[]: %x", read_u8(cpu->mmu, 0xfa) , cpu->gpu->fb[SIZE_X/2]);
-    printf(s);
+void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
+    printf("OP: %x   %s\n", cpu->registers.clk.m, OPS_STR[opcode]);
+    printf("A: %x    B: %x    C: %x\n", cpu->registers.a, cpu->registers.b, cpu->registers.c);
+    printf("D: %x    E: %x    F: %x\n", cpu->registers.d, cpu->registers.e, cpu->registers.f);
+    printf("H: %x    L: %x    M: %x\n", cpu->registers.h, cpu->registers.e, cpu->registers.clk.m);
+    printf("T: %x    SP: %x    PC: %x\n", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
 }
 
 void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
@@ -112,7 +104,7 @@ void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
     u8 pc = cpu->registers.pc;
     pc--;
     if (cpu->mmu->in_bios && pc == eq) {
-        char s[80]; sprintf(s, "OP: %s, PC:%x", OPS_STR[opcode], pc); printf(s);
+         printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);
     }
 }
 
@@ -122,7 +114,7 @@ void d_pc_eq_v(gbc_cpu *cpu, u8 opcode, u8 eq) {
     u8 pc = cpu->registers.pc;
     pc--;
     if (cpu->mmu->in_bios && pc == eq) {
-        gbc_registers_debug(cpu, opcode, 0);
+        gbc_registers_debug(cpu, opcode);
     }
 }
 
@@ -132,7 +124,18 @@ void d_pc_r(gbc_cpu *cpu, u8 opcode, u8 low, u8 high) {
     u8 pc = cpu->registers.pc;
     pc--;
     if (cpu->mmu->in_bios && pc > low && pc < high) {
-        char s[80]; sprintf(s, "OP: %s, PC:%x", OPS_STR[opcode], pc); printf(s);
+        printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);
+    }
+}
+
+void debug_dmg_bootrom(gbc_cpu *cpu, u8 opcode) {
+    u16 pc = cpu->registers.pc;
+    pc--;
+    if (pc == 0x0003) {
+        printf("%s: setup stack: sp(%x), expected sp(fffe)", OPS_STR[opcode], cpu->registers.sp);
+    }
+    if (pc == 0x0034) {
+        printf("%s: load bytes into vram for @", OPS_STR[opcode]);
     }
 }
 
@@ -141,7 +144,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 		cpu->HALT = 0;
 
 		if(cpu->IME) {
-			printf("Interrupt Master Enable");
+			printf("Interrupt Master Enable\n");
 			/* Disable interrupts */
 			cpu->IME = 0;
 
@@ -175,27 +178,13 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    u8 lcdcont = read_u8(cpu->mmu, IO_LCDCONT);
-    if (lcdcont != 0) {
-        char s[80]; sprintf(s, "lcdcont %x", lcdcont); printf(s);
-        /*for(u8 i=0; i<120; i++) { VBlankIntrWait(); }*/
-    }
-    d_pc_eq(cpu, opcode, 0x57); // LCDCONT enabled here
-    d_pc_eq_v(cpu, opcode, 0xfa);
-    /*d_pc_eq(cpu, opcode, 0x4b);*/
-    /*d_pc_r(cpu, opcode, 0x90, 0x100);*/
-    d_pc_r(cpu, opcode, 0xe0, 0xFF);
-    /*d_pc_r(cpu, opcode, 0x21, 0xFF);*/
+    /*u8 lcdcont = read_u8(cpu->mmu, IO_LCDCONT);*/
 
-    printf(OPS_STR[opcode]);
-    printf("\n");
+    gbc_cpu cpu_clone = *cpu;
+
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
-    /*if (cpu->registers.pc >=0xfe && cpu->registers.pc <= 0x100) {*/
-        /*gbc_registers_debug(cpu, opcode, 0);*/
-    /*}*/
-    /*cli_clear();*/
-    /*gbc_registers_debug(cpu, opcode, 0);*/
+    debug_dmg_bootrom(&cpu_clone, opcode);
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
@@ -207,36 +196,19 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     execute_init(cpu);
     gpu_start_frame(cpu->gpu);
 
-    int instr = 0;
 
-    /*char z[80];*/
     /*u8 logo[0x30] = {0};*/
     /*int l_start = 0x104;*/
     /*int l_end = 0x134;*/
     /*for (int i=l_start; i<l_end; i++) {*/
-        /*[>sprintf(z, "read_u8: %x    %x", i, i-l_start);<]*/
-        /*[>printf(z);<]*/
-        /*[>VBlankIntrWait();<]*/
         /*logo[i-l_start] = read_u8(cpu->mmu, i);*/
     /*}*/
-
-    /*for (u8 i=0; i<6; i++) {*/
-        /*for (u8 j=0; j<8; j++) {*/
-            /*char s[2] = {0};*/
-            /*sprintf(s, "%x", logo[(i*8)+j]);*/
-            /*cli_print(j*3, i+1, s);*/
-        /*}*/
-    /*}*/
-    /*while(1) {}*/
-
-    //gbc_registers_debug(cpu, -1, instr);
-    /*SetMode(MODE_3 | BG2_ON);*/
-    /*for(u8 y=0; y<160; y++) { for(u8 x=0; x<240; x++) { MODE3_FB[y][x] = RGB8(40, 40, 40); } }*/
+    printf("started loop");
     while(1) {
-        instr++;
         gbc_cpu_step(cpu);
+
         if (cpu->gpu->fb[5] != 0) {
-            char s[80]; sprintf(s, "fb: %x", cpu->gpu->fb[5]); printf(s);
+            printf("fb: %x\n", cpu->gpu->fb[5]);
         }
     }
 }

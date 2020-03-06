@@ -320,15 +320,11 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 				(objs[i].y <= line) && ((objs[i].y + obj_height) > line)) {
 			objs_line[objs_line_len++] = &objs[i];
 
-            u8 s[80];
-            sprintf(s, "mode clk: %d", gpu->mode_clock);
-            printf(s);
-            sprintf(s, "Object %d:\n", objs[i].id);
-            printf(s);
-            sprintf(s, "x: %02X, y: %02X, pat: %02X\n", objs[i].x, objs[i].y, objs[i].pat);
-            printf(s);
+            printf("mode clk: %d", gpu->mode_clock);
+            printf("Object %d:\n", objs[i].id);
+            printf("x: %02X, y: %02X, pat: %02X\n", objs[i].x, objs[i].y, objs[i].pat);
 
-			//return;
+            /*return;*/
 		}
 	}
 
@@ -381,6 +377,7 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 }
 
 void gpu_draw_line(gbc_gpu *gpu, u8 line) {
+    printf("gpu_draw_line\n");
 	if (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
 		gpu_draw_line_bg(gpu, line);
 	}
@@ -428,7 +425,6 @@ The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 i
 Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
 */
 u8 gpu_run(gbc_gpu *gpu, int cycles) {
-    char s[80];
     if (!read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
         gpu->reset = 1;
         return 0;
@@ -510,12 +506,12 @@ unsigned long gbcToRgb32(unsigned const bgr15) {
         | (r * 3 + g * 2 + b * 11) >> 1;
 }
 
-u16 rgb32ToRgb16(u32 rgb32) {
-    int red = red / 8;
-    int green = green / 4;
-    int blue = blue / 8;
-    return RGB8(red, green, blue);
-}
+/*u16 rgb32ToRgb16(u32 rgb32) {*/
+    /*int red = red / 8;*/
+    /*int green = green / 4;*/
+    /*int blue = blue / 8;*/
+    /*return RGB8(red, green, blue);*/
+/*}*/
 
 /*u16 color_dmg_to_gba(unsigned const bgr15) {*/
     /*return rgb32ToRgb16(gbcToRgb32(bgr15));*/
