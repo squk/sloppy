@@ -136,7 +136,7 @@ void gpu_draw_line_fb(gbc_gpu *gpu, u8 line) {
         *px_ptr = px;
 	}
 
-	/*printf("fb write");*/
+    printf("fb write\n");
 	/*memcpy(gpu->fb, 0, sizeof gpu->fb);*/
 	/*for (u8 x = 0; x < SIZE_X; x++) {*/
         /*u8 padding = 80;*/
@@ -320,7 +320,7 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 				(objs[i].y <= line) && ((objs[i].y + obj_height) > line)) {
 			objs_line[objs_line_len++] = &objs[i];
 
-            printf("mode clk: %d", gpu->mode_clock);
+            printf("mode clk: %d\n", gpu->mode_clock);
             printf("Object %d:\n", objs[i].id);
             printf("x: %02X, y: %02X, pat: %02X\n", objs[i].x, objs[i].y, objs[i].pat);
 
@@ -454,7 +454,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 
 	    // VBLANK
 	    if (read_u8(gpu->mmu, IO_CURLINE) == SIZE_Y) {
-            printf("vblank");
+            /*printf("vblank\n");*/
 	        write_u8(gpu->mmu, IO_LCDSTAT, (read_u8(gpu->mmu, IO_LCDSTAT) & 0xF3) | 0x01);
 	        // Set Mode Flag to VBLANK at LCDSTAT
 	        unset_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
@@ -468,7 +468,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	    }
         // Normal line
 	    else if (read_u8(gpu->mmu, IO_CURLINE) < SIZE_Y) {
-            printf("normal line");
+            /*printf("normal line\n");*/
             if (read_u8(gpu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
             }
@@ -481,7 +481,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	}
 	// OAM
     else if (read_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && gpu->mode_clock >= LCD_MODE_2_CYCLES) {
-        printf("oam");
+        printf("oam\n");
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
 
 		if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
@@ -490,7 +490,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
     }
     // Update LCD
     else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && gpu->mode_clock >= LCD_MODE_2_CYCLES) {
-        printf("updating LCD");
+        printf("updating LCD\n");
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
 		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
     }

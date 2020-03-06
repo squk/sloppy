@@ -118,13 +118,11 @@ void d_pc_eq_v(gbc_cpu *cpu, u8 opcode, u8 eq) {
     }
 }
 
-void d_pc_r(gbc_cpu *cpu, u8 opcode, u8 low, u8 high) {
-    if (opcode == 0)
-        return;
-    u8 pc = cpu->registers.pc;
+void d_pc_r(gbc_cpu *cpu, u16 pc, u8 opcode, u8 low, u8 high) {
     pc--;
-    if (cpu->mmu->in_bios && pc > low && pc < high) {
-        printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);
+    if (cpu->mmu->in_bios && pc >= low && pc <= high) {
+        gbc_registers_debug(cpu, opcode);
+        /*printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);*/
     }
 }
 
@@ -132,6 +130,7 @@ bool setup_stack = false;
 bool vram_cleared = false;
 bool hit_at = false;
 bool init_tile_map = false;
+bool hit_screen_frame = false;
 
 void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     /*gbc_registers_debug(cpu, opcode);*/
@@ -155,6 +154,9 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
             vram_cleared = true;
         }
     }
+    if (old_pc == 0x001d && !hit_at) {
+        printf("%s: setup BG palette\n", OPS_STR[opcode]);
+    }
     if (old_pc == 0x003e && !hit_at) {
         printf("%s: load bytes into vram for @\n", OPS_STR[opcode]);
         hit_at = true;
@@ -164,7 +166,23 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
         init_tile_map = true;
     }
     if (old_pc == 0x0055) {
-        printf("starting logo scroll");
+        printf("initializing logo scrolling\n");
+    }
+    if (old_pc == 0x0068 && !hit_screen_frame) {
+        printf("wait for screen frame...");
+        hit_screen_frame = true;
+    }
+    if (old_pc == 0x0072) {
+        printf("starting logo scroll\n");
+    }
+    if (old_pc == 0x0095) {
+        printf("Graphic routine\n");
+    }
+    if (old_pc == 0x00e0) {
+        printf("Nintendo logo comparison routine\n");
+    }
+    if (old_pc == 0x00fa) {
+        printf("lock up?\n");
     }
 }
 
@@ -221,6 +239,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
 
+    /*d_pc_r(cpu, old_pc, opcode, 0x64, 0x68);*/
     /*printf("%x   %s\n", cpu->registers.pc, OPS_STR[opcode]);*/
     debug_dmg_bootrom(cpu, old_pc, opcode);
 
