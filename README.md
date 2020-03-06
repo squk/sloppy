@@ -1,7 +1,9 @@
 sloppy emu
 =======================
 
-A Gameboy Color emulator for the Gameboy Advance
+A Gameboy Color emulator for the Gameboy Advance. 
+
+Work in progress. Currently debugging emulator opcodes on a computer's CLI. 
 
 # deps
 https://devkitpro.org/
