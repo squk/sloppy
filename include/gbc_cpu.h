@@ -64,5 +64,8 @@ void set_f(gbc_cpu *cpu, u8 flag);
 void put_f(gbc_cpu *cpu, u8 flag, bool val);
 
 void gbc_cpu_reset(gbc_cpu *cpu);
-void gbc_cpu_loop(gbc_cpu *cpu);
 void gbc_cpu_set_boot_state(gbc_cpu *cpu);
+
+void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode);
+void gbc_cpu_step(gbc_cpu *cpu);
+void gbc_cpu_loop(gbc_cpu *cpu);

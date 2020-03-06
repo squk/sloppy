@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <time.h>
 #include <string.h>
 
 #include "gbc_cpu.h"
@@ -91,11 +90,12 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
 }
 
 void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
-    printf("OP: %x   %s\n", cpu->registers.clk.m, OPS_STR[opcode]);
+    printf("OP: %x   %s\n", opcode, OPS_STR[opcode]);
     printf("A: %x    B: %x    C: %x\n", cpu->registers.a, cpu->registers.b, cpu->registers.c);
     printf("D: %x    E: %x    F: %x\n", cpu->registers.d, cpu->registers.e, cpu->registers.f);
-    printf("H: %x    L: %x    M: %x\n", cpu->registers.h, cpu->registers.e, cpu->registers.clk.m);
+    printf("H: %x    L: %x    M: %x\n", cpu->registers.h, cpu->registers.l, cpu->registers.clk.m);
     printf("T: %x    SP: %x    PC: %x\n", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
+    getchar();
 }
 
 void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
@@ -128,14 +128,43 @@ void d_pc_r(gbc_cpu *cpu, u8 opcode, u8 low, u8 high) {
     }
 }
 
-void debug_dmg_bootrom(gbc_cpu *cpu, u8 opcode) {
-    u16 pc = cpu->registers.pc;
-    pc--;
-    if (pc == 0x0003) {
-        printf("%s: setup stack: sp(%x), expected sp(fffe)", OPS_STR[opcode], cpu->registers.sp);
+bool setup_stack = false;
+bool vram_cleared = false;
+bool hit_at = false;
+bool init_tile_map = false;
+
+void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
+    /*gbc_registers_debug(cpu, opcode);*/
+    old_pc--;
+
+    if (old_pc == 0x0000 && !setup_stack) {
+        printf("%s: setup stack: sp(%x), expected sp(fffe)\n", OPS_STR[opcode], cpu->registers.sp);
+        setup_stack = true;
     }
-    if (pc == 0x0034) {
-        printf("%s: load bytes into vram for @", OPS_STR[opcode]);
+    if (old_pc == 0x000a && !vram_cleared) {
+        bool done = true;
+        for (int i=0x9FFF; i>=0x8000; i--) {
+            u8 b = read_u8(cpu->mmu, i);
+            if (b != 0x0) {
+                done = false;
+                break;
+            }
+        }
+        if (done) {
+            printf("vram cleared %s\n", OPS_STR[opcode]);
+            vram_cleared = true;
+        }
+    }
+    if (old_pc == 0x003e && !hit_at) {
+        printf("%s: load bytes into vram for @\n", OPS_STR[opcode]);
+        hit_at = true;
+    }
+    if (old_pc == 0x0053 && !init_tile_map) {
+        printf("%s: initializing tile map\n", OPS_STR[opcode]);
+        init_tile_map = true;
+    }
+    if (old_pc == 0x0055) {
+        printf("starting logo scroll");
     }
 }
 
@@ -178,13 +207,22 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    /*u8 lcdcont = read_u8(cpu->mmu, IO_LCDCONT);*/
 
-    gbc_cpu cpu_clone = *cpu;
+    /*u8 lcdcont = read_u8(cpu->mmu, IO_LCDCONT);*/
+    /*u8 logo[0x30] = {0};*/
+    /*int l_start = 0x104;*/
+    /*int l_end = 0x134;*/
+    /*for (int i=l_start; i<l_end; i++) {*/
+        /*logo[i-l_start] = read_u8(cpu->mmu, i);*/
+    /*}*/
+
+    u16 old_pc = cpu->registers.pc;
 
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
-    debug_dmg_bootrom(&cpu_clone, opcode);
+
+    /*printf("%x   %s\n", cpu->registers.pc, OPS_STR[opcode]);*/
+    debug_dmg_bootrom(cpu, old_pc, opcode);
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
@@ -193,22 +231,13 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 }
 
 void gbc_cpu_loop(gbc_cpu *cpu) {
+    printf("init cpu loop\n");
+
     execute_init(cpu);
     gpu_start_frame(cpu->gpu);
+    printf("begin cpu loop\n");
 
-
-    /*u8 logo[0x30] = {0};*/
-    /*int l_start = 0x104;*/
-    /*int l_end = 0x134;*/
-    /*for (int i=l_start; i<l_end; i++) {*/
-        /*logo[i-l_start] = read_u8(cpu->mmu, i);*/
-    /*}*/
-    printf("started loop");
     while(1) {
         gbc_cpu_step(cpu);
-
-        if (cpu->gpu->fb[5] != 0) {
-            printf("fb: %x\n", cpu->gpu->fb[5]);
-        }
     }
 }
