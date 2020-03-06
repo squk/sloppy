@@ -149,7 +149,7 @@ void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
 	u16 bg_tile_map, tile_data;
 	u8 oam_row, obj_line;
 	u8 obj_line_a, obj_line_b;
-	int16_t obj;
+	s16 obj;
 
 	switch (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
         case OPT_BG_Tile_Map_0:
@@ -198,7 +198,7 @@ void gpu_draw_line_win(gbc_gpu *gpu, u8 line) {
 	u16 win_tile_map, tile_data;
 	u8 oam_row, obj_line;
 	u8 obj_line_a, obj_line_b;
-	int16_t obj;
+	s16 obj;
 
 	if (read_u8(gpu->mmu, IO_WNDPOSY)  > line || read_u8(gpu->mmu, IO_WNDPOSX) > SIZE_X) {
 		return;

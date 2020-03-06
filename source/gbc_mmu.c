@@ -49,7 +49,7 @@ void gbc_mmu_init(gbc_mmu *mmu){
 
     memset(mmu->bios, 0, sizeof mmu->bios);
     memset(mmu->rom, 0, sizeof mmu-> rom);
-    memset(mmu->vram, 0, sizeof mmu->vram);
+    memset(mmu->vram, 1, sizeof mmu->vram); // we load 1's into the vram to test the bootrom code
     memset(mmu->wram, 0, sizeof mmu->wram);
     memset(mmu->oam, 0, sizeof mmu->oam);
     memset(mmu->io, 0, sizeof mmu->io);
@@ -105,7 +105,7 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     u8 *ptr = get_address_ptr(mmu, address);
     if (address == 0xFF50) {
         mmu->in_bios = false;
-        /*cli_printl("OUT OF BIOS");*/
+        printf("OUT OF BIOS");
     }
     *ptr = val;
 }

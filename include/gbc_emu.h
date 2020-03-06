@@ -33,7 +33,7 @@ void emu_run() {
 }
 
 void emu_test() {
-    printf("starting CPU loop");
+    printf("initializing emulator\n");
     gbc_cpu cpu;
     gbc_gpu gpu;
     gbc_mmu mmu;
@@ -65,9 +65,10 @@ void emu_test() {
     memcpy(mmu.bios, bios, 512);
     mmu.in_bios = true;
     //gbc_cpu_set_boot_state(&cpu);
-    load_rom(&mmu, data_tetris_gb_bin, data_tetris_gb_bin_len);
+    //load_rom(&mmu, data_tetris_gb_bin, data_tetris_gb_bin_len);
     //load_rom(&mmu, tetris_gb_bin, tetris_gb_bin_size);
     //load_rom(&mmu, cpu_instrs_gb_bin, cpu_instrs_gb_bin_size);
 
+    printf("emulator initialized\n");
     gbc_cpu_loop(&cpu);
 }
