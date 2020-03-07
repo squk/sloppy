@@ -109,7 +109,7 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     u8 *ptr = get_address_ptr(mmu, address);
     if (address == 0xFF50) {
         mmu->in_bios = false;
-        printf("OUT OF BIOS");
+        printf("OUT OF BIOS\n");
     }
     *ptr = val;
 }

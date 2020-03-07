@@ -235,21 +235,11 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
 
-    /*u8 lcdcont = read_u8(cpu->mmu, IO_LCDCONT);*/
-    /*u8 logo[0x30] = {0};*/
-    /*int l_start = 0x104;*/
-    /*int l_end = 0x134;*/
-    /*for (int i=l_start; i<l_end; i++) {*/
-        /*logo[i-l_start] = read_u8(cpu->mmu, i);*/
-    /*}*/
-
     u16 old_pc = cpu->registers.pc;
 
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
 
-    /*d_pc_r(cpu, old_pc, opcode, 0x64, 0x68);*/
-    /*printf("%x   %s\n", cpu->registers.pc, OPS_STR[opcode]);*/
     debug_dmg_bootrom(cpu, old_pc, opcode);
 
     // Add execution time to the CPU clk
