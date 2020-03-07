@@ -46,8 +46,8 @@ void emu_test() {
     memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len);
     mmu.in_bios = true;
     //gbc_cpu_set_boot_state(&cpu);
-    //gbc_load_rom(mmu, data_tetris_gb_bin, data_tetris_gb_bin_len);
-    gbc_load_rom(mmu, data_cpu_instrs_gb_bin, data_cpu_instrs_gb_bin_len);
+    gbc_load_rom(&mmu, data_tetris_gb_bin, data_tetris_gb_bin_len);
+    //gbc_load_rom(&mmu, data_cpu_instrs_gb_bin, data_cpu_instrs_gb_bin_len);
 
     printf("emulator initialized\n");
     gbc_cpu_loop(&cpu);

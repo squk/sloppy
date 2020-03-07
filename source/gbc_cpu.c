@@ -134,6 +134,7 @@ bool init_tile_map = false;
 bool hit_screen_frame = false;
 bool started_logo_scroll = false;
 int hit_cp = 0;
+bool hit_gfx_routine = false;
 
 void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     /*gbc_registers_debug(cpu, opcode);*/
@@ -179,17 +180,18 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
         printf("starting logo scroll\n");
         started_logo_scroll = true;
     }
-    if (old_pc == 0x0095) {
+    if (old_pc == 0x0095 && !hit_gfx_routine) {
         printf("Graphic routine\n");
+        hit_gfx_routine = true;
     }
     if (old_pc == 0x00ed) {
-        printf("%d/30\n", ++hit_cp);
+        printf("%d/30  ", ++hit_cp);
     }
     if (old_pc == 0x00e0) {
         printf("Nintendo logo comparison routine\n");
     }
     if (old_pc == 0x00f9) {
-        printf("lock up?\n");
+        printf("\nlock up?\n");
     }
 }
 
@@ -256,7 +258,12 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     gpu_run(cpu->gpu, cpu->registers.clk.m);
 }
 
+// 0x014D is the header checksum.
+// Contains an 8 bit checksum across the cartridge header bytes 0134-014C.
+// Formula: x=0: for i=0x134 TO 0x14C: x=x-MEM[i]-1
+// The lower 8 bits of the result must match the value at address 0X14D
 void validate_memory(gbc_cpu *cpu) {
+    // nintendo logo checksum
     size_t logo_size = 0x30;
     u16 bios_start = 0x00A8;
     u16 rom_start = 0x0104;
@@ -269,20 +276,25 @@ void validate_memory(gbc_cpu *cpu) {
         }
     }
 
+    // header checksum
     size_t checksum_size = 0x19;
     u16 checksum_start = 0x0134;
-    u8 sum = 0;
-    for (u8 i=0; i <= checksum_size; i++) {
-        s8 v = read_u8(cpu->mmu, checksum_start+i);
-        sum += v;
-        printf("%x   %x\n", checksum_start+i, sum);
+    u16 checksum_end = 0x014C;
+
+    int sum = 0;
+    for (u16 i=checksum_start; i <= checksum_end; i++) {
+        u8 v = read_u8(cpu->mmu, i);
+        sum = sum - v -1;
+        printf("%x  v:%x  sum:%x\n", i, v, sum);
     }
-    if (sum != 0x0) {
-        printf("checksum failed at 0x%x\n", checksum_start);
+    sum &= 255; // mask to lower 8 bits
+    u8 expected = read_u8(cpu->mmu, 0x14D);
+    if (sum != expected) {
+        printf("checksum failed at 0x%x   sum: %x    expected: %x\n", checksum_start, sum, expected);
     }
 
-/*0x00A8 to 0x00D7*/
-/*0x0104 to 0x0133*/
+    hex_dump("BIOS", cpu->mmu->bios, 0x100);
+    hex_dump("ROM", cpu->mmu->rom, 0x200);
 }
 
 void gbc_cpu_loop(gbc_cpu *cpu) {
