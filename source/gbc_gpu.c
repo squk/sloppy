@@ -11,8 +11,6 @@
 #include "gbc_io.h"
 #include "gbc_mmu.h"
 
-#define LCD_LINE_CYCLES     456
-
 // Bit 7-6 - Shade for Color Number 3
 // Bit 5-4 - Shade for Color Number 2
 // Bit 3-2 - Shade for Color Number 1
@@ -114,29 +112,27 @@ void gpu_start_frame(gbc_gpu *gpu) {
 }
 
 // TODO: cleanup and optimize
-void gpu_draw_line_fb(gbc_gpu *gpu, u8 line) {
-	for (u8 x = 0; x < SIZE_X; x++) {
-        u8 row_index = line * SIZE_X;
+void gpu_draw_line_fb(gbc_gpu*gpu, u8 line) {
+    for (int i = 0; i < SIZE_X; i++) {
+        int px_index = line * SIZE_X + i;
+        gpu->fb[px_index] = gpu->bg_disp[line * 256 + i];
+        // Add ordering between win and obj!
+        // check non painted
+        if (gpu->win_disp[line * 256 + i] < 8) {
+            gpu->fb[px_index] = gpu->win_disp[line * 256 + i];
+        }
 
-        u8 *px_ptr = &gpu->fb[row_index + x]; // 80 = padding
-		u8 px = gpu->bg_disp[line * 256 + x];
-
-		if (gpu->win_disp[line * 256 + x] < 8) {
-			px = gpu->win_disp[line * 256 + x];
-		}
-
-		if (gpu->obj_disp[(line + SPRITE_INI_Y) * 256 + x + SPRITE_INI_X] < 8) {
-			if (px != 0 && gpu->obj_disp[(line + SPRITE_INI_Y) * 256 + x + SPRITE_INI_X] >= 4) {
-                *px_ptr = px;
-				continue;
-			}
-			px = gpu->obj_disp[(line + SPRITE_INI_Y) * 256 + x + SPRITE_INI_X] & 0x03;
-		}
-
-        *px_ptr = px;
-	}
-
-    printf("fb write\n");
+        // check transparency
+        if (gpu->obj_disp[(line + SPRITE_INI_Y) * 256 +
+                i + SPRITE_INI_X] < 8) {
+            if (gpu->fb[px_index] != 0
+                    && gpu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] >= 4) {
+                continue;
+            }
+            gpu->fb[px_index] = gpu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] & 0x03;
+        }
+    }
+    /*printf("fb write\n");*/
 	/*memcpy(gpu->fb, 0, sizeof gpu->fb);*/
 	/*for (u8 x = 0; x < SIZE_X; x++) {*/
         /*u8 padding = 80;*/
@@ -377,7 +373,7 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 }
 
 void gpu_draw_line(gbc_gpu *gpu, u8 line) {
-    printf("gpu_draw_line\n");
+    /*printf("gpu_draw_line\n");*/
 	if (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
 		gpu_draw_line_bg(gpu, line);
 	}
@@ -479,20 +475,27 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
             }
 	    }
 	}
-	// OAM
-    else if (read_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && gpu->mode_clock >= LCD_MODE_2_CYCLES) {
-        printf("oam\n");
+
+    if (read_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && gpu->mode_clock >= DUR_HBLANK) {
+        /*printf("in HBLANK\n");*/
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
 
 		if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
 			set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
 		}
+		gpu->mode_clock = 0;
     }
-    // Update LCD
-    else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && gpu->mode_clock >= LCD_MODE_2_CYCLES) {
-        printf("updating LCD\n");
+    else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && gpu->mode_clock >= DUR_OAM) {
+        /*printf("in OAM\n");*/
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
 		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
+		gpu->mode_clock = 0;
+    }
+    else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM_VRAM) && gpu->mode_clock >= DUR_OAM_VRAM) {
+        /*printf("in vram\n");*/
+		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
+		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
+		gpu->mode_clock = 0;
     }
 }
 

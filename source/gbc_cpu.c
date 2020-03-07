@@ -135,6 +135,7 @@ bool hit_screen_frame = false;
 bool started_logo_scroll = false;
 int hit_cp = 0;
 bool hit_gfx_routine = false;
+bool wrote_fb_dump = false;
 
 void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     /*gbc_registers_debug(cpu, opcode);*/
@@ -189,9 +190,20 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     }
     if (old_pc == 0x00e0) {
         printf("Nintendo logo comparison routine\n");
+        /*FILE *fp;*/
+        /*fp = fopen("framebuffer.bmp" , "w" );*/
+        /*fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp );*/
+        /*fclose(fp);*/
+        /*wrote_fb_dump = true;*/
+        /*printf("dumped framebuffer to file\n");*/
+        hex_dump("framebuffer", cpu->gpu->fb, 0x200);
     }
     if (old_pc == 0x00f9) {
         printf("\nlock up?\n");
+    }
+    if (old_pc >= 0x500 && !wrote_fb_dump) {
+        hex_dump("framebuffer", cpu->gpu->fb, 0x200);
+        wrote_fb_dump = true;
     }
 }
 
