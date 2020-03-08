@@ -19,6 +19,7 @@
 #define LCD_MODE_0_CYCLES   0
 #define LCD_MODE_2_CYCLES   204
 #define LCD_MODE_3_CYCLES   284
+#define LCD_LINE_CYCLES     456
 
 #define DUR_FRAME 70224
 #define DUR_OAM 80

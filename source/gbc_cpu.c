@@ -185,24 +185,25 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
         printf("Graphic routine\n");
         hit_gfx_routine = true;
     }
-    if (old_pc == 0x00ed) {
-        printf("%d/30  ", ++hit_cp);
-    }
     if (old_pc == 0x00e0) {
         printf("Nintendo logo comparison routine\n");
-        /*FILE *fp;*/
-        /*fp = fopen("framebuffer.bmp" , "w" );*/
-        /*fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp );*/
-        /*fclose(fp);*/
-        /*wrote_fb_dump = true;*/
-        /*printf("dumped framebuffer to file\n");*/
+        FILE *fp;
+        fp = fopen("fb1.bin" , "w" );
+        fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);
+        fclose(fp);
+        printf("dumped vram to file\n");
+
         hex_dump("framebuffer", cpu->gpu->fb, 0x200);
     }
     if (old_pc == 0x00f9) {
         printf("\nlock up?\n");
     }
-    if (old_pc >= 0x500 && !wrote_fb_dump) {
+    if (old_pc >= 0x300 && !wrote_fb_dump) {
         hex_dump("framebuffer", cpu->gpu->fb, 0x200);
+        FILE *fp;
+        fp = fopen("fb2.bin" , "w" );
+        fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);
+        fclose(fp);
         wrote_fb_dump = true;
     }
 }
@@ -253,6 +254,9 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     (funcPtr)(cpu);
 
     debug_dmg_bootrom(cpu, old_pc, opcode);
+    if (!cpu->mmu->in_bios) {
+        /*hex_dump("framebuffer2", cpu->gpu->fb, 0x200);*/
+    }
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
