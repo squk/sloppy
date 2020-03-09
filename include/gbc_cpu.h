@@ -52,6 +52,9 @@ typedef struct {
 
     gbc_mmu *mmu;
     gbc_gpu *gpu;
+
+
+    bool quit;
 } gbc_cpu;
 
 bool FZ(gbc_cpu *cpu);

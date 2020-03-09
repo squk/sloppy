@@ -11,6 +11,29 @@
 #include "gbc_io.h"
 #include "gbc_mmu.h"
 
+
+void gpu_init(gbc_gpu *gpu) {
+    gpu_start_frame(gpu);
+}
+
+
+void insertion_sort(void *array, int length,
+		int compare(void*, int, int), void swap(void *, int, int)) {
+	int i, j; // loop indexes
+
+	for (j = 1; j < length; j++) {// index to insert array
+		for (i = j-1; 0 <= i; i--) {
+			// compare to previous index and swap if needed
+			// else if previous index is smaller, this is my place
+			if (!compare(array, i, i+1)) {
+				swap(array, i, i+1);
+			} else {
+				i = 0;
+			}
+		}
+	}
+}
+
 // Bit 7-6 - Shade for Color Number 3
 // Bit 5-4 - Shade for Color Number 2
 // Bit 3-2 - Shade for Color Number 1
@@ -52,6 +75,7 @@ u8 gpu_read_u8(gbc_gpu *gpu, u16 address) {
 void gpu_start_frame(gbc_gpu *gpu) {
 	int i, j;
 
+
 	// set win and obj to transparent
 	for (i = 0; i < 256; i++) {
 		for (j = 0; j < 256; j++) {
@@ -64,7 +88,7 @@ void gpu_start_frame(gbc_gpu *gpu) {
 }
 
 // TODO: cleanup and optimize
-void gpu_draw_line_fb(gbc_gpu*gpu, u8 line) {
+void gpu_draw_line_fb(gbc_gpu *gpu, u8 line) {
     for (int i = 0; i < SIZE_X; i++) {
         int px_index = line * SIZE_X + i;
         gpu->fb[px_index] = gpu->bg_disp[line * 256 + i];
@@ -84,16 +108,9 @@ void gpu_draw_line_fb(gbc_gpu*gpu, u8 line) {
             gpu->fb[px_index] = gpu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] & 0x03;
         }
     }
+
     /*printf("fb write\n");*/
 	/*memcpy(gpu->fb, 0, sizeof gpu->fb);*/
-    /*for (u8 x = 0; x < SIZE_X; x++) {*/
-        /*u8 padding = 80;*/
-        /*u8 row_index = line * SIZE_X;*/
-        /*if (gpu->fb[row_index + x] != 0) {*/
-            /*printf("i: %x   v: %x", row_index+x, gpu->fb[row_index+x]);*/
-        /*}*/
-        /*[>MODE3_FB[row_index][x + padding] = gpu->fb[row_index + x]; // 80 = padding<]*/
-    /*}*/
 }
 
 void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
@@ -129,9 +146,9 @@ void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
 	u8 i, j;
 	for (i = 0; i < 32; i++) {
 		if (tile_data == 0x9000) {
-			obj = read_u8(gpu->mmu, bg_tile_map + oam_row * 32 + i);
+			obj = (s8)read_u8(gpu->mmu, bg_tile_map + oam_row * 32 + i);
 		} else {
-			obj = read_u8(gpu->mmu, bg_tile_map + oam_row * 32 + i);
+			obj = (u8)read_u8(gpu->mmu, bg_tile_map + oam_row * 32 + i);
 		}
 		obj_line_a = read_u8(gpu->mmu, tile_data + obj * 16 + obj_line * 2);
 		obj_line_b = read_u8(gpu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
@@ -181,7 +198,7 @@ void gpu_draw_line_win(gbc_gpu *gpu, u8 line) {
 	u8 i, j;
 	for (i = 0; i < (SIZE_X - (read_u8(gpu->mmu, IO_WNDPOSX) - 8)) / 8 + 1; i++) {
 		if (tile_data == 0x9000) {
-			obj = (u8)read_u8(gpu->mmu, win_tile_map + oam_row * 32 + i);
+			obj = (s8)read_u8(gpu->mmu, win_tile_map + oam_row * 32 + i);
 		} else {
 			obj = (u8)read_u8(gpu->mmu, win_tile_map + oam_row * 32 + i);
 		}
@@ -280,7 +297,7 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 	}
 
 	// Sort the candidate objects by priority
-	/*insertion_sort(objs_line, objs_line_len, obj_comp, obj_swap);*/
+    insertion_sort(objs_line, objs_line_len, obj_comp, obj_swap);
 
 	// Draw objects by order of priority
 	if (objs_line_len > 10) {
@@ -328,7 +345,6 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 }
 
 void gpu_draw_line(gbc_gpu *gpu, u8 line) {
-    /*printf("gpu_draw_line\n");*/
 	if (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
 		gpu_draw_line_bg(gpu, line);
 	}
@@ -338,6 +354,7 @@ void gpu_draw_line(gbc_gpu *gpu, u8 line) {
     if (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
         gpu_draw_line_obj(gpu, line);
     }
+
     gpu_draw_line_fb(gpu, line);
 }
 
@@ -376,6 +393,7 @@ The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 i
 Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
 */
 u8 gpu_run(gbc_gpu *gpu, int cycles) {
+    int byte_row_width = 160;
     if (!read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
         gpu->reset = 1;
         return 0;
@@ -405,7 +423,6 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 
 	    // VBLANK
 	    if (read_u8(gpu->mmu, IO_CURLINE) == SIZE_Y) {
-            /*printf("vblank\n");*/
 	        write_u8(gpu->mmu, IO_LCDSTAT, (read_u8(gpu->mmu, IO_LCDSTAT) & 0xF3) | 0x01);
 	        // Set Mode Flag to VBLANK at LCDSTAT
 	        unset_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
@@ -416,12 +433,24 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	        if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
 	            set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
 	        }
+
+            SDL_Event e;
+            SDL_PollEvent(&e);
+            if (e.type == SDL_QUIT){
+                gpu->quit = true;
+            }
+            if (e.type == SDL_KEYDOWN){
+                gpu->quit = true;
+            }
+            if (e.type == SDL_MOUSEBUTTONDOWN){
+                gpu->quit = true;
+            }
 	    }
         // Normal line
 	    else if (read_u8(gpu->mmu, IO_CURLINE) < SIZE_Y) {
-            /*printf("normal line\n");*/
             if (read_u8(gpu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
+                SDL_RenderClear(gpu->renderer);
             }
 		    set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
 
@@ -430,27 +459,35 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
             }
 	    }
 	}
-
-    if (read_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && gpu->mode_clock >= DUR_HBLANK) {
-        /*printf("in HBLANK\n");*/
+    else if (read_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && gpu->mode_clock >= DUR_HBLANK) {
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
 
 		if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
 			set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
 		}
-		/*gpu->mode_clock = 0;*/
+		/*gpu->mode_clock -= DUR_HBLANK;*/
     }
     else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && gpu->mode_clock >= DUR_OAM) {
-        /*printf("in OAM\n");*/
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
 		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
-		/*gpu->mode_clock = 0;*/
+		/*gpu->mode_clock -= DUR_OAM;*/
     }
     else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM_VRAM) && gpu->mode_clock >= DUR_OAM_VRAM) {
-        /*printf("in vram\n");*/
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
 		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
-		/*gpu->mode_clock = 0;*/
+
+        for (int y = 0; y < SIZE_Y; y++) {
+            for (int x = 0; x < SIZE_X; x++) {
+                int px_index = y * SIZE_X + x;
+                u8 color = gpu->fb[px_index];
+
+                SDL_SetRenderDrawColor(gpu->renderer, color, color, color, 0xFF);
+                SDL_RenderDrawPoint(gpu->renderer, x, y);
+            }
+        }
+
+        SDL_RenderPresent(gpu->renderer);
+		/*gpu->mode_clock -= DUR_OAM_VRAM;*/
     }
 }
 
@@ -465,13 +502,13 @@ unsigned long gbcToRgb32(unsigned const bgr15) {
 }
 
 /*u16 rgb32ToRgb16(u32 rgb32) {*/
-    /*int red = red / 8;*/
-    /*int green = green / 4;*/
-    /*int blue = blue / 8;*/
-    /*return RGB8(red, green, blue);*/
+/*int red = red / 8;*/
+/*int green = green / 4;*/
+/*int blue = blue / 8;*/
+/*return RGB8(red, green, blue);*/
 /*}*/
 
 /*u16 color_dmg_to_gba(unsigned const bgr15) {*/
-    /*return rgb32ToRgb16(gbcToRgb32(bgr15));*/
-    /*//return gbcToRgb32(bgr15);*/
+/*return rgb32ToRgb16(gbcToRgb32(bgr15));*/
+/*//return gbcToRgb32(bgr15);*/
 /*}*/

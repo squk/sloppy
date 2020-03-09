@@ -27,9 +27,6 @@ typedef struct {
     bool in_bios;
 } gbc_mmu;
 
-const u8 kInitialValuesForFFXX[256];
-const u8 kInitialValuesForColorFFXX[256];
-
 void hex_dump(char *desc, void *addr, int len);
 
 void gbc_mmu_init(gbc_mmu *mmu);

@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_render.h>
+
 #include "types.h"
 #include "gbc_cpu.h"
 #include "gbc_gpu.h"
@@ -31,12 +34,19 @@ void emu_run() {
 }
 
 void emu_test() {
+    int i;
+
+    SDL_Renderer *renderer;
+    SDL_Window *window;
+    SDL_CreateWindowAndRenderer(SIZE_X, SIZE_Y, 0, &window, &renderer);
+    //SDL_CreateWindowAndRenderer(SIZE_X, SIZE_Y, 0, &window, &renderer);
     printf("initializing emulator\n");
     gbc_cpu cpu;
     gbc_gpu gpu;
     gbc_mmu mmu;
     cpu.mmu = &mmu;
     gpu.mmu = &mmu;
+    gpu.renderer = renderer;
 
     cpu.gpu = &gpu;
 
@@ -51,4 +61,8 @@ void emu_test() {
 
     printf("emulator initialized\n");
     gbc_cpu_loop(&cpu);
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 }

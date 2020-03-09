@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_events.h>
+
 #include "gbc_cpu.h"
 #include "gbc_ops.h"
 #include "gbc_io.h"
@@ -188,22 +192,15 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     if (old_pc == 0x00e0) {
         printf("Nintendo logo comparison routine\n");
         FILE *fp;
-        fp = fopen("fb1.bin" , "w" );
+        fp = fopen("fb.bin" , "w" );
         fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);
         fclose(fp);
-        printf("dumped vram to file\n");
-
-        hex_dump("framebuffer", cpu->gpu->fb, 0x200);
+        printf("dumped framebuffer to file\n");
     }
     if (old_pc == 0x00f9) {
         printf("\nlock up?\n");
     }
-    if (old_pc >= 0x300 && !wrote_fb_dump) {
-        hex_dump("framebuffer", cpu->gpu->fb, 0x200);
-        FILE *fp;
-        fp = fopen("fb2.bin" , "w" );
-        fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);
-        fclose(fp);
+    if (old_pc >= 0x500 && !wrote_fb_dump) {
         wrote_fb_dump = true;
     }
 }
@@ -307,11 +304,12 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     printf("init cpu loop\n");
 
     execute_init(cpu);
-    gpu_start_frame(cpu->gpu);
+    gpu_init(cpu->gpu);
     printf("begin cpu loop\n");
 
     validate_memory(cpu);
-    while(1) {
+    while(!cpu->gpu->quit) {
         gbc_cpu_step(cpu);
     }
+    atexit(SDL_Quit);
 }

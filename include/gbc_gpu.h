@@ -1,6 +1,9 @@
 #pragma once
 #include "gbc_mmu.h"
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_render.h>
+
 // to display a sprite in the upper left corner of the screen set sprite X=8, Y=16.
 #define SPRITE_INI_X 8
 #define SPRITE_INI_Y 16
@@ -56,6 +59,9 @@ typedef struct {
 
 typedef struct {
     gbc_mmu *mmu;
+    SDL_Renderer *renderer;
+    SDL_Window *window;
+
     u8 fb[SIZE_X * SIZE_Y];
     u8 bg_disp[512*512];
     u8 win_disp[512*512];
@@ -64,6 +70,8 @@ typedef struct {
     int mode_clock; // Object Attribute Memory
     u8 reset;
     u8 bg_palette[4], obj0_palette[4], obj1_palette[4];
+
+    bool quit;
 } gbc_gpu;
 
 void set_palette(u8* p, u8 v);
@@ -71,6 +79,7 @@ void set_palette(u8* p, u8 v);
 void gpu_write_u8(gbc_gpu *gpu, u16 address, u8 v);
 u8 gpu_read_u8(gbc_gpu *gpu, u16 address);
 
+void gpu_init(gbc_gpu *gpu);
 void gpu_start_frame(gbc_gpu *gpu);
 void gpu_draw_line_fb(gbc_gpu *gpu, u8 line);
 void gpu_draw_line_bg(gbc_gpu *gpu, u8 line);
