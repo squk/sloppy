@@ -94,13 +94,9 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
 }
 
 void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
-    printf("OP: %x   %s\n", opcode, OPS_STR[opcode]);
-    printf("A: %x    B: %x    C: %x\n", cpu->registers.a, cpu->registers.b, cpu->registers.c);
-    printf("D: %x    E: %x    F: %x\n", cpu->registers.d, cpu->registers.e, cpu->registers.f);
-    printf("H: %x    L: %x    M: %x\n", cpu->registers.h, cpu->registers.l, cpu->registers.clk.m);
-    printf("T: %x    SP: %x    PC: %x\n", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
-    printf("press enter\n");
-    getchar();
+    gbc_cpu_registers *r = &cpu->registers;
+    printf("AF=%02hX%02hX BC=%02hX%02hX DE=%02hX%02hX HL=%02hX%02hX SP=%04hX PC=%04hX  %s\n", r->a, r->f, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, OPS_STR[opcode]);
+    /*getchar();*/
 }
 
 void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
@@ -191,11 +187,11 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     }
     if (old_pc == 0x00e0) {
         printf("Nintendo logo comparison routine\n");
-        FILE *fp;
-        fp = fopen("fb.bin" , "w" );
-        fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);
-        fclose(fp);
-        printf("dumped framebuffer to file\n");
+        /*FILE *fp;*/
+        /*fp = fopen("fb.bin" , "w" );*/
+        /*fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);*/
+        /*fclose(fp);*/
+        /*printf("dumped framebuffer to file\n");*/
     }
     if (old_pc == 0x00f9) {
         printf("\nlock up?\n");
@@ -245,19 +241,23 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
 
+    if (cpu->registers.pc >= 0x00 && cpu->registers.pc <= 0xff) {
+        cpu->registers.pc--;
+        gbc_registers_debug(cpu, opcode);
+        cpu->registers.pc++;
+    }
+
     u16 old_pc = cpu->registers.pc;
 
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
 
-    debug_dmg_bootrom(cpu, old_pc, opcode);
-    if (!cpu->mmu->in_bios) {
-        /*hex_dump("framebuffer2", cpu->gpu->fb, 0x200);*/
-    }
+    /*debug_dmg_bootrom(cpu, old_pc, opcode);*/
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
     cpu->clk.t += cpu->registers.clk.t;
+
     gpu_run(cpu->gpu, cpu->registers.clk.m);
 }
 
@@ -296,18 +296,17 @@ void validate_memory(gbc_cpu *cpu) {
         printf("checksum failed at 0x%x   sum: %x    expected: %x\n", checksum_start, sum, expected);
     }
 
-    hex_dump("BIOS", cpu->mmu->bios, 0x100);
-    hex_dump("ROM", cpu->mmu->rom, 0x200);
+    /*hex_dump("BIOS", cpu->mmu->bios, 0x100);*/
+    /*hex_dump("ROM", cpu->mmu->rom, 0x200);*/
 }
 
 void gbc_cpu_loop(gbc_cpu *cpu) {
     printf("init cpu loop\n");
 
-    execute_init(cpu);
     gpu_init(cpu->gpu);
     printf("begin cpu loop\n");
 
-    validate_memory(cpu);
+    /*validate_memory(cpu);*/
     while(!cpu->gpu->quit) {
         gbc_cpu_step(cpu);
     }

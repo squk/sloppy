@@ -112,6 +112,11 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
         mmu->in_bios = false;
         printf("OUT OF BIOS\n");
     }
+    if (address == 0xFF01) {
+        /*fprintf(stderr, "%c", val);*/
+        printf("%c", val);
+        fflush(stdout);
+    }
     *ptr = val;
 }
 
