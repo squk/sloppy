@@ -187,17 +187,25 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     }
     if (old_pc == 0x00e0) {
         printf("Nintendo logo comparison routine\n");
-        /*FILE *fp;*/
-        /*fp = fopen("fb.bin" , "w" );*/
-        /*fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);*/
-        /*fclose(fp);*/
-        /*printf("dumped framebuffer to file\n");*/
+        FILE *fp;
+        fp = fopen("fb.bin" , "w" );
+        fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);
+        fclose(fp);
+        printf("dumped framebuffer to file\n");
     }
     if (old_pc == 0x00f9) {
         printf("\nlock up?\n");
     }
     if (old_pc >= 0x500 && !wrote_fb_dump) {
         wrote_fb_dump = true;
+    }
+}
+
+void gbc_cpu_trace(gbc_cpu *cpu, u8 opcode) {
+    if (cpu->registers.pc >= 0x00 && cpu->registers.pc <= 0xff) {
+        cpu->registers.pc--;
+        gbc_registers_debug(cpu, opcode);
+        cpu->registers.pc++;
     }
 }
 
@@ -240,12 +248,6 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-
-    if (cpu->registers.pc >= 0x00 && cpu->registers.pc <= 0xff) {
-        cpu->registers.pc--;
-        gbc_registers_debug(cpu, opcode);
-        cpu->registers.pc++;
-    }
 
     u16 old_pc = cpu->registers.pc;
 
