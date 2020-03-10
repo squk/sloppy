@@ -1176,36 +1176,43 @@ void INC_SP(gbc_cpu *cpu) {
 void DEC_B(gbc_cpu *cpu) {
     (cpu->registers.b)--;
     cpu->registers.f = cpu->registers.b?0:FLAG_Z;
+    cpu->registers.f |= FLAG_N;
     cpu->registers.clk.m = 1;
 }
 void DEC_C(gbc_cpu *cpu) {
     (cpu->registers.c)--;
     cpu->registers.f = cpu->registers.c?0:FLAG_Z;
+    cpu->registers.f |= FLAG_N;
     cpu->registers.clk.m = 1;
 }
 void DEC_D(gbc_cpu *cpu) {
     (cpu->registers.d)--;
     cpu->registers.f = cpu->registers.d?0:FLAG_Z;
+    cpu->registers.f |= FLAG_N;
     cpu->registers.clk.m = 1;
 }
 void DEC_E(gbc_cpu *cpu) {
     (cpu->registers.e)--;
     cpu->registers.f = cpu->registers.e?0:FLAG_Z;
+    cpu->registers.f |= FLAG_N;
     cpu->registers.clk.m = 1;
 }
 void DEC_H(gbc_cpu *cpu) {
     (cpu->registers.h)--;
     cpu->registers.f = cpu->registers.h?0:FLAG_Z;
+    cpu->registers.f |= FLAG_N;
     cpu->registers.clk.m = 1;
 }
 void DEC_L(gbc_cpu *cpu) {
     (cpu->registers.l)--;
     cpu->registers.f = cpu->registers.l?0:FLAG_Z;
+    cpu->registers.f |= FLAG_N;
     cpu->registers.clk.m = 1;
 }
 void DEC_A(gbc_cpu *cpu) {
     (cpu->registers.a)--;
     cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    cpu->registers.f |= FLAG_N;
     cpu->registers.clk.m = 1;
 }
 void DEC_mHL(gbc_cpu *cpu) {
@@ -1213,6 +1220,7 @@ void DEC_mHL(gbc_cpu *cpu) {
     i&=255;
     write_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l,i);
     cpu->registers.f = i?0:FLAG_Z;
+    cpu->registers.f |= FLAG_N;
     cpu->registers.clk.m = 3;
 }
 
