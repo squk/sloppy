@@ -3,6 +3,7 @@
 #include "gbc_cpu.h"
 
 typedef void (*gbc_operator)(gbc_cpu *cpu);
+
 /*
  * d8  means immediate 8 bit data
  * d16 means immediate 16 bit data
