@@ -44,6 +44,7 @@ typedef struct {
     gbc_cpu_rsv rsv;
 
     u8 HALT;
+    bool quit;
 
     // interrupts
     u8 IME; // IME - Interrupt Master Enable Flag (Write Only)
@@ -54,10 +55,15 @@ typedef struct {
     gbc_gpu *gpu;
 } gbc_cpu;
 
-bool FZ(gbc_cpu *cpu);
-bool FN(gbc_cpu *cpu);
-bool FH(gbc_cpu *cpu);
-bool FC(gbc_cpu *cpu);
+bool flag_z(gbc_cpu *cpu);
+bool flag_n(gbc_cpu *cpu);
+bool flag_h(gbc_cpu *cpu);
+bool flag_c(gbc_cpu *cpu);
+
+void set_flag_z(gbc_cpu *cpu, bool val);
+void set_flag_n(gbc_cpu *cpu, bool val);
+void set_flag_h(gbc_cpu *cpu, bool val);
+void set_flag_c(gbc_cpu *cpu, bool val);
 
 void unset_f(gbc_cpu *cpu, u8 flag);
 void set_f(gbc_cpu *cpu, u8 flag);

@@ -9,23 +9,16 @@
 #include "gbc_ops.h"
 #include "gbc_io.h"
 
-bool FZ(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
-bool FN(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }
-bool FH(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
-bool FC(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == FLAG_C; }
+bool flag_z(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
+bool flag_n(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }
+bool flag_h(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_H) == FLAG_H; }
+bool flag_c(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == FLAG_C; }
 
-void set_f(gbc_cpu *cpu, u8 flag) {
-    cpu->registers.f |= flag;
-}
+void set_flag_z(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_Z) | (val ? FLAG_Z : 0); }
+void set_flag_n(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_N) | (val ? FLAG_N : 0); }
+void set_flag_h(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_H) | (val ? FLAG_H : 0); }
+void set_flag_c(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_C) | (val ? FLAG_C : 0); }
 
-void unset_f(gbc_cpu *cpu, u8 flag) {
-    cpu->registers.f &= ~flag;
-}
-
-void put_f(gbc_cpu *cpu, u8 flag, bool val) {
-    if (val) set_f(cpu, flag);
-    else unset_f(cpu, flag);
-}
 
 void gbc_cpu_reset(gbc_cpu *cpu) {
     cpu->registers.a = 0;
@@ -95,7 +88,14 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
 
 void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
     gbc_cpu_registers *r = &cpu->registers;
-    printf("AF=%02hX%02hX BC=%02hX%02hX DE=%02hX%02hX HL=%02hX%02hX SP=%04hX PC=%04hX  %s\n", r->a, r->f, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, OPS_STR[opcode]);
+    char flags[] = "----";
+    if (r->f & FLAG_Z) flags[0] = 'Z';
+    if (r->f & FLAG_N) flags[1] = 'N';
+    if (r->f & FLAG_H) flags[2] = 'H';
+    if (r->f & FLAG_C) flags[3] = 'C';
+
+    s8 temp = read_u8(cpu->mmu,cpu->registers.pc);
+    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx  %s, %d\n", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, OPS_STR[opcode], temp);
     /*getchar();*/
 }
 
@@ -202,11 +202,11 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
 }
 
 void gbc_cpu_trace(gbc_cpu *cpu, u8 opcode) {
-    if (cpu->registers.pc >= 0x00 && cpu->registers.pc <= 0xff) {
+    /*if (cpu->registers.pc >= 0x00 && cpu->registers.pc <= 0xff) {*/
         cpu->registers.pc--;
         gbc_registers_debug(cpu, opcode);
         cpu->registers.pc++;
-    }
+    /*}*/
 }
 
 void gbc_cpu_step(gbc_cpu *cpu) {
@@ -248,13 +248,14 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
+    /*gbc_cpu_trace(cpu, opcode);*/
 
     u16 old_pc = cpu->registers.pc;
 
     void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
     (funcPtr)(cpu);
 
-    /*debug_dmg_bootrom(cpu, old_pc, opcode);*/
+    debug_dmg_bootrom(cpu, old_pc, opcode);
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
@@ -309,8 +310,23 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     printf("begin cpu loop\n");
 
     /*validate_memory(cpu);*/
-    while(!cpu->gpu->quit) {
+    while(!cpu->quit) {
         gbc_cpu_step(cpu);
+
+        /*SDL_Event e;*/
+        /*SDL_PollEvent(&e);*/
+        /*if (e.type == SDL_QUIT){*/
+            /*printf("SDL_QUIT");*/
+            /*cpu->quit = true;*/
+        /*}*/
+        /*if (e.type == SDL_KEYDOWN){*/
+            /*printf("SDL_KEYDOWN");*/
+            /*cpu->quit = true;*/
+        /*}*/
+        /*if (e.type == SDL_MOUSEBUTTONDOWN){*/
+            /*printf("SDL_MOUSEBUTTONDOWN");*/
+            /*cpu->quit = true;*/
+        /*}*/
     }
-    atexit(SDL_Quit);
+    /*atexit(SDL_Quit);*/
 }
