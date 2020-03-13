@@ -248,7 +248,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    /*gbc_cpu_trace(cpu, opcode);*/
+    gbc_cpu_trace(cpu, opcode);
 
     u16 old_pc = cpu->registers.pc;
 
@@ -304,10 +304,10 @@ void validate_memory(gbc_cpu *cpu) {
 }
 
 void gbc_cpu_loop(gbc_cpu *cpu) {
-    printf("init cpu loop\n");
+    /*printf("init cpu loop\n");*/
 
     gpu_init(cpu->gpu);
-    printf("begin cpu loop\n");
+    /*printf("begin cpu loop\n");*/
 
     /*validate_memory(cpu);*/
     while(!cpu->quit) {
