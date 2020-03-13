@@ -48,15 +48,15 @@ void emu_run() {
 void emu_test() {
     int i;
 
-    SDL_Renderer *renderer;
-    SDL_Window *window;
-    SDL_CreateWindowAndRenderer(SIZE_X, SIZE_Y, 0, &window, &renderer);
+    //SDL_Renderer *renderer;
+    //SDL_Window *window;
+    //SDL_CreateWindowAndRenderer(SIZE_X, SIZE_Y, 0, &window, &renderer);
     // Check that the window was successfully created
-    if (window == NULL) {
-        // In the case that the window could not be made...
-        printf("Could not create window: %s\n", SDL_GetError());
-        return;
-    }
+    //if (window == NULL) {
+        //// In the case that the window could not be made...
+        //printf("Could not create window: %s\n", SDL_GetError());
+        //return;
+    //}
 
     gbc_cpu cpu;
     gbc_gpu gpu;
@@ -92,7 +92,7 @@ void emu_test() {
     //printf("emulator initialized\n");
     gbc_cpu_loop(&cpu);
 
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    //SDL_DestroyRenderer(renderer);
+    //SDL_DestroyWindow(window);
+    //SDL_Quit();
 }
