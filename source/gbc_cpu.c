@@ -312,21 +312,10 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     /*validate_memory(cpu);*/
     while(!cpu->quit) {
         gbc_cpu_step(cpu);
-
-        /*SDL_Event e;*/
-        /*SDL_PollEvent(&e);*/
-        /*if (e.type == SDL_QUIT){*/
-            /*printf("SDL_QUIT");*/
-            /*cpu->quit = true;*/
-        /*}*/
-        /*if (e.type == SDL_KEYDOWN){*/
-            /*printf("SDL_KEYDOWN");*/
-            /*cpu->quit = true;*/
-        /*}*/
-        /*if (e.type == SDL_MOUSEBUTTONDOWN){*/
-            /*printf("SDL_MOUSEBUTTONDOWN");*/
-            /*cpu->quit = true;*/
-        /*}*/
+        if (cpu->gpu->quit) {
+            cpu->quit = true;
+        }
     }
-    /*atexit(SDL_Quit);*/
+    atexit(SDL_Quit);
+    SDL_Quit();
 }

@@ -16,7 +16,6 @@ void gpu_init(gbc_gpu *gpu) {
     gpu_start_frame(gpu);
 }
 
-
 void insertion_sort(void *array, int length,
 		int compare(void*, int, int), void swap(void *, int, int)) {
 	int i, j; // loop indexes
@@ -433,18 +432,6 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	        if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
 	            set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
 	        }
-
-            SDL_Event e;
-            SDL_PollEvent(&e);
-            if (e.type == SDL_QUIT){
-                gpu->quit = true;
-            }
-            if (e.type == SDL_KEYDOWN){
-                gpu->quit = true;
-            }
-            if (e.type == SDL_MOUSEBUTTONDOWN){
-                gpu->quit = true;
-            }
 	    }
         // Normal line
 	    else if (read_u8(gpu->mmu, IO_CURLINE) < SIZE_Y) {
@@ -465,12 +452,10 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 		if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
 			set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
 		}
-		/*gpu->mode_clock -= DUR_HBLANK;*/
     }
     else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && gpu->mode_clock >= DUR_OAM) {
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
 		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
-		/*gpu->mode_clock -= DUR_OAM;*/
     }
     else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM_VRAM) && gpu->mode_clock >= DUR_OAM_VRAM) {
 		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
@@ -486,8 +471,29 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
             }
         }
 
+
+        SDL_Event e;
+
+        if (SDL_PollEvent(&e) != 0) {
+            printf("%d %d\n", e.type, SDL_KEYDOWN);
+            if (e.type == 12){ // Ctrl C ?
+                printf("SDL_QUIT\n");
+                gpu->quit = true;
+            }
+            /*if (e.type == 65538) {*/
+                /*printf("SDL_KEYDOWN  %d  %d\n", e.key.keysym.sym, SDLK_ESCAPE);*/
+                /*if (e.key.keysym.sym == SDLK_ESCAPE) {*/
+                    /*printf("QUIT\n");*/
+                    /*gpu->quit = true;*/
+                /*}*/
+            /*}*/
+            /*if (e.type == SDL_MOUSEBUTTONDOWN){*/
+                /*printf("SDL_MOUSEBUTTONDOWN\n");*/
+                /*gpu->quit = true;*/
+            /*}*/
+        }
+
         SDL_RenderPresent(gpu->renderer);
-		/*gpu->mode_clock -= DUR_OAM_VRAM;*/
     }
 }
 

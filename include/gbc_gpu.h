@@ -3,6 +3,8 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_keyboard.h>
 
 // to display a sprite in the upper left corner of the screen set sprite X=8, Y=16.
 #define SPRITE_INI_X 8
@@ -68,8 +70,8 @@ typedef struct {
     u8 obj_disp[512*512];
 
     int mode_clock; // Object Attribute Memory
-    u8 reset;
     u8 bg_palette[4], obj0_palette[4], obj1_palette[4];
+    u8 reset;
 
     bool quit;
 } gbc_gpu;

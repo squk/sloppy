@@ -39,16 +39,22 @@ void emu_run() {
 void emu_test() {
     int i;
 
-    //SDL_Renderer *renderer;
-    //SDL_Window *window;
-    //SDL_CreateWindowAndRenderer(SIZE_X, SIZE_Y, 0, &window, &renderer);
+    SDL_Renderer *renderer;
+    SDL_Window *window;
+    SDL_CreateWindowAndRenderer(SIZE_X, SIZE_Y, 0, &window, &renderer);
+    // Check that the window was successfully created
+    if (window == NULL) {
+        // In the case that the window could not be made...
+        printf("Could not create window: %s\n", SDL_GetError());
+        return;
+    }
 
     gbc_cpu cpu;
     gbc_gpu gpu;
     gbc_mmu mmu;
     cpu.mmu = &mmu;
     gpu.mmu = &mmu;
-    //gpu.renderer = renderer;
+    gpu.renderer = renderer;
 
     cpu.gpu = &gpu;
 
@@ -58,10 +64,8 @@ void emu_test() {
     memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len);
     mmu.in_bios = true;
 
-    //mmu.in_bios = false;
-    //cpu.registers.pc = 0x100;
-
     //gbc_cpu_set_boot_state(&cpu);
+
     gbc_load_rom(&mmu, data_tetris_gb_bin, data_tetris_gb_bin_len);
     //gbc_load_rom(&mmu, data_cpu_instrs_gb_bin, data_cpu_instrs_gb_bin_len);
     //gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len);
@@ -71,7 +75,7 @@ void emu_test() {
     printf("emulator initialized\n");
     gbc_cpu_loop(&cpu);
 
-    //SDL_DestroyRenderer(renderer);
-    //SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     SDL_Quit();
 }
