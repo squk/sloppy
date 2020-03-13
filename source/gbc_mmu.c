@@ -114,8 +114,14 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     }
     if (address == 0xFF01) {
         /*fprintf(stderr, "%c", val);*/
-        printf("%c", val);
+        /*printf("%c", val);*/
+        /*fflush(stdout);*/
+    }
+
+    if (address == 0xFF02 && val == 0x81) {
+        printf("%c", read_u8(mmu, 0xFF01));
         fflush(stdout);
+        write_u8(mmu, 0xff02, 0);
     }
     *ptr = val;
 }
@@ -129,8 +135,8 @@ u16 read_u16(gbc_mmu *mmu , u16 address) {
 
 void write_u16(gbc_mmu *mmu , u16 address, u16 val) {
     // swap bits for little-endian
-     write_u8(mmu, address, val & 0xFF);
-     write_u8(mmu, address+1, (u8)(val >> 8));
+    write_u8(mmu, address, val & 0xFF);
+    write_u8(mmu, address+1, (u8)(val >> 8));
 }
 
 bool read_bit(gbc_mmu *mmu, u16 address, u8 bit) {
