@@ -491,79 +491,87 @@ void SWAP_L(gbc_cpu *cpu) {
 }
 
 void ADD_A(gbc_cpu *cpu) {
-    u8 i = cpu->registers.a;
-    (cpu->registers.a)+=cpu->registers.a;
-    cpu->registers.f=(cpu->registers.a>255)?FLAG_C:0;
-    if(!cpu->registers.a) cpu->registers.f|=FLAG_Z;
-    if((cpu->registers.a^cpu->registers.a^i)&0x10) cpu->registers.f|=FLAG_H;
+	u16 temp = cpu->registers.a + cpu->registers.a;
+	set_flag_z(cpu, (temp & 0xFF) == 0x00);
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.a ^ temp) & 0x10);
+	set_flag_c(cpu, temp & 0xFF00);
+	cpu->registers.a = (temp & 0xFF);
     cpu->registers.clk.m = 1;
 }
 void ADD_B(gbc_cpu *cpu) {
-    u8 i = cpu->registers.a;
-    (cpu->registers.a)+=cpu->registers.b;
-    cpu->registers.f=(cpu->registers.a>255)?FLAG_C:0;
-    if(!cpu->registers.a) cpu->registers.f|=FLAG_Z;
-    if((cpu->registers.a^cpu->registers.b^i)&0x10) cpu->registers.f|=FLAG_H;
+	u16 temp = cpu->registers.a + cpu->registers.b;
+	set_flag_z(cpu, (temp & 0xFF) == 0x00);
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.b ^ temp) & 0x10);
+	set_flag_c(cpu, temp & 0xFF00);
+	cpu->registers.a = (temp & 0xFF);
     cpu->registers.clk.m = 1;
 }
 void ADD_C(gbc_cpu *cpu) {
-    u8 i = cpu->registers.a;
-    (cpu->registers.a)+=cpu->registers.c;
-    cpu->registers.f=(cpu->registers.a>255)?FLAG_C:0;
-    if(!cpu->registers.a) cpu->registers.f|=FLAG_Z;
-    if((cpu->registers.a^cpu->registers.c^i)&0x10) cpu->registers.f|=FLAG_H;
+	u16 temp = cpu->registers.a + cpu->registers.c;
+	set_flag_z(cpu, (temp & 0xFF) == 0x00);
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.c ^ temp) & 0x10);
+	set_flag_c(cpu, temp & 0xFF00);
+	cpu->registers.a = (temp & 0xFF);
     cpu->registers.clk.m = 1;
 }
 void ADD_D(gbc_cpu *cpu) {
-    u8 i = cpu->registers.a;
-    (cpu->registers.a)+=cpu->registers.d;
-    cpu->registers.f=(cpu->registers.a>255)?FLAG_C:0;
-    if(!cpu->registers.a) cpu->registers.f|=FLAG_Z;
-    if((cpu->registers.a^cpu->registers.d^i)&0x10) cpu->registers.f|=FLAG_H;
+	u16 temp = cpu->registers.a + cpu->registers.d;
+	set_flag_z(cpu, (temp & 0xFF) == 0x00);
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.d ^ temp) & 0x10);
+	set_flag_c(cpu, temp & 0xFF00);
+	cpu->registers.a = (temp & 0xFF);
     cpu->registers.clk.m = 1;
 }
 void ADD_E(gbc_cpu *cpu) {
-    u8 i = cpu->registers.a;
-    (cpu->registers.a)+=cpu->registers.e;
-    cpu->registers.f=(cpu->registers.a>255)?FLAG_C:0;
-    if(!cpu->registers.a) cpu->registers.f|=FLAG_Z;
-    if((cpu->registers.a^cpu->registers.e^i)&0x10) cpu->registers.f|=FLAG_H;
+	u16 temp = cpu->registers.a + cpu->registers.e;
+	set_flag_z(cpu, (temp & 0xFF) == 0x00);
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.e ^ temp) & 0x10);
+	set_flag_c(cpu, temp & 0xFF00);
+	cpu->registers.a = (temp & 0xFF);
     cpu->registers.clk.m = 1;
 }
 void ADD_H(gbc_cpu *cpu) {
-    u8 i = cpu->registers.a;
-    (cpu->registers.a)+=cpu->registers.h;
-    cpu->registers.f=(cpu->registers.a>255)?FLAG_C:0;
-    if(!cpu->registers.a) cpu->registers.f|=FLAG_Z;
-    if((cpu->registers.a^cpu->registers.h^i)&0x10) cpu->registers.f|=FLAG_H;
+	u16 temp = cpu->registers.a + cpu->registers.h;
+	set_flag_z(cpu, (temp & 0xFF) == 0x00);
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.h ^ temp) & 0x10);
+	set_flag_c(cpu, temp & 0xFF00);
+	cpu->registers.a = (temp & 0xFF);
     cpu->registers.clk.m = 1;
 }
 void ADD_L(gbc_cpu *cpu) {
-    u8 i = cpu->registers.a;
-    (cpu->registers.a)+=cpu->registers.l;
-    cpu->registers.f=(cpu->registers.a>255)?FLAG_C:0;
-    if(!cpu->registers.a) cpu->registers.f|=FLAG_Z;
-    if((cpu->registers.a^cpu->registers.l^i)&0x10) cpu->registers.f|=FLAG_H;
+	u16 temp = cpu->registers.a + cpu->registers.l;
+	set_flag_z(cpu, (temp & 0xFF) == 0x00);
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.l ^ temp) & 0x10);
+	set_flag_c(cpu, temp & 0xFF00);
+	cpu->registers.a = (temp & 0xFF);
     cpu->registers.clk.m = 1;
 }
 void ADD_A_mHL(gbc_cpu *cpu) {
-    u8 i = cpu->registers.a;
-    u8 r = read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
-    cpu->registers.a+=r;
-    cpu->registers.f=(cpu->registers.a>255)?FLAG_C:0;
-    if(!cpu->registers.a) cpu->registers.f|=FLAG_Z;
-    if((cpu->registers.a^i^r)&0x10) cpu->registers.f|=FLAG_H;
+    u8 hl = read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
+    u16 temp = cpu->registers.a + hl;
+	set_flag_z(cpu, ((temp & 0xFF) == 0x00));
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (cpu->registers.a ^ hl ^ temp) & 0x10);
+	set_flag_c(cpu, (temp & 0xFF00));
+	cpu->registers.a = (temp & 0xFF);
     cpu->registers.clk.m = 2;
 }
 
 void ADD_d8(gbc_cpu *cpu) {
-    u8 i = cpu->registers.a;
-    u8 r = read_u8(cpu->mmu,cpu->registers.pc);
-    (cpu->registers.a)+=r;
-    cpu->registers.pc++;
-    cpu->registers.f=(cpu->registers.a>255)?FLAG_C:0;
-    if(!cpu->registers.a) cpu->registers.f|=FLAG_Z;
-    if((cpu->registers.a^i^r)&0x10) cpu->registers.f|=FLAG_H;
+	u8 value = read_u8(cpu, cpu->registers.pc++);
+	u16 calc = cpu->registers.a + value;
+	set_flag_z(cpu, ((u8)calc == 0));
+	set_flag_h(cpu, ((cpu->registers.a & 0xF) + (value & 0xF) > 0x0F));
+	set_flag_c(cpu, calc > 0xFF);
+	set_flag_n(cpu, 0);
+	cpu->registers.a = (u8)calc;
     cpu->registers.clk.m = 2;
 }
 
@@ -866,7 +874,7 @@ void CP_A(gbc_cpu *cpu) {
 void CP_B(gbc_cpu *cpu) {
 	u16 temp = cpu->registers.a - cpu->registers.b;
     set_flag_z(cpu, (temp & 0xFF) == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
 	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.b ^ temp) & 0x10);
     set_flag_c(cpu, temp & 0xFF00);
     cpu->registers.clk.m=1;
@@ -874,7 +882,7 @@ void CP_B(gbc_cpu *cpu) {
 void CP_C(gbc_cpu *cpu) {
 	u16 temp = cpu->registers.a - cpu->registers.c;
     set_flag_z(cpu, (temp & 0xFF) == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
 	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.c ^ temp) & 0x10);
     set_flag_c(cpu, temp & 0xFF00);
     cpu->registers.clk.m=1;
@@ -882,7 +890,7 @@ void CP_C(gbc_cpu *cpu) {
 void CP_D(gbc_cpu *cpu) {
 	u16 temp = cpu->registers.a - cpu->registers.d;
     set_flag_z(cpu, (temp & 0xFF) == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
 	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.d ^ temp) & 0x10);
     set_flag_c(cpu, temp & 0xFF00);
     cpu->registers.clk.m=1;
@@ -890,7 +898,7 @@ void CP_D(gbc_cpu *cpu) {
 void CP_E(gbc_cpu *cpu) {
 	u16 temp = cpu->registers.a - cpu->registers.e;
     set_flag_z(cpu, (temp & 0xFF) == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
 	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.e ^ temp) & 0x10);
     set_flag_c(cpu, temp & 0xFF00);
     cpu->registers.clk.m=1;
@@ -898,7 +906,7 @@ void CP_E(gbc_cpu *cpu) {
 void CP_H(gbc_cpu *cpu) {
 	u16 temp = cpu->registers.a - cpu->registers.h;
     set_flag_z(cpu, (temp & 0xFF) == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
 	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.h ^ temp) & 0x10);
     set_flag_c(cpu, temp & 0xFF00);
     cpu->registers.clk.m=1;
@@ -906,7 +914,7 @@ void CP_H(gbc_cpu *cpu) {
 void CP_L(gbc_cpu *cpu) {
 	u16 temp = cpu->registers.a - cpu->registers.l;
     set_flag_z(cpu, (temp & 0xFF) == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
 	set_flag_h(cpu, (cpu->registers.a ^ cpu->registers.l ^ temp) & 0x10);
     set_flag_c(cpu, temp & 0xFF00);
     cpu->registers.clk.m=1;
@@ -915,7 +923,7 @@ void CP_mHL(gbc_cpu *cpu) {
 	u8 temp_8 = read_u8(cpu->mmu, (cpu->registers.h<<8)+cpu->registers.l);
     u16 temp_16 = cpu->registers.a - temp_8;
     set_flag_z(cpu, (temp_16 & 0xFF) == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
 	set_flag_h(cpu, (cpu->registers.a ^ temp_8^ temp_16) & 0x10);
     set_flag_c(cpu, temp_16 & 0xFF00);
     cpu->registers.clk.m = 2;
@@ -924,7 +932,7 @@ void CP_d8(gbc_cpu *cpu) {
     u8 temp_8 = read_u8(cpu->mmu, cpu->registers.pc++);
     u16 temp_16 = cpu->registers.a - temp_8;
     set_flag_z(cpu, (temp_16 & 0xFF) == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
 	set_flag_h(cpu, (cpu->registers.a ^ temp_8^ temp_16) & 0x10);
     set_flag_c(cpu, temp_16 & 0xFF00);
     cpu->registers.clk.m = 2;
@@ -942,143 +950,223 @@ void DAA(gbc_cpu *cpu) {
 
 void AND_A(gbc_cpu *cpu) {
     cpu->registers.a&=cpu->registers.a;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 1);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void AND_B(gbc_cpu *cpu) {
     cpu->registers.a&=cpu->registers.b;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 1);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void AND_C(gbc_cpu *cpu) {
     cpu->registers.a&=cpu->registers.c;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 1);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void AND_D(gbc_cpu *cpu) {
     cpu->registers.a&=cpu->registers.d;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 1);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void AND_E(gbc_cpu *cpu) {
     cpu->registers.a&=cpu->registers.e;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 1);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void AND_H(gbc_cpu *cpu) {
     cpu->registers.a&=cpu->registers.h;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 1);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void AND_L(gbc_cpu *cpu) {
     cpu->registers.a&=cpu->registers.l;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 1);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void AND_mHL(gbc_cpu *cpu) {
     cpu->registers.a&=read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 1);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 2;
 }
 void AND_d8(gbc_cpu *cpu) {
     cpu->registers.a&=read_u8(cpu->mmu,cpu->registers.pc);
     cpu->registers.pc++;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 1);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 2;
 }
 
 void OR_A(gbc_cpu *cpu) {
     cpu->registers.a|=cpu->registers.a;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void OR_B(gbc_cpu *cpu) {
     cpu->registers.a|=cpu->registers.b;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void OR_C(gbc_cpu *cpu) {
     cpu->registers.a|=cpu->registers.c;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void OR_D(gbc_cpu *cpu) {
     cpu->registers.a|=cpu->registers.d;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void OR_E(gbc_cpu *cpu) {
     cpu->registers.a|=cpu->registers.e;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void OR_H(gbc_cpu *cpu) {
     cpu->registers.a|=cpu->registers.h;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void OR_L(gbc_cpu *cpu) {
     cpu->registers.a|=cpu->registers.l;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void OR_mHL(gbc_cpu *cpu) {
     cpu->registers.a|=read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 2;
 }
 void OR_d8(gbc_cpu *cpu) {
     cpu->registers.a|=read_u8(cpu->mmu,cpu->registers.pc);
     cpu->registers.pc++;
-    cpu->registers.f = cpu->registers.a?0:FLAG_Z;
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 2;
 }
 
-// checked
 void XOR_A(gbc_cpu *cpu) {
     cpu->registers.a = 0;
-    set_flag_z(cpu, true);
+    set_flag_z(cpu, 0);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void XOR_B(gbc_cpu *cpu) {
     cpu->registers.a^=cpu->registers.b;
-    set_flag_z(cpu, cpu->registers.a == 0);
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void XOR_C(gbc_cpu *cpu) {
     cpu->registers.a^=cpu->registers.c;
-    set_flag_z(cpu, cpu->registers.a == 0);
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void XOR_D(gbc_cpu *cpu) {
     cpu->registers.a^=cpu->registers.d;
-    set_flag_z(cpu, cpu->registers.a == 0);
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void XOR_E(gbc_cpu *cpu) {
     cpu->registers.a^=cpu->registers.e;
-    set_flag_z(cpu, cpu->registers.a == 0);
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void XOR_H(gbc_cpu *cpu) {
     cpu->registers.a^=cpu->registers.h;
-    set_flag_z(cpu, cpu->registers.a == 0);
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void XOR_L(gbc_cpu *cpu) {
     cpu->registers.a^=cpu->registers.l;
-    set_flag_z(cpu, cpu->registers.a == 0);
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 1;
 }
 void XOR_mHL(gbc_cpu *cpu) {
     cpu->registers.a^=read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
-    set_flag_z(cpu, cpu->registers.a == 0);
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 2;
 }
 void XOR_d8(gbc_cpu *cpu) {
     cpu->registers.a^=read_u8(cpu->mmu,cpu->registers.pc);
     cpu->registers.pc++;
-    set_flag_z(cpu, cpu->registers.a == 0);
+    set_flag_z(cpu, cpu->registers.a == 0x00);
+    set_flag_n(cpu, 0);
+	set_flag_h(cpu, 0);
+    set_flag_c(cpu, 0);
     cpu->registers.clk.m = 2;
 }
 
@@ -1086,7 +1174,7 @@ void INC_A(gbc_cpu *cpu) {
     u8 i = cpu->registers.a;
     cpu->registers.a++;
     set_flag_z(cpu, cpu->registers.a == 0x00);
-    set_flag_n(cpu, false);
+    set_flag_n(cpu, 0);
     set_flag_h(cpu, half_carry(i, 1));
     cpu->registers.clk.m = 1;
 }
@@ -1094,7 +1182,7 @@ void INC_B(gbc_cpu *cpu) {
     u8 i = cpu->registers.b;
     cpu->registers.b++;
     set_flag_z(cpu, cpu->registers.b == 0x00);
-    set_flag_n(cpu, false);
+    set_flag_n(cpu, 0);
     set_flag_h(cpu, half_carry(i, 1));
     cpu->registers.clk.m = 1;
 }
@@ -1102,7 +1190,7 @@ void INC_C(gbc_cpu *cpu) {
     u8 i = cpu->registers.c;
     cpu->registers.c++;
     set_flag_z(cpu, cpu->registers.c == 0x00);
-    set_flag_n(cpu, false);
+    set_flag_n(cpu, 0);
     set_flag_h(cpu, half_carry(i, 1));
     cpu->registers.clk.m = 1;
 }
@@ -1110,7 +1198,7 @@ void INC_D(gbc_cpu *cpu) {
     u8 i = cpu->registers.d;
     cpu->registers.d++;
     set_flag_z(cpu, cpu->registers.d == 0x00);
-    set_flag_n(cpu, false);
+    set_flag_n(cpu, 0);
     set_flag_h(cpu, half_carry(i, 1));
     cpu->registers.clk.m = 1;
 }
@@ -1118,7 +1206,7 @@ void INC_E(gbc_cpu *cpu) {
     u8 i = cpu->registers.e;
     cpu->registers.e++;
     set_flag_z(cpu, cpu->registers.e == 0x00);
-    set_flag_n(cpu, false);
+    set_flag_n(cpu, 0);
     set_flag_h(cpu, half_carry(i, 1));
     cpu->registers.clk.m = 1;
 }
@@ -1126,7 +1214,7 @@ void INC_H(gbc_cpu *cpu) {
     u8 i = cpu->registers.h;
     cpu->registers.h++;
     set_flag_z(cpu, cpu->registers.h == 0x00);
-    set_flag_n(cpu, false);
+    set_flag_n(cpu, 0);
     set_flag_h(cpu, half_carry(i, 1));
     cpu->registers.clk.m = 1;
 }
@@ -1134,7 +1222,7 @@ void INC_L(gbc_cpu *cpu) {
     u8 i = cpu->registers.l;
     cpu->registers.l++;
     set_flag_z(cpu, cpu->registers.l == 0x00);
-    set_flag_n(cpu, false);
+    set_flag_n(cpu, 0);
     set_flag_h(cpu, half_carry(i, 1));
     cpu->registers.clk.m = 1;
 }
@@ -1170,7 +1258,7 @@ void DEC_B(gbc_cpu *cpu) {
     u8 i = cpu->registers.b;
     cpu->registers.b--;
     set_flag_z(cpu, cpu->registers.b == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
     set_flag_h(cpu, (cpu->registers.b & 0x0F) == 0x0F);
     cpu->registers.clk.m = 1;
 }
@@ -1178,7 +1266,7 @@ void DEC_C(gbc_cpu *cpu) {
     u8 i = cpu->registers.c;
     cpu->registers.c--;
     set_flag_z(cpu, cpu->registers.c == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
     set_flag_h(cpu, (cpu->registers.c & 0x0F) == 0x0F);
     cpu->registers.clk.m = 1;
 }
@@ -1186,7 +1274,7 @@ void DEC_D(gbc_cpu *cpu) {
     u8 i = cpu->registers.d;
     cpu->registers.d--;
     set_flag_z(cpu, cpu->registers.d == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
     set_flag_h(cpu, (cpu->registers.d & 0x0F) == 0x0F);
     cpu->registers.clk.m = 1;
 }
@@ -1194,7 +1282,7 @@ void DEC_E(gbc_cpu *cpu) {
     u8 i = cpu->registers.e;
     cpu->registers.e--;
     set_flag_z(cpu, cpu->registers.e == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
     set_flag_h(cpu, (cpu->registers.e & 0x0F) == 0x0F);
     cpu->registers.clk.m = 1;
 }
@@ -1202,7 +1290,7 @@ void DEC_H(gbc_cpu *cpu) {
     u8 i = cpu->registers.h;
     cpu->registers.h--;
     set_flag_z(cpu, cpu->registers.h == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
     set_flag_h(cpu, (cpu->registers.h & 0x0F) == 0x0F);
     cpu->registers.clk.m = 1;
 }
@@ -1210,7 +1298,7 @@ void DEC_L(gbc_cpu *cpu) {
     u8 i = cpu->registers.l;
     cpu->registers.l--;
     set_flag_z(cpu, cpu->registers.l == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
     set_flag_h(cpu, (cpu->registers.l & 0x0F) == 0x0F);
     cpu->registers.clk.m = 1;
 }
@@ -1218,7 +1306,7 @@ void DEC_A(gbc_cpu *cpu) {
     u8 i = cpu->registers.a;
     cpu->registers.a--;
     set_flag_z(cpu, cpu->registers.a == 0x00);
-    set_flag_n(cpu, true);
+    set_flag_n(cpu, 1);
     set_flag_h(cpu, (cpu->registers.a & 0x0F) == 0x0F);
     cpu->registers.clk.m = 1;
 }
