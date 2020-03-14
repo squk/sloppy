@@ -9,6 +9,13 @@
 #include "gbc_ops.h"
 #include "gbc_io.h"
 
+u16 get_hl(gbc_cpu *cpu) { return (cpu->registers.h<<8)+cpu->registers.l; }
+void set_hl(gbc_cpu *cpu, u16 hl) { cpu->registers.h=(hl>>8)&255; cpu->registers.l = hl&255; }
+u16 get_bc(gbc_cpu *cpu) { return (cpu->registers.b<<8)+cpu->registers.c; }
+void set_bc(gbc_cpu *cpu, u16 bc) { cpu->registers.b=(bc>>8)&255; cpu->registers.c = bc&255; }
+u16 get_de(gbc_cpu *cpu) { return (cpu->registers.d<<8)+cpu->registers.e; }
+void set_de(gbc_cpu *cpu, u16 de) { cpu->registers.d=(de>>8)&255; cpu->registers.e = de&255; }
+
 bool flag_z(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
 bool flag_n(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }
 bool flag_h(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_H) == FLAG_H; }
@@ -202,11 +209,9 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
 }
 
 void gbc_cpu_trace(gbc_cpu *cpu, u8 opcode) {
-    /*if (cpu->registers.pc >= 0x00 && cpu->registers.pc <= 0xff) {*/
-        cpu->registers.pc--;
-        gbc_registers_debug(cpu, opcode);
-        cpu->registers.pc++;
-    /*}*/
+    cpu->registers.pc--;
+    gbc_registers_debug(cpu, opcode);
+    cpu->registers.pc++;
 }
 
 void gbc_cpu_step(gbc_cpu *cpu) {
@@ -249,6 +254,11 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
     /*gbc_cpu_trace(cpu, opcode);*/
+        /*cpu->registers.pc--;*/
+    /*if (cpu->registers.pc == 0xfe) {*/
+        /*gbc_registers_debug(cpu, opcode);*/
+    /*}*/
+        /*cpu->registers.pc++;*/
 
     u16 old_pc = cpu->registers.pc;
 

@@ -55,6 +55,13 @@ typedef struct {
     gbc_ppu *ppu;
 } gbc_cpu;
 
+u16 get_hl(gbc_cpu *cpu);
+void set_hl(gbc_cpu *cpu, u16 hl);
+u16 get_bc(gbc_cpu *cpu);
+void set_bc(gbc_cpu *cpu, u16 bc);
+u16 get_de(gbc_cpu *cpu);
+void set_de(gbc_cpu *cpu, u16 de);
+
 bool flag_z(gbc_cpu *cpu);
 bool flag_n(gbc_cpu *cpu);
 bool flag_h(gbc_cpu *cpu);
