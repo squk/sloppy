@@ -94,8 +94,8 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
     if (r->f & FLAG_H) flags[2] = 'H';
     if (r->f & FLAG_C) flags[3] = 'C';
 
-    s8 temp = read_u8(cpu->mmu,cpu->registers.pc);
-    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx  %s, %d\n", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, OPS_STR[opcode], temp);
+    u8 temp = read_u8(cpu->mmu,cpu->registers.pc+1);
+    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx  %s, %x\n", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, OPS_STR[opcode], temp);
     /*getchar();*/
 }
 
@@ -316,6 +316,6 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
             cpu->quit = true;
         }
     }
-    atexit(SDL_Quit);
-    SDL_Quit();
+    /*atexit(SDL_Quit);*/
+    /*SDL_Quit();*/
 }

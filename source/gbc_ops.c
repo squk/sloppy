@@ -426,11 +426,12 @@ void LD_A_mHLD(gbc_cpu *cpu) {
 }
 
 void LDH_a8_A(gbc_cpu *cpu) {
-    write_u8(cpu->mmu, 0xFF00 | read_u8(cpu->mmu, cpu->registers.pc++), cpu->registers.a);
+    write_u8(cpu->mmu, 0xFF00 + read_u8(cpu->mmu, cpu->registers.pc++), cpu->registers.a);
     cpu->registers.clk.m = 3;
 }
 void LDH_A_a8(gbc_cpu *cpu) {
-    cpu->registers.a = read_u8(cpu->mmu, 0xFF00 | read_u8(cpu->mmu, cpu->registers.pc++));
+    cpu->registers.a = read_u8(cpu->mmu, 0xFF00 + read_u8(cpu->mmu, cpu->registers.pc++));
+    cpu->registers.clk.m = 3;
 }
 void LD_HL_SP_r8(gbc_cpu *cpu) {
     u8 i = read_u8(cpu->mmu,cpu->registers.pc);

@@ -13,6 +13,7 @@
 
 
 void gpu_init(gbc_gpu *gpu) {
+    gpu->quit = false;
     gpu_start_frame(gpu);
 }
 
@@ -437,7 +438,7 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
 	    else if (read_u8(gpu->mmu, IO_CURLINE) < SIZE_Y) {
             if (read_u8(gpu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
-                SDL_RenderClear(gpu->renderer);
+                /*SDL_RenderClear(gpu->renderer);*/
             }
 		    set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
 
@@ -466,34 +467,34 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
                 int px_index = y * SIZE_X + x;
                 u8 color = gpu->fb[px_index];
 
-                SDL_SetRenderDrawColor(gpu->renderer, color, color, color, 0xFF);
-                SDL_RenderDrawPoint(gpu->renderer, x, y);
+                /*SDL_SetRenderDrawColor(gpu->renderer, color, color, color, 0xFF);*/
+                /*SDL_RenderDrawPoint(gpu->renderer, x, y);*/
             }
         }
 
 
-        SDL_Event e;
+        /*SDL_Event e;*/
 
-        if (SDL_PollEvent(&e) != 0) {
-            printf("%d %d\n", e.type, SDL_KEYDOWN);
-            if (e.type == 12){ // Ctrl C ?
-                printf("SDL_QUIT\n");
-                gpu->quit = true;
-            }
-            /*if (e.type == 65538) {*/
-                /*printf("SDL_KEYDOWN  %d  %d\n", e.key.keysym.sym, SDLK_ESCAPE);*/
-                /*if (e.key.keysym.sym == SDLK_ESCAPE) {*/
-                    /*printf("QUIT\n");*/
-                    /*gpu->quit = true;*/
-                /*}*/
-            /*}*/
-            /*if (e.type == SDL_MOUSEBUTTONDOWN){*/
-                /*printf("SDL_MOUSEBUTTONDOWN\n");*/
+        /*if (SDL_PollEvent(&e) != 0) {*/
+            /*printf("%d %d\n", e.type, SDL_KEYDOWN);*/
+            /*if (e.type == 12){ // Ctrl C ?*/
+                /*printf("SDL_QUIT\n");*/
                 /*gpu->quit = true;*/
             /*}*/
-        }
+            /*[>if (e.type == 65538) {<]*/
+                /*[>printf("SDL_KEYDOWN  %d  %d\n", e.key.keysym.sym, SDLK_ESCAPE);<]*/
+                /*[>if (e.key.keysym.sym == SDLK_ESCAPE) {<]*/
+                    /*[>printf("QUIT\n");<]*/
+                    /*[>gpu->quit = true;<]*/
+                /*[>}<]*/
+            /*[>}<]*/
+            /*[>if (e.type == SDL_MOUSEBUTTONDOWN){<]*/
+                /*[>printf("SDL_MOUSEBUTTONDOWN\n");<]*/
+                /*[>gpu->quit = true;<]*/
+            /*[>}<]*/
+        /*}*/
 
-        SDL_RenderPresent(gpu->renderer);
+        /*SDL_RenderPresent(gpu->renderer);*/
     }
 }
 

@@ -63,7 +63,7 @@ void emu_test() {
     gbc_mmu mmu;
     cpu.mmu = &mmu;
     gpu.mmu = &mmu;
-    gpu.renderer = renderer;
+    //gpu.renderer = renderer;
 
     cpu.gpu = &gpu;
 
