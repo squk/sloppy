@@ -556,10 +556,10 @@ void ADD_L(gbc_cpu *cpu) {
 void ADD_A_mHL(gbc_cpu *cpu) {
     u8 hl = read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
     u16 temp = cpu->registers.a + hl;
-	set_flag_z(cpu, ((temp & 0xFF) == 0x00));
+	set_flag_z(cpu, (temp & 0xFF) == 0x00);
 	set_flag_n(cpu, 0);
 	set_flag_h(cpu, (cpu->registers.a ^ hl ^ temp) & 0x10);
-	set_flag_c(cpu, (temp & 0xFF00));
+	set_flag_c(cpu, temp & 0xFF00);
 	cpu->registers.a = (temp & 0xFF);
     cpu->registers.clk.m = 2;
 }
@@ -568,54 +568,51 @@ void ADD_d8(gbc_cpu *cpu) {
 	u8 value = read_u8(cpu, cpu->registers.pc++);
 	u16 calc = cpu->registers.a + value;
 	set_flag_z(cpu, ((u8)calc == 0));
+	set_flag_n(cpu, 0);
 	set_flag_h(cpu, ((cpu->registers.a & 0xF) + (value & 0xF) > 0x0F));
 	set_flag_c(cpu, calc > 0xFF);
-	set_flag_n(cpu, 0);
 	cpu->registers.a = (u8)calc;
     cpu->registers.clk.m = 2;
 }
 
 void ADD_HL_BC(gbc_cpu *cpu) {
-    u16 hl=(cpu->registers.h<<8)+cpu->registers.l;
-    hl+=(cpu->registers.b<<8)+cpu->registers.c;
-    if(hl>65535) cpu->registers.f|=FLAG_C;
-    else cpu->registers.f &= 0xEF;
-    cpu->registers.h=(hl>>8)&255;
-    cpu->registers.l = hl&255;
+	u32 temp = get_hl(cpu) + get_bc(cpu);
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (temp ^ get_hl(cpu) ^ get_bc(cpu)) & 0x1000);
+	set_flag_c(cpu, temp & 0xFFFF0000);
+	set_hl(cpu, temp & 0x0000FFFF);
     cpu->registers.clk.m = 3;
 }
 void ADD_HL_DE(gbc_cpu *cpu) {
-    u16 hl=(cpu->registers.h<<8)+cpu->registers.l;
-    hl+=(cpu->registers.d<<8)+cpu->registers.e;
-    if(hl>65535) cpu->registers.f|=FLAG_C;
-    else cpu->registers.f &= 0xEF;
-    cpu->registers.h=(hl>>8)&255;
-    cpu->registers.l = hl&255;
+	u32 temp = get_hl(cpu) + get_de(cpu);
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, (temp ^ get_hl(cpu) ^ get_de(cpu)) & 0x1000);
+	set_flag_c(cpu, temp & 0xFFFF0000);
+	set_hl(cpu, temp & 0x0000FFFF);
     cpu->registers.clk.m = 3;
 }
 void ADD_HL_HL(gbc_cpu *cpu) {
-    u16 hl=(cpu->registers.h<<8)+cpu->registers.l;
-    hl+=(cpu->registers.h<<8)+cpu->registers.l;
-    if(hl>65535) cpu->registers.f|=FLAG_C;
-    else cpu->registers.f &= 0xEF;
-    cpu->registers.h=(hl>>8)&255;
-    cpu->registers.l = hl&255;
-    cpu->registers.clk.m = 3;
+    u32 temp = get_hl(cpu) + get_hl(cpu);
+	set_flag_n(cpu, 0);
+    set_flag_h(cpu, temp & 0x1000);
+    set_flag_c(cpu, temp & 0xFFFF0000);
+    set_hl(cpu, temp & 0x0000FFFF);
 }
 void ADD_HL_SP(gbc_cpu *cpu) {
-    u16 hl=(cpu->registers.h<<8)+cpu->registers.l;
-    hl+=cpu->registers.sp;
-    if(hl>65535) cpu->registers.f|=FLAG_C;
-    else cpu->registers.f &= 0xEF;
-    cpu->registers.h=(hl>>8)&255;
-    cpu->registers.l = hl&255;
+	u32 temp = get_hl(cpu) + cpu->registers.sp;
+	set_flag_n(cpu, 0);
+	set_flag_h(cpu, ((get_hl(cpu) & 0xFFF) + (cpu->registers.sp & 0xFFF)) & 0x1000);
+	set_flag_c(cpu, temp & 0x10000);
+	set_hl(cpu, (u16)temp);
     cpu->registers.clk.m = 3;
 }
 void ADD_SP_d8(gbc_cpu *cpu) {
-    u8 i = read_u8(cpu->mmu,cpu->registers.pc);
-    if(i>127) i=-((~i+1)&255);
-    cpu->registers.pc++;
-    cpu->registers.sp+=i;
+    s8 offset = (s8)read_u8(cpu->mmu, cpu->registers.pc++);
+	set_flag_z(cpu, 0);
+	set_flag_n(cpu, 0);
+    set_flag_h(cpu, (cpu->registers.sp & 0xF) + (offset & 0xF) > 0xF);
+    set_flag_c(cpu, (cpu->registers.sp & 0xFF) + (offset & 0xFF) > 0xFF);
+    cpu->registers.sp += offset;
     cpu->registers.clk.m = 4;
 }
 
