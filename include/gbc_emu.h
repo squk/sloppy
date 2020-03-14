@@ -48,22 +48,27 @@ void emu_run() {
 void emu_test() {
     int i;
 
-    //SDL_Renderer *renderer;
-    //SDL_Window *window;
-    //SDL_CreateWindowAndRenderer(SIZE_X, SIZE_Y, 0, &window, &renderer);
+#if defined(SLOPPY_RENDER)
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Renderer *renderer;
+    SDL_Window *window;
+    SDL_CreateWindowAndRenderer(SIZE_X, SIZE_Y, 0, &window, &renderer);
     // Check that the window was successfully created
-    //if (window == NULL) {
-        //// In the case that the window could not be made...
-        //printf("Could not create window: %s\n", SDL_GetError());
-        //return;
-    //}
+    if (window == NULL) {
+        // In the case that the window could not be made...
+        printf("Could not create window: %s\n", SDL_GetError());
+        return;
+    }
+#endif
 
     gbc_cpu cpu;
     gbc_ppu ppu;
     gbc_mmu mmu;
     cpu.mmu = &mmu;
     ppu.mmu = &mmu;
-    //ppu.renderer = renderer;
+#if defined(SLOPPY_RENDER)
+    ppu.renderer = renderer;
+#endif
 
     cpu.ppu = &ppu;
 
@@ -77,12 +82,12 @@ void emu_test() {
 
     //gbc_load_rom(&mmu, data_tetris_gb_bin, data_tetris_gb_bin_len);
 
-    gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len);
+    //gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len);
     //gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len);
     //gbc_load_rom(&mmu, __03_op_sp_hl_gb, __03_op_sp_hl_gb_len);
     //gbc_load_rom(&mmu, __04_op_r_imm_gb, __04_op_r_imm_gb_len);
     //gbc_load_rom(&mmu, __05_op_rp_gb, __05_op_rp_gb_len);
-    //gbc_load_rom(&mmu, __06_ld_r_r_gb, __06_ld_r_r_gb_len);
+    gbc_load_rom(&mmu, __06_ld_r_r_gb, __06_ld_r_r_gb_len);
     //gbc_load_rom(&mmu, __07_jr_jp_call_ret_rst_gb, __07_jr_jp_call_ret_rst_gb_len);
     //gbc_load_rom(&mmu, __08_misc_instrs_gb, __08_misc_instrs_gb_len);
     //gbc_load_rom(&mmu, __09_op_r_r_gb, __09_op_r_r_gb_len);
@@ -92,7 +97,9 @@ void emu_test() {
     //printf("emulator initialized\n");
     gbc_cpu_loop(&cpu);
 
-    //SDL_DestroyRenderer(renderer);
-    //SDL_DestroyWindow(window);
-    //SDL_Quit();
+#if defined(SLOPPY_RENDER)
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+#endif
 }

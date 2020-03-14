@@ -248,7 +248,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    gbc_cpu_trace(cpu, opcode);
+    /*gbc_cpu_trace(cpu, opcode);*/
 
     u16 old_pc = cpu->registers.pc;
 
@@ -316,6 +316,8 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
             cpu->quit = true;
         }
     }
-    /*atexit(SDL_Quit);*/
-    /*SDL_Quit();*/
+#if defined(SLOPPY_RENDER)
+    atexit(SDL_Quit);
+    SDL_Quit();
+#endif
 }

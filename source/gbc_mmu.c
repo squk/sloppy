@@ -112,16 +112,10 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
         mmu->in_bios = false;
         printf("OUT OF BIOS\n");
     }
-    if (address == 0xFF01) {
-        /*fprintf(stderr, "%c", val);*/
-        /*printf("%c", val);*/
-        /*fflush(stdout);*/
-    }
-
-    if (address == 0xFF02 && val == 0x81) {
+    // https://gbdev.gg8.se/wiki/articles/Serial_Data_Transfer_(Link_Cable)#FF02_-_SC_-_Serial_Transfer_Control_.28R.2FW.29
+    if (address == 0xFF02 && val & 0x81) {
         printf("%c", read_u8(mmu, 0xFF01));
         fflush(stdout);
-        write_u8(mmu, 0xff02, 0);
     }
     *ptr = val;
 }
