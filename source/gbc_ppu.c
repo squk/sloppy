@@ -18,20 +18,20 @@ void ppu_init(gbc_ppu *ppu) {
 }
 
 void insertion_sort(void *array, int length,
-		int compare(void*, int, int), void swap(void *, int, int)) {
-	int i, j; // loop indexes
+        int compare(void*, int, int), void swap(void *, int, int)) {
+    int i, j; // loop indexes
 
-	for (j = 1; j < length; j++) {// index to insert array
-		for (i = j-1; 0 <= i; i--) {
-			// compare to previous index and swap if needed
-			// else if previous index is smaller, this is my place
-			if (!compare(array, i, i+1)) {
-				swap(array, i, i+1);
-			} else {
-				i = 0;
-			}
-		}
-	}
+    for (j = 1; j < length; j++) {// index to insert array
+        for (i = j-1; 0 <= i; i--) {
+            // compare to previous index and swap if needed
+            // else if previous index is smaller, this is my place
+            if (!compare(array, i, i+1)) {
+                swap(array, i, i+1);
+            } else {
+                i = 0;
+            }
+        }
+    }
 }
 
 // Bit 7-6 - Shade for Color Number 3
@@ -39,52 +39,52 @@ void insertion_sort(void *array, int length,
 // Bit 3-2 - Shade for Color Number 1
 // Bit 1-0 - Shade for Color Number 0
 void set_palette(u8* p, u8 v)  {
-	p[0] = v & 0x03;
-	p[1] = (v & 0x0C) >> 2;
-	p[2] = (v & 0x30) >> 4;
-	p[3] = (v & 0xC0) >> 6;
+    p[0] = v & 0x03;
+    p[1] = (v & 0x0C) >> 2;
+    p[2] = (v & 0x30) >> 4;
+    p[3] = (v & 0xC0) >> 6;
 }
 
 u8 ppu_read_u8(gbc_ppu *ppu, u16 address) {
-	switch (address) {
-		case IO_CURLINE:
-			return read_u8(ppu->mmu, IO_CURLINE);
-		case IO_CMPLINE:
-			return read_u8(ppu->mmu, IO_CMPLINE);
-		case IO_BGRDPAL:
-			return read_u8(ppu->mmu, IO_BGRDPAL);
-		case IO_OBJ0PAL:
-			return read_u8(ppu->mmu, IO_OBJ0PAL);
-		case IO_OBJ1PAL:
-			return read_u8(ppu->mmu, IO_OBJ1PAL);
-		case IO_SCROLLY:
-			return read_u8(ppu->mmu, IO_SCROLLY);
-		case IO_SCROLLX:
-			return read_u8(ppu->mmu, IO_SCROLLX);
-		case IO_WNDPOSY:
-			return read_u8(ppu->mmu, IO_WNDPOSX);
-		case IO_WNDPOSX:
-			return read_u8(ppu->mmu, IO_WNDPOSX);
-		case IO_LCDSTAT:
-			return read_u8(ppu->mmu, IO_LCDSTAT);
-		default:
-			return 0;
-	}
+    switch (address) {
+        case IO_CURLINE:
+            return read_u8(ppu->mmu, IO_CURLINE);
+        case IO_CMPLINE:
+            return read_u8(ppu->mmu, IO_CMPLINE);
+        case IO_BGRDPAL:
+            return read_u8(ppu->mmu, IO_BGRDPAL);
+        case IO_OBJ0PAL:
+            return read_u8(ppu->mmu, IO_OBJ0PAL);
+        case IO_OBJ1PAL:
+            return read_u8(ppu->mmu, IO_OBJ1PAL);
+        case IO_SCROLLY:
+            return read_u8(ppu->mmu, IO_SCROLLY);
+        case IO_SCROLLX:
+            return read_u8(ppu->mmu, IO_SCROLLX);
+        case IO_WNDPOSY:
+            return read_u8(ppu->mmu, IO_WNDPOSX);
+        case IO_WNDPOSX:
+            return read_u8(ppu->mmu, IO_WNDPOSX);
+        case IO_LCDSTAT:
+            return read_u8(ppu->mmu, IO_LCDSTAT);
+        default:
+            return 0;
+    }
 }
 
 void ppu_start_frame(gbc_ppu *ppu) {
-	int i, j;
+    int i, j;
 
 
-	// set win and obj to transparent
-	for (i = 0; i < 256; i++) {
-		for (j = 0; j < 256; j++) {
+    // set win and obj to transparent
+    for (i = 0; i < 256; i++) {
+        for (j = 0; j < 256; j++) {
             ppu->bg_disp[i * 256 + 1] = 0;
             ppu->win_disp[i * 256 + j] = TRANSPARENT;
             ppu->obj_disp[i * 256 + j] = TRANSPARENT;
-		}
-	}
-	u8 r = ppu_run(ppu, 0);
+        }
+    }
+    u8 r = ppu_run(ppu, 0);
 }
 
 // TODO: cleanup and optimize
@@ -110,137 +110,137 @@ void ppu_draw_line_fb(gbc_ppu *ppu, u8 line) {
     }
 
     /*printf("fb write\n");*/
-	/*memcpy(ppu->fb, 0, sizeof ppu->fb);*/
+    /*memcpy(ppu->fb, 0, sizeof ppu->fb);*/
 }
 
 void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
-	u16 bg_tile_map, tile_data;
-	u8 oam_row, obj_line;
-	u8 obj_line_a, obj_line_b;
-	s16 obj;
+    u16 bg_tile_map, tile_data;
+    u8 oam_row, obj_line;
+    u8 obj_line_a, obj_line_b;
+    s16 obj;
 
-	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
+    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
         case OPT_BG_Tile_Map_0:
             bg_tile_map = 0x9800;
             break;
         case OPT_BG_Tile_Map_1:
             bg_tile_map = 0x9C00;
             break;
-	}
+    }
 
-	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
         case OPT_BGWindow_Tile_Data_0:
             tile_data = 0x9000;
             break;
         case OPT_BGWindow_Tile_Data_1:
             tile_data = 0x8000;
             break;
-	}
+    }
 
-	// optimization for GBA. it's ARM CPU struggled with div and mod operators
-	/*oam_row = (u8)Div(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
-	/*obj_line = (u8)DivMod(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
+    // optimization for GBA. it's ARM CPU struggled with div and mod operators
+    /*oam_row = (u8)Div(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
+    /*obj_line = (u8)DivMod(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
     oam_row = (u8)((line + read_u8(ppu->mmu, IO_SCROLLY)) / 8);
     obj_line = (u8)((line + read_u8(ppu->mmu, IO_SCROLLY)) % 8);
 
-	u8 i, j;
-	for (i = 0; i < 32; i++) {
-		if (tile_data == 0x9000) {
-			obj = (s8)read_u8(ppu->mmu, bg_tile_map + oam_row * 32 + i);
-		} else {
-			obj = (u8)read_u8(ppu->mmu, bg_tile_map + oam_row * 32 + i);
-		}
-		obj_line_a = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2);
-		obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
-		for (j = 0; j < 8; j++) {
-			ppu->bg_disp[line * 256 + (u8)(i * 8 - read_u8(ppu->mmu, IO_SCROLLX) + j)] =
-				ppu->bg_palette[
-				((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-				    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
-				];
-		}
-	}
+    u8 i, j;
+    for (i = 0; i < 32; i++) {
+        if (tile_data == 0x9000) {
+            obj = (s8)read_u8(ppu->mmu, bg_tile_map + oam_row * 32 + i);
+        } else {
+            obj = (u8)read_u8(ppu->mmu, bg_tile_map + oam_row * 32 + i);
+        }
+        obj_line_a = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2);
+        obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
+        for (j = 0; j < 8; j++) {
+            ppu->bg_disp[line * 256 + (u8)(i * 8 - read_u8(ppu->mmu, IO_SCROLLX) + j)] =
+                ppu->bg_palette[
+                ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
+                ];
+        }
+    }
 }
 
 void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
-	u16 win_tile_map, tile_data;
-	u8 oam_row, obj_line;
-	u8 obj_line_a, obj_line_b;
-	s16 obj;
+    u16 win_tile_map, tile_data;
+    u8 oam_row, obj_line;
+    u8 obj_line_a, obj_line_b;
+    s16 obj;
 
-	if (read_u8(ppu->mmu, IO_WNDPOSY)  > line || read_u8(ppu->mmu, IO_WNDPOSX) > SIZE_X) {
-		return;
-	}
+    if (read_u8(ppu->mmu, IO_WNDPOSY)  > line || read_u8(ppu->mmu, IO_WNDPOSX) > SIZE_X) {
+        return;
+    }
 
-	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Tile_Map_Display_Select)) {
-	    case OPT_Window_Tile_Map_0:
-		    win_tile_map = 0x9800;
-		    break;
-	    case OPT_Window_Tile_Map_1:
-		    win_tile_map = 0x9C00;
-		    break;
-	}
+    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Tile_Map_Display_Select)) {
+        case OPT_Window_Tile_Map_0:
+            win_tile_map = 0x9800;
+            break;
+        case OPT_Window_Tile_Map_1:
+            win_tile_map = 0x9C00;
+            break;
+    }
 
-	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
-	    case OPT_BGWindow_Tile_Data_0:
-		    tile_data = 0x9000;
-		    break;
-	    case OPT_BGWindow_Tile_Data_1:
-		    tile_data = 0x8000;
-		    break;
-	}
+    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+        case OPT_BGWindow_Tile_Data_0:
+            tile_data = 0x9000;
+            break;
+        case OPT_BGWindow_Tile_Data_1:
+            tile_data = 0x8000;
+            break;
+    }
 
-	// optimization for GBA. it's ARM CPU struggled with div and mod operators
-	/*oam_row = Div((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
-	/*obj_line = DivMod((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
-	oam_row = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) / 8);
-	obj_line = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) % 8);
-	u8 i, j;
-	for (i = 0; i < (SIZE_X - (read_u8(ppu->mmu, IO_WNDPOSX) - 8)) / 8 + 1; i++) {
-		if (tile_data == 0x9000) {
-			obj = (s8)read_u8(ppu->mmu, win_tile_map + oam_row * 32 + i);
-		} else {
-			obj = (u8)read_u8(ppu->mmu, win_tile_map + oam_row * 32 + i);
-		}
-		obj_line_a = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2);
-		obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
-		for (j = 0; j < 8; j++) {
-			ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
-				ppu->bg_palette[
-				((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-				    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
-				];
-		}
-	}
+    // optimization for GBA. it's ARM CPU struggled with div and mod operators
+    /*oam_row = Div((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
+    /*obj_line = DivMod((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
+    oam_row = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) / 8);
+    obj_line = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) % 8);
+    u8 i, j;
+    for (i = 0; i < (SIZE_X - (read_u8(ppu->mmu, IO_WNDPOSX) - 8)) / 8 + 1; i++) {
+        if (tile_data == 0x9000) {
+            obj = (s8)read_u8(ppu->mmu, win_tile_map + oam_row * 32 + i);
+        } else {
+            obj = (u8)read_u8(ppu->mmu, win_tile_map + oam_row * 32 + i);
+        }
+        obj_line_a = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2);
+        obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
+        for (j = 0; j < 8; j++) {
+            ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
+                ppu->bg_palette[
+                ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
+                ];
+        }
+    }
 }
 
 int obj_comp(void *array, int i, int j) {
-	ppu_obj *a = ((ppu_obj**)array)[i];
-	ppu_obj *b = ((ppu_obj**)array)[j];
+    ppu_obj *a = ((ppu_obj**)array)[i];
+    ppu_obj *b = ((ppu_obj**)array)[j];
 
-	if (a->x < b->x) {
-		return 0;
-	}
-	if (a->x > b->x) {
-		return 1;
-	}
+    if (a->x < b->x) {
+        return 0;
+    }
+    if (a->x > b->x) {
+        return 1;
+    }
 
-	if (a->id < b->id) {
-		return 0;
-	}
-	if (a->id > b->id) {
-	    return 1;
-	}
-	// this should never be reached
-	return 0;
+    if (a->id < b->id) {
+        return 0;
+    }
+    if (a->id > b->id) {
+        return 1;
+    }
+    // this should never be reached
+    return 0;
 }
 
 void obj_swap(void *array, int i, int j) {
-	ppu_obj *a = ((ppu_obj**)array)[i];
-	ppu_obj *b = ((ppu_obj**)array)[j];
+    ppu_obj *a = ((ppu_obj**)array)[i];
+    ppu_obj *b = ((ppu_obj**)array)[j];
 
-	((ppu_obj**)array)[i] = b;
-	((ppu_obj**)array)[j] = a;
+    ((ppu_obj**)array)[i] = b;
+    ((ppu_obj**)array)[j] = a;
 }
 
 // 8x8 or 8x16
@@ -251,106 +251,106 @@ void obj_swap(void *array, int i, int j) {
 // same X -> FE00 highest, FE04 next highest
 // Y = 0 or Y => 144+16, discard sprite
 void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
-	int i, j, first;
-	uint16_t addr, pos;
-	u8 obj_height, objs_line_len, obj_line;
-	u8 obj_line_a, obj_line_b, color;
-	u8 x_flip, y_flip, behind;
-	u8 *pal;
-	ppu_obj objs[40];
-	ppu_obj *objs_line[40];
+    int i, j, first;
+    uint16_t addr, pos;
+    u8 obj_height, objs_line_len, obj_line;
+    u8 obj_line_a, obj_line_b, color;
+    u8 x_flip, y_flip, behind;
+    u8 *pal;
+    ppu_obj objs[40];
+    ppu_obj *objs_line[40];
 
-	line += SPRITE_INI_Y;
+    line += SPRITE_INI_Y;
 
-	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Size)) {
-	    case OPT_OBJ_Size_8x8:
-		    obj_height = 8;
-		    break;
-	    case OPT_OBJ_Size_8x16:
-		    obj_height = 16;
-		    break;
-	}
-	// Read all the obj attributes
-	for (i = 0; i < 40; i++) {
-		addr = MEM_OAM + i * 4;
+    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Size)) {
+        case OPT_OBJ_Size_8x8:
+            obj_height = 8;
+            break;
+        case OPT_OBJ_Size_8x16:
+            obj_height = 16;
+            break;
+    }
+    // Read all the obj attributes
+    for (i = 0; i < 40; i++) {
+        addr = MEM_OAM + i * 4;
 
-		objs[i].id = i;
-		objs[i].y = read_u8(ppu->mmu, addr++);
-		objs[i].x = read_u8(ppu->mmu, addr++);
-		objs[i].pat = read_u8(ppu->mmu, addr++);
-		objs[i].flags = read_u8(ppu->mmu, addr);
-	}
+        objs[i].id = i;
+        objs[i].y = read_u8(ppu->mmu, addr++);
+        objs[i].x = read_u8(ppu->mmu, addr++);
+        objs[i].pat = read_u8(ppu->mmu, addr++);
+        objs[i].flags = read_u8(ppu->mmu, addr);
+    }
 
-	// Take the candidate objects to be drawn in the line
-	objs_line_len = 0;
-	for (i = 0; i < 40; i++) {
-		if((objs[i].y != 0) && (objs[i].y < SPRITE_END_Y) &&
-				(objs[i].y <= line) && ((objs[i].y + obj_height) > line)) {
-			objs_line[objs_line_len++] = &objs[i];
+    // Take the candidate objects to be drawn in the line
+    objs_line_len = 0;
+    for (i = 0; i < 40; i++) {
+        if((objs[i].y != 0) && (objs[i].y < SPRITE_END_Y) &&
+                (objs[i].y <= line) && ((objs[i].y + obj_height) > line)) {
+            objs_line[objs_line_len++] = &objs[i];
 
             printf("mode clk: %d\n", ppu->mode_clock);
             printf("Object %d:\n", objs[i].id);
             printf("x: %02X, y: %02X, pat: %02X\n", objs[i].x, objs[i].y, objs[i].pat);
 
             /*return;*/
-		}
-	}
+        }
+    }
 
-	// Sort the candidate objects by priority
+    // Sort the candidate objects by priority
     insertion_sort(objs_line, objs_line_len, obj_comp, obj_swap);
 
-	// Draw objects by order of priority
-	if (objs_line_len > 10) {
-		first = objs_line_len - 10;
-	} else {
-		first = 0;
-	}
+    // Draw objects by order of priority
+    if (objs_line_len > 10) {
+        first = objs_line_len - 10;
+    } else {
+        first = 0;
+    }
 
-	for (i = first; i < objs_line_len; i++) {
-		x_flip = (objs_line[i]->flags & OPT_OBJ_Flag_xflip) ? 1 : 0;
-		y_flip = (objs_line[i]->flags & OPT_OBJ_Flag_yflip) ? 1 : 0;
-		obj_line = (line - objs_line[i]->y) % obj_height;
-		if (y_flip) {
-			obj_line = obj_height - 1 - obj_line;
-		}
-		obj_line_a = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 +
-				obj_line * 2);
-		obj_line_b = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 +
-				obj_line * 2 + 1);
-		if (objs_line[i]->flags & OPT_OBJ_Flag_palette) {
-			pal = ppu->obj1_palette;
-		} else {
-			pal = ppu->obj0_palette;
-		}
-		if (objs_line[i]->flags & OPT_OBJ_Flag_priority) {
-			behind = 1;
-		} else {
-			behind = 0;
-		}
-		for (j = 0; j < 8; j++) {
-			pos = line * 256 +
-				(objs_line[i]->x + (x_flip ? 7 - j : j)) % 256;
-			color = pal[
-				((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-				    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
-			];
-			if (color < 8) {
-				ppu->obj_disp[pos] = color;
-				if (behind) {
-					ppu->obj_disp[pos] |= 4;
-				}
-			}
-		}
-	}
+    for (i = first; i < objs_line_len; i++) {
+        x_flip = (objs_line[i]->flags & OPT_OBJ_Flag_xflip) ? 1 : 0;
+        y_flip = (objs_line[i]->flags & OPT_OBJ_Flag_yflip) ? 1 : 0;
+        obj_line = (line - objs_line[i]->y) % obj_height;
+        if (y_flip) {
+            obj_line = obj_height - 1 - obj_line;
+        }
+        obj_line_a = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 +
+                obj_line * 2);
+        obj_line_b = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 +
+                obj_line * 2 + 1);
+        if (objs_line[i]->flags & OPT_OBJ_Flag_palette) {
+            pal = ppu->obj1_palette;
+        } else {
+            pal = ppu->obj0_palette;
+        }
+        if (objs_line[i]->flags & OPT_OBJ_Flag_priority) {
+            behind = 1;
+        } else {
+            behind = 0;
+        }
+        for (j = 0; j < 8; j++) {
+            pos = line * 256 +
+                (objs_line[i]->x + (x_flip ? 7 - j : j)) % 256;
+            color = pal[
+                ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
+            ];
+            if (color < 8) {
+                ppu->obj_disp[pos] = color;
+                if (behind) {
+                    ppu->obj_disp[pos] |= 4;
+                }
+            }
+        }
+    }
 }
 
 void ppu_draw_line(gbc_ppu *ppu, u8 line) {
-	if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
-		ppu_draw_line_bg(ppu, line);
-	}
-	if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
-		ppu_draw_line_win(ppu, line);
-	}
+    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
+        ppu_draw_line_bg(ppu, line);
+    }
+    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
+        ppu_draw_line_win(ppu, line);
+    }
     if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
         ppu_draw_line_obj(ppu, line);
     }
@@ -398,69 +398,69 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         ppu->reset = 1;
         return 0;
     }
-	if (ppu->reset) {
-		ppu->reset = 0;
+    if (ppu->reset) {
+        ppu->reset = 0;
         return 1;
-	}
+    }
 
-	ppu->mode_clock += cycles;
+    ppu->mode_clock += cycles;
 
-	if (ppu->mode_clock > LCD_LINE_CYCLES) {
-	    ppu->mode_clock -= LCD_LINE_CYCLES;
+    if (ppu->mode_clock > LCD_LINE_CYCLES) {
+        ppu->mode_clock -= LCD_LINE_CYCLES;
 
-		// LYC Update
-		if (read_u8(ppu->mmu, IO_CURLINE) == read_u8(ppu->mmu, IO_CMPLINE)) {
-			set_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
-			if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_LYC_LY_COINCIDENCE_INTERRUPT)) {
-				set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
-			}
-		} else {
-		    write_u8(ppu->mmu, IO_LCDSTAT, read_u8(ppu->mmu, IO_LCDSTAT) & 0xFB);
-		}
+        // LYC Update
+        if (read_u8(ppu->mmu, IO_CURLINE) == read_u8(ppu->mmu, IO_CMPLINE)) {
+            set_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
+            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_LYC_LY_COINCIDENCE_INTERRUPT)) {
+                set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+            }
+        } else {
+            write_u8(ppu->mmu, IO_LCDSTAT, read_u8(ppu->mmu, IO_LCDSTAT) & 0xFB);
+        }
 
-	    // next line
-	    write_u8(ppu->mmu, IO_CURLINE, (read_u8(ppu->mmu, IO_CURLINE) + 1) % LCD_VERT_LINES);
+        // next line
+        write_u8(ppu->mmu, IO_CURLINE, (read_u8(ppu->mmu, IO_CURLINE) + 1) % LCD_VERT_LINES);
 
-	    // VBLANK
-	    if (read_u8(ppu->mmu, IO_CURLINE) == SIZE_Y) {
-	        write_u8(ppu->mmu, IO_LCDSTAT, (read_u8(ppu->mmu, IO_LCDSTAT) & 0xF3) | 0x01);
-	        // Set Mode Flag to VBLANK at LCDSTAT
-	        unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
-	        set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_VBLANK);
+        // VBLANK
+        if (read_u8(ppu->mmu, IO_CURLINE) == SIZE_Y) {
+            write_u8(ppu->mmu, IO_LCDSTAT, (read_u8(ppu->mmu, IO_LCDSTAT) & 0xF3) | 0x01);
+            // Set Mode Flag to VBLANK at LCDSTAT
+            unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
+            set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_VBLANK);
 
-	        // Interrupt VBlank
-	        set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_VBLANK);
-	        if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
-	            set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
-	        }
-	    }
+            // Interrupt VBlank
+            set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_VBLANK);
+            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
+                set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+            }
+        }
         // Normal line
-	    else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
+        else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
             if (read_u8(ppu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
                 /*SDL_RenderClear(ppu->renderer);*/
             }
-		    set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
+            set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
 
             if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_0_HBLANK_INTERRUPT)) {
-			    set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+                set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
-	    }
-	}
+        }
+    }
     else if (read_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && ppu->mode_clock >= DUR_HBLANK) {
-		set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
+        set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
 
-		if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
-			set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
-		}
+        if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
+            set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+        }
     }
     else if ((read_u8(ppu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && ppu->mode_clock >= DUR_OAM) {
-		set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
-		ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
+        set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
+        ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
     }
     else if ((read_u8(ppu->mmu, IO_LCDSTAT) & OPT_MODE_OAM_VRAM) && ppu->mode_clock >= DUR_OAM_VRAM) {
-		set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
-		ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
+        set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
+        ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
 
         for (int y = 0; y < SIZE_Y; y++) {
             for (int x = 0; x < SIZE_X; x++) {
@@ -476,22 +476,22 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         /*SDL_Event e;*/
 
         /*if (SDL_PollEvent(&e) != 0) {*/
-            /*printf("%d %d\n", e.type, SDL_KEYDOWN);*/
-            /*if (e.type == 12){ // Ctrl C ?*/
-                /*printf("SDL_QUIT\n");*/
-                /*ppu->quit = true;*/
-            /*}*/
-            /*[>if (e.type == 65538) {<]*/
-                /*[>printf("SDL_KEYDOWN  %d  %d\n", e.key.keysym.sym, SDLK_ESCAPE);<]*/
-                /*[>if (e.key.keysym.sym == SDLK_ESCAPE) {<]*/
-                    /*[>printf("QUIT\n");<]*/
-                    /*[>ppu->quit = true;<]*/
-                /*[>}<]*/
-            /*[>}<]*/
-            /*[>if (e.type == SDL_MOUSEBUTTONDOWN){<]*/
-                /*[>printf("SDL_MOUSEBUTTONDOWN\n");<]*/
-                /*[>ppu->quit = true;<]*/
-            /*[>}<]*/
+        /*printf("%d %d\n", e.type, SDL_KEYDOWN);*/
+        /*if (e.type == 12){ // Ctrl C ?*/
+        /*printf("SDL_QUIT\n");*/
+        /*ppu->quit = true;*/
+        /*}*/
+        /*[>if (e.type == 65538) {<]*/
+        /*[>printf("SDL_KEYDOWN  %d  %d\n", e.key.keysym.sym, SDLK_ESCAPE);<]*/
+        /*[>if (e.key.keysym.sym == SDLK_ESCAPE) {<]*/
+        /*[>printf("QUIT\n");<]*/
+        /*[>ppu->quit = true;<]*/
+        /*[>}<]*/
+        /*[>}<]*/
+        /*[>if (e.type == SDL_MOUSEBUTTONDOWN){<]*/
+        /*[>printf("SDL_MOUSEBUTTONDOWN\n");<]*/
+        /*[>ppu->quit = true;<]*/
+        /*[>}<]*/
         /*}*/
 
         /*SDL_RenderPresent(ppu->renderer);*/
