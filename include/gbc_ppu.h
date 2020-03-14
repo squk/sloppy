@@ -57,7 +57,7 @@ typedef struct {
 	uint8_t y;
 	uint8_t pat;
 	uint8_t flags;
-} gpu_obj;
+} ppu_obj;
 
 typedef struct {
     gbc_mmu *mmu;
@@ -74,20 +74,20 @@ typedef struct {
     u8 reset;
 
     bool quit;
-} gbc_gpu;
+} gbc_ppu;
 
 void set_palette(u8* p, u8 v);
 
-void gpu_write_u8(gbc_gpu *gpu, u16 address, u8 v);
-u8 gpu_read_u8(gbc_gpu *gpu, u16 address);
+void ppu_write_u8(gbc_ppu *ppu, u16 address, u8 v);
+u8 ppu_read_u8(gbc_ppu *ppu, u16 address);
 
-void gpu_init(gbc_gpu *gpu);
-void gpu_start_frame(gbc_gpu *gpu);
-void gpu_draw_line_fb(gbc_gpu *gpu, u8 line);
-void gpu_draw_line_bg(gbc_gpu *gpu, u8 line);
-void gpu_draw_line_obj(gbc_gpu *gpu, u8 line);
-void gpu_draw_line(gbc_gpu *gpu, u8 line);
-u8 gpu_run(gbc_gpu *gpu, int cycles);
+void ppu_init(gbc_ppu *ppu);
+void ppu_start_frame(gbc_ppu *ppu);
+void ppu_draw_line_fb(gbc_ppu *ppu, u8 line);
+void ppu_draw_line_bg(gbc_ppu *ppu, u8 line);
+void ppu_draw_line_obj(gbc_ppu *ppu, u8 line);
+void ppu_draw_line(gbc_ppu *ppu, u8 line);
+u8 ppu_run(gbc_ppu *ppu, int cycles);
 
 unsigned long gbcToRgb32(unsigned const bgr15);
 u16 rgb32ToRgb16(u32 rgb32);

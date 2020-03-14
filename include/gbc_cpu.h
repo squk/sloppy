@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "gbc_gpu.h"
+#include "gbc_ppu.h"
 #include "gbc_mmu.h"
 
 #define FLAG_Z 0x80
@@ -52,7 +52,7 @@ typedef struct {
     u8 IF; // IF - Interrupt Flag (R/W)
 
     gbc_mmu *mmu;
-    gbc_gpu *gpu;
+    gbc_ppu *ppu;
 } gbc_cpu;
 
 bool flag_z(gbc_cpu *cpu);

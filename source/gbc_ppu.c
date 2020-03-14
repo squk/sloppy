@@ -7,14 +7,14 @@
 #include <stdio.h>
 
 #include "types.h"
-#include "gbc_gpu.h"
+#include "gbc_ppu.h"
 #include "gbc_io.h"
 #include "gbc_mmu.h"
 
 
-void gpu_init(gbc_gpu *gpu) {
-    gpu->quit = false;
-    gpu_start_frame(gpu);
+void ppu_init(gbc_ppu *ppu) {
+    ppu->quit = false;
+    ppu_start_frame(ppu);
 }
 
 void insertion_sort(void *array, int length,
@@ -45,81 +45,81 @@ void set_palette(u8* p, u8 v)  {
 	p[3] = (v & 0xC0) >> 6;
 }
 
-u8 gpu_read_u8(gbc_gpu *gpu, u16 address) {
+u8 ppu_read_u8(gbc_ppu *ppu, u16 address) {
 	switch (address) {
 		case IO_CURLINE:
-			return read_u8(gpu->mmu, IO_CURLINE);
+			return read_u8(ppu->mmu, IO_CURLINE);
 		case IO_CMPLINE:
-			return read_u8(gpu->mmu, IO_CMPLINE);
+			return read_u8(ppu->mmu, IO_CMPLINE);
 		case IO_BGRDPAL:
-			return read_u8(gpu->mmu, IO_BGRDPAL);
+			return read_u8(ppu->mmu, IO_BGRDPAL);
 		case IO_OBJ0PAL:
-			return read_u8(gpu->mmu, IO_OBJ0PAL);
+			return read_u8(ppu->mmu, IO_OBJ0PAL);
 		case IO_OBJ1PAL:
-			return read_u8(gpu->mmu, IO_OBJ1PAL);
+			return read_u8(ppu->mmu, IO_OBJ1PAL);
 		case IO_SCROLLY:
-			return read_u8(gpu->mmu, IO_SCROLLY);
+			return read_u8(ppu->mmu, IO_SCROLLY);
 		case IO_SCROLLX:
-			return read_u8(gpu->mmu, IO_SCROLLX);
+			return read_u8(ppu->mmu, IO_SCROLLX);
 		case IO_WNDPOSY:
-			return read_u8(gpu->mmu, IO_WNDPOSX);
+			return read_u8(ppu->mmu, IO_WNDPOSX);
 		case IO_WNDPOSX:
-			return read_u8(gpu->mmu, IO_WNDPOSX);
+			return read_u8(ppu->mmu, IO_WNDPOSX);
 		case IO_LCDSTAT:
-			return read_u8(gpu->mmu, IO_LCDSTAT);
+			return read_u8(ppu->mmu, IO_LCDSTAT);
 		default:
 			return 0;
 	}
 }
 
-void gpu_start_frame(gbc_gpu *gpu) {
+void ppu_start_frame(gbc_ppu *ppu) {
 	int i, j;
 
 
 	// set win and obj to transparent
 	for (i = 0; i < 256; i++) {
 		for (j = 0; j < 256; j++) {
-            gpu->bg_disp[i * 256 + 1] = 0;
-            gpu->win_disp[i * 256 + j] = TRANSPARENT;
-            gpu->obj_disp[i * 256 + j] = TRANSPARENT;
+            ppu->bg_disp[i * 256 + 1] = 0;
+            ppu->win_disp[i * 256 + j] = TRANSPARENT;
+            ppu->obj_disp[i * 256 + j] = TRANSPARENT;
 		}
 	}
-	u8 r = gpu_run(gpu, 0);
+	u8 r = ppu_run(ppu, 0);
 }
 
 // TODO: cleanup and optimize
-void gpu_draw_line_fb(gbc_gpu *gpu, u8 line) {
+void ppu_draw_line_fb(gbc_ppu *ppu, u8 line) {
     for (int i = 0; i < SIZE_X; i++) {
         int px_index = line * SIZE_X + i;
-        gpu->fb[px_index] = gpu->bg_disp[line * 256 + i];
+        ppu->fb[px_index] = ppu->bg_disp[line * 256 + i];
         // Add ordering between win and obj!
         // check non painted
-        if (gpu->win_disp[line * 256 + i] < 8) {
-            gpu->fb[px_index] = gpu->win_disp[line * 256 + i];
+        if (ppu->win_disp[line * 256 + i] < 8) {
+            ppu->fb[px_index] = ppu->win_disp[line * 256 + i];
         }
 
         // check transparency
-        if (gpu->obj_disp[(line + SPRITE_INI_Y) * 256 +
+        if (ppu->obj_disp[(line + SPRITE_INI_Y) * 256 +
                 i + SPRITE_INI_X] < 8) {
-            if (gpu->fb[px_index] != 0
-                    && gpu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] >= 4) {
+            if (ppu->fb[px_index] != 0
+                    && ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] >= 4) {
                 continue;
             }
-            gpu->fb[px_index] = gpu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] & 0x03;
+            ppu->fb[px_index] = ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] & 0x03;
         }
     }
 
     /*printf("fb write\n");*/
-	/*memcpy(gpu->fb, 0, sizeof gpu->fb);*/
+	/*memcpy(ppu->fb, 0, sizeof ppu->fb);*/
 }
 
-void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
+void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
 	u16 bg_tile_map, tile_data;
 	u8 oam_row, obj_line;
 	u8 obj_line_a, obj_line_b;
 	s16 obj;
 
-	switch (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
+	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
         case OPT_BG_Tile_Map_0:
             bg_tile_map = 0x9800;
             break;
@@ -128,7 +128,7 @@ void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
             break;
 	}
 
-	switch (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
         case OPT_BGWindow_Tile_Data_0:
             tile_data = 0x9000;
             break;
@@ -138,23 +138,23 @@ void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
 	}
 
 	// optimization for GBA. it's ARM CPU struggled with div and mod operators
-	/*oam_row = (u8)Div(line + read_u8(gpu->mmu, IO_SCROLLY), 8);*/
-	/*obj_line = (u8)DivMod(line + read_u8(gpu->mmu, IO_SCROLLY), 8);*/
-    oam_row = (u8)((line + read_u8(gpu->mmu, IO_SCROLLY)) / 8);
-    obj_line = (u8)((line + read_u8(gpu->mmu, IO_SCROLLY)) % 8);
+	/*oam_row = (u8)Div(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
+	/*obj_line = (u8)DivMod(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
+    oam_row = (u8)((line + read_u8(ppu->mmu, IO_SCROLLY)) / 8);
+    obj_line = (u8)((line + read_u8(ppu->mmu, IO_SCROLLY)) % 8);
 
 	u8 i, j;
 	for (i = 0; i < 32; i++) {
 		if (tile_data == 0x9000) {
-			obj = (s8)read_u8(gpu->mmu, bg_tile_map + oam_row * 32 + i);
+			obj = (s8)read_u8(ppu->mmu, bg_tile_map + oam_row * 32 + i);
 		} else {
-			obj = (u8)read_u8(gpu->mmu, bg_tile_map + oam_row * 32 + i);
+			obj = (u8)read_u8(ppu->mmu, bg_tile_map + oam_row * 32 + i);
 		}
-		obj_line_a = read_u8(gpu->mmu, tile_data + obj * 16 + obj_line * 2);
-		obj_line_b = read_u8(gpu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
+		obj_line_a = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2);
+		obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
 		for (j = 0; j < 8; j++) {
-			gpu->bg_disp[line * 256 + (u8)(i * 8 - read_u8(gpu->mmu, IO_SCROLLX) + j)] =
-				gpu->bg_palette[
+			ppu->bg_disp[line * 256 + (u8)(i * 8 - read_u8(ppu->mmu, IO_SCROLLX) + j)] =
+				ppu->bg_palette[
 				((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
 				    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
 				];
@@ -162,17 +162,17 @@ void gpu_draw_line_bg(gbc_gpu *gpu, u8 line) {
 	}
 }
 
-void gpu_draw_line_win(gbc_gpu *gpu, u8 line) {
+void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
 	u16 win_tile_map, tile_data;
 	u8 oam_row, obj_line;
 	u8 obj_line_a, obj_line_b;
 	s16 obj;
 
-	if (read_u8(gpu->mmu, IO_WNDPOSY)  > line || read_u8(gpu->mmu, IO_WNDPOSX) > SIZE_X) {
+	if (read_u8(ppu->mmu, IO_WNDPOSY)  > line || read_u8(ppu->mmu, IO_WNDPOSX) > SIZE_X) {
 		return;
 	}
 
-	switch (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Tile_Map_Display_Select)) {
+	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Tile_Map_Display_Select)) {
 	    case OPT_Window_Tile_Map_0:
 		    win_tile_map = 0x9800;
 		    break;
@@ -181,7 +181,7 @@ void gpu_draw_line_win(gbc_gpu *gpu, u8 line) {
 		    break;
 	}
 
-	switch (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
 	    case OPT_BGWindow_Tile_Data_0:
 		    tile_data = 0x9000;
 		    break;
@@ -191,22 +191,22 @@ void gpu_draw_line_win(gbc_gpu *gpu, u8 line) {
 	}
 
 	// optimization for GBA. it's ARM CPU struggled with div and mod operators
-	/*oam_row = Div((u8)(line - read_u8(gpu->mmu, IO_WNDPOSY)), 8);*/
-	/*obj_line = DivMod((u8)(line - read_u8(gpu->mmu, IO_WNDPOSY)), 8);*/
-	oam_row = (u8)((line - read_u8(gpu->mmu, IO_WNDPOSY)) / 8);
-	obj_line = (u8)((line - read_u8(gpu->mmu, IO_WNDPOSY)) % 8);
+	/*oam_row = Div((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
+	/*obj_line = DivMod((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
+	oam_row = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) / 8);
+	obj_line = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) % 8);
 	u8 i, j;
-	for (i = 0; i < (SIZE_X - (read_u8(gpu->mmu, IO_WNDPOSX) - 8)) / 8 + 1; i++) {
+	for (i = 0; i < (SIZE_X - (read_u8(ppu->mmu, IO_WNDPOSX) - 8)) / 8 + 1; i++) {
 		if (tile_data == 0x9000) {
-			obj = (s8)read_u8(gpu->mmu, win_tile_map + oam_row * 32 + i);
+			obj = (s8)read_u8(ppu->mmu, win_tile_map + oam_row * 32 + i);
 		} else {
-			obj = (u8)read_u8(gpu->mmu, win_tile_map + oam_row * 32 + i);
+			obj = (u8)read_u8(ppu->mmu, win_tile_map + oam_row * 32 + i);
 		}
-		obj_line_a = read_u8(gpu->mmu, tile_data + obj * 16 + obj_line * 2);
-		obj_line_b = read_u8(gpu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
+		obj_line_a = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2);
+		obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
 		for (j = 0; j < 8; j++) {
-			gpu->win_disp[line * 256 + (u8)(i * 8 + read_u8(gpu->mmu, IO_WNDPOSX) - 7 + j)] =
-				gpu->bg_palette[
+			ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
+				ppu->bg_palette[
 				((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
 				    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
 				];
@@ -215,8 +215,8 @@ void gpu_draw_line_win(gbc_gpu *gpu, u8 line) {
 }
 
 int obj_comp(void *array, int i, int j) {
-	gpu_obj *a = ((gpu_obj**)array)[i];
-	gpu_obj *b = ((gpu_obj**)array)[j];
+	ppu_obj *a = ((ppu_obj**)array)[i];
+	ppu_obj *b = ((ppu_obj**)array)[j];
 
 	if (a->x < b->x) {
 		return 0;
@@ -236,11 +236,11 @@ int obj_comp(void *array, int i, int j) {
 }
 
 void obj_swap(void *array, int i, int j) {
-	gpu_obj *a = ((gpu_obj**)array)[i];
-	gpu_obj *b = ((gpu_obj**)array)[j];
+	ppu_obj *a = ((ppu_obj**)array)[i];
+	ppu_obj *b = ((ppu_obj**)array)[j];
 
-	((gpu_obj**)array)[i] = b;
-	((gpu_obj**)array)[j] = a;
+	((ppu_obj**)array)[i] = b;
+	((ppu_obj**)array)[j] = a;
 }
 
 // 8x8 or 8x16
@@ -250,19 +250,19 @@ void obj_swap(void *array, int i, int j) {
 // higher X -> draw first (lower X -> draw above others)
 // same X -> FE00 highest, FE04 next highest
 // Y = 0 or Y => 144+16, discard sprite
-void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
+void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
 	int i, j, first;
 	uint16_t addr, pos;
 	u8 obj_height, objs_line_len, obj_line;
 	u8 obj_line_a, obj_line_b, color;
 	u8 x_flip, y_flip, behind;
 	u8 *pal;
-	gpu_obj objs[40];
-	gpu_obj *objs_line[40];
+	ppu_obj objs[40];
+	ppu_obj *objs_line[40];
 
 	line += SPRITE_INI_Y;
 
-	switch (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Size)) {
+	switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Size)) {
 	    case OPT_OBJ_Size_8x8:
 		    obj_height = 8;
 		    break;
@@ -275,10 +275,10 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 		addr = MEM_OAM + i * 4;
 
 		objs[i].id = i;
-		objs[i].y = read_u8(gpu->mmu, addr++);
-		objs[i].x = read_u8(gpu->mmu, addr++);
-		objs[i].pat = read_u8(gpu->mmu, addr++);
-		objs[i].flags = read_u8(gpu->mmu, addr);
+		objs[i].y = read_u8(ppu->mmu, addr++);
+		objs[i].x = read_u8(ppu->mmu, addr++);
+		objs[i].pat = read_u8(ppu->mmu, addr++);
+		objs[i].flags = read_u8(ppu->mmu, addr);
 	}
 
 	// Take the candidate objects to be drawn in the line
@@ -288,7 +288,7 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 				(objs[i].y <= line) && ((objs[i].y + obj_height) > line)) {
 			objs_line[objs_line_len++] = &objs[i];
 
-            printf("mode clk: %d\n", gpu->mode_clock);
+            printf("mode clk: %d\n", ppu->mode_clock);
             printf("Object %d:\n", objs[i].id);
             printf("x: %02X, y: %02X, pat: %02X\n", objs[i].x, objs[i].y, objs[i].pat);
 
@@ -313,14 +313,14 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 		if (y_flip) {
 			obj_line = obj_height - 1 - obj_line;
 		}
-		obj_line_a = read_u8(gpu->mmu, 0x8000 + objs_line[i]->pat * 16 +
+		obj_line_a = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 +
 				obj_line * 2);
-		obj_line_b = read_u8(gpu->mmu, 0x8000 + objs_line[i]->pat * 16 +
+		obj_line_b = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 +
 				obj_line * 2 + 1);
 		if (objs_line[i]->flags & OPT_OBJ_Flag_palette) {
-			pal = gpu->obj1_palette;
+			pal = ppu->obj1_palette;
 		} else {
-			pal = gpu->obj0_palette;
+			pal = ppu->obj0_palette;
 		}
 		if (objs_line[i]->flags & OPT_OBJ_Flag_priority) {
 			behind = 1;
@@ -335,27 +335,27 @@ void gpu_draw_line_obj(gbc_gpu *gpu, u8 line) {
 				    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
 			];
 			if (color < 8) {
-				gpu->obj_disp[pos] = color;
+				ppu->obj_disp[pos] = color;
 				if (behind) {
-					gpu->obj_disp[pos] |= 4;
+					ppu->obj_disp[pos] |= 4;
 				}
 			}
 		}
 	}
 }
 
-void gpu_draw_line(gbc_gpu *gpu, u8 line) {
-	if (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
-		gpu_draw_line_bg(gpu, line);
+void ppu_draw_line(gbc_ppu *ppu, u8 line) {
+	if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
+		ppu_draw_line_bg(ppu, line);
 	}
-	if (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
-		gpu_draw_line_win(gpu, line);
+	if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
+		ppu_draw_line_win(ppu, line);
 	}
-    if (read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
-        gpu_draw_line_obj(gpu, line);
+    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
+        ppu_draw_line_obj(ppu, line);
     }
 
-    gpu_draw_line_fb(gpu, line);
+    ppu_draw_line_fb(ppu, line);
 }
 
 
@@ -392,83 +392,83 @@ Mode 1  ____________________________________11111111111111_____
 The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 is present about 48.6uS, 2 about 19uS, and 3 about 41uS. This is interrupted every 16.6ms by the VBlank (1). The mode flag stays set at 1 for about 1.08 ms.
 Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
 */
-u8 gpu_run(gbc_gpu *gpu, int cycles) {
+u8 ppu_run(gbc_ppu *ppu, int cycles) {
     int byte_row_width = 160;
-    if (!read_bit(gpu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
-        gpu->reset = 1;
+    if (!read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
+        ppu->reset = 1;
         return 0;
     }
-	if (gpu->reset) {
-		gpu->reset = 0;
+	if (ppu->reset) {
+		ppu->reset = 0;
         return 1;
 	}
 
-	gpu->mode_clock += cycles;
+	ppu->mode_clock += cycles;
 
-	if (gpu->mode_clock > LCD_LINE_CYCLES) {
-	    gpu->mode_clock -= LCD_LINE_CYCLES;
+	if (ppu->mode_clock > LCD_LINE_CYCLES) {
+	    ppu->mode_clock -= LCD_LINE_CYCLES;
 
 		// LYC Update
-		if (read_u8(gpu->mmu, IO_CURLINE) == read_u8(gpu->mmu, IO_CMPLINE)) {
-			set_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
-			if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_LYC_LY_COINCIDENCE_INTERRUPT)) {
-				set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+		if (read_u8(ppu->mmu, IO_CURLINE) == read_u8(ppu->mmu, IO_CMPLINE)) {
+			set_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
+			if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_LYC_LY_COINCIDENCE_INTERRUPT)) {
+				set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
 			}
 		} else {
-		    write_u8(gpu->mmu, IO_LCDSTAT, read_u8(gpu->mmu, IO_LCDSTAT) & 0xFB);
+		    write_u8(ppu->mmu, IO_LCDSTAT, read_u8(ppu->mmu, IO_LCDSTAT) & 0xFB);
 		}
 
 	    // next line
-	    write_u8(gpu->mmu, IO_CURLINE, (read_u8(gpu->mmu, IO_CURLINE) + 1) % LCD_VERT_LINES);
+	    write_u8(ppu->mmu, IO_CURLINE, (read_u8(ppu->mmu, IO_CURLINE) + 1) % LCD_VERT_LINES);
 
 	    // VBLANK
-	    if (read_u8(gpu->mmu, IO_CURLINE) == SIZE_Y) {
-	        write_u8(gpu->mmu, IO_LCDSTAT, (read_u8(gpu->mmu, IO_LCDSTAT) & 0xF3) | 0x01);
+	    if (read_u8(ppu->mmu, IO_CURLINE) == SIZE_Y) {
+	        write_u8(ppu->mmu, IO_LCDSTAT, (read_u8(ppu->mmu, IO_LCDSTAT) & 0xF3) | 0x01);
 	        // Set Mode Flag to VBLANK at LCDSTAT
-	        unset_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
-	        set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_VBLANK);
+	        unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
+	        set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_VBLANK);
 
 	        // Interrupt VBlank
-	        set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_VBLANK);
-	        if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
-	            set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+	        set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_VBLANK);
+	        if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
+	            set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
 	        }
 	    }
         // Normal line
-	    else if (read_u8(gpu->mmu, IO_CURLINE) < SIZE_Y) {
-            if (read_u8(gpu->mmu, IO_CURLINE) == 0) {
+	    else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
+            if (read_u8(ppu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
-                /*SDL_RenderClear(gpu->renderer);*/
+                /*SDL_RenderClear(ppu->renderer);*/
             }
-		    set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
+		    set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
 
-            if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_0_HBLANK_INTERRUPT)) {
-			    set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_0_HBLANK_INTERRUPT)) {
+			    set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
 	    }
 	}
-    else if (read_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && gpu->mode_clock >= DUR_HBLANK) {
-		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
+    else if (read_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK) && ppu->mode_clock >= DUR_HBLANK) {
+		set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
 
-		if (read_bit(gpu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
-			set_bit(gpu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+		if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
+			set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
 		}
     }
-    else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && gpu->mode_clock >= DUR_OAM) {
-		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
-		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
+    else if ((read_u8(ppu->mmu, IO_LCDSTAT) & OPT_MODE_OAM) && ppu->mode_clock >= DUR_OAM) {
+		set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
+		ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
     }
-    else if ((read_u8(gpu->mmu, IO_LCDSTAT) & OPT_MODE_OAM_VRAM) && gpu->mode_clock >= DUR_OAM_VRAM) {
-		set_bit(gpu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
-		gpu_draw_line(gpu, read_u8(gpu->mmu, IO_CURLINE));
+    else if ((read_u8(ppu->mmu, IO_LCDSTAT) & OPT_MODE_OAM_VRAM) && ppu->mode_clock >= DUR_OAM_VRAM) {
+		set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
+		ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
 
         for (int y = 0; y < SIZE_Y; y++) {
             for (int x = 0; x < SIZE_X; x++) {
                 int px_index = y * SIZE_X + x;
-                u8 color = gpu->fb[px_index];
+                u8 color = ppu->fb[px_index];
 
-                /*SDL_SetRenderDrawColor(gpu->renderer, color, color, color, 0xFF);*/
-                /*SDL_RenderDrawPoint(gpu->renderer, x, y);*/
+                /*SDL_SetRenderDrawColor(ppu->renderer, color, color, color, 0xFF);*/
+                /*SDL_RenderDrawPoint(ppu->renderer, x, y);*/
             }
         }
 
@@ -479,22 +479,22 @@ u8 gpu_run(gbc_gpu *gpu, int cycles) {
             /*printf("%d %d\n", e.type, SDL_KEYDOWN);*/
             /*if (e.type == 12){ // Ctrl C ?*/
                 /*printf("SDL_QUIT\n");*/
-                /*gpu->quit = true;*/
+                /*ppu->quit = true;*/
             /*}*/
             /*[>if (e.type == 65538) {<]*/
                 /*[>printf("SDL_KEYDOWN  %d  %d\n", e.key.keysym.sym, SDLK_ESCAPE);<]*/
                 /*[>if (e.key.keysym.sym == SDLK_ESCAPE) {<]*/
                     /*[>printf("QUIT\n");<]*/
-                    /*[>gpu->quit = true;<]*/
+                    /*[>ppu->quit = true;<]*/
                 /*[>}<]*/
             /*[>}<]*/
             /*[>if (e.type == SDL_MOUSEBUTTONDOWN){<]*/
                 /*[>printf("SDL_MOUSEBUTTONDOWN\n");<]*/
-                /*[>gpu->quit = true;<]*/
+                /*[>ppu->quit = true;<]*/
             /*[>}<]*/
         /*}*/
 
-        /*SDL_RenderPresent(gpu->renderer);*/
+        /*SDL_RenderPresent(ppu->renderer);*/
     }
 }
 

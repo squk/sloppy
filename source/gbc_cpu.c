@@ -189,7 +189,7 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
         printf("Nintendo logo comparison routine\n");
         FILE *fp;
         fp = fopen("fb.bin" , "w" );
-        fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);
+        fwrite(&cpu->ppu->fb, 1, sizeof cpu->ppu->fb, fp);
         fclose(fp);
         printf("dumped framebuffer to file\n");
     }
@@ -261,7 +261,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     cpu->clk.m += cpu->registers.clk.m;
     cpu->clk.t += cpu->registers.clk.t;
 
-    gpu_run(cpu->gpu, cpu->registers.clk.m);
+    ppu_run(cpu->ppu, cpu->registers.clk.m);
 }
 
 // 0x014D is the header checksum.
@@ -306,13 +306,13 @@ void validate_memory(gbc_cpu *cpu) {
 void gbc_cpu_loop(gbc_cpu *cpu) {
     /*printf("init cpu loop\n");*/
 
-    gpu_init(cpu->gpu);
+    ppu_init(cpu->ppu);
     /*printf("begin cpu loop\n");*/
 
     /*validate_memory(cpu);*/
     while(!cpu->quit) {
         gbc_cpu_step(cpu);
-        if (cpu->gpu->quit) {
+        if (cpu->ppu->quit) {
             cpu->quit = true;
         }
     }

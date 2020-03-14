@@ -8,7 +8,7 @@
 
 #include "types.h"
 #include "gbc_cpu.h"
-#include "gbc_gpu.h"
+#include "gbc_ppu.h"
 #include "gbc_mmu.h"
 #include "dmg_rom.h"
 
@@ -29,12 +29,12 @@
 
 void emu_run() {
     gbc_cpu cpu;
-    gbc_gpu gpu;
+    gbc_ppu ppu;
     gbc_mmu mmu;
     cpu.mmu = &mmu;
-    gpu.mmu = &mmu;
+    ppu.mmu = &mmu;
 
-    cpu.gpu = &gpu;
+    cpu.ppu = &ppu;
 
     gbc_mmu_init(&mmu);
     gbc_cpu_reset(&cpu);
@@ -59,13 +59,13 @@ void emu_test() {
     //}
 
     gbc_cpu cpu;
-    gbc_gpu gpu;
+    gbc_ppu ppu;
     gbc_mmu mmu;
     cpu.mmu = &mmu;
-    gpu.mmu = &mmu;
-    //gpu.renderer = renderer;
+    ppu.mmu = &mmu;
+    //ppu.renderer = renderer;
 
-    cpu.gpu = &gpu;
+    cpu.ppu = &ppu;
 
     gbc_mmu_init(&mmu);
     gbc_cpu_reset(&cpu);
