@@ -480,7 +480,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
 #if defined(SLOPPY_RENDER)
         SDL_Event e;
         if (SDL_PollEvent(&e) != 0) {
-            printf("%d %d\n", e.type, SDL_KEYDOWN);
+            /*printf("%d %d\n", e.type, SDL_KEYDOWN);*/
             if (e.type == 12){ // Ctrl C ?
                 printf("SDL_QUIT\n");
                 ppu->quit = true;
