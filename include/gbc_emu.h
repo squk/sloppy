@@ -75,19 +75,19 @@ void emu_test() {
     gbc_mmu_init(&mmu);
     gbc_cpu_reset(&cpu);
 
-    //memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len);
-    //mmu.in_bios = true;
+    memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len);
+    mmu.in_bios = true;
+    //gbc_cpu_set_boot_state(&cpu);
 
-    gbc_cpu_set_boot_state(&cpu);
-
-    //gbc_load_rom(&mmu, data_tetris_gb_bin, data_tetris_gb_bin_len);
+    gbc_load_rom(&mmu, data_tetris_gb_bin, data_tetris_gb_bin_len);
+    //gbc_load_rom(&mmu, data_cpu_instrs_gb_bin, data_cpu_instrs_gb_bin_len);
 
     //gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len);
     //gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len);
     //gbc_load_rom(&mmu, __03_op_sp_hl_gb, __03_op_sp_hl_gb_len);
     //gbc_load_rom(&mmu, __04_op_r_imm_gb, __04_op_r_imm_gb_len);
     //gbc_load_rom(&mmu, __05_op_rp_gb, __05_op_rp_gb_len);
-    gbc_load_rom(&mmu, __06_ld_r_r_gb, __06_ld_r_r_gb_len);
+    //gbc_load_rom(&mmu, __06_ld_r_r_gb, __06_ld_r_r_gb_len);
     //gbc_load_rom(&mmu, __07_jr_jp_call_ret_rst_gb, __07_jr_jp_call_ret_rst_gb_len);
     //gbc_load_rom(&mmu, __08_misc_instrs_gb, __08_misc_instrs_gb_len);
     //gbc_load_rom(&mmu, __09_op_r_r_gb, __09_op_r_r_gb_len);
