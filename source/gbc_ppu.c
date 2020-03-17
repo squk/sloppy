@@ -14,6 +14,7 @@
 
 void ppu_init(gbc_ppu *ppu) {
     ppu->quit = false;
+    ppu->mode_clock = 0;
     ppu_start_frame(ppu);
 }
 
@@ -45,36 +46,8 @@ void set_palette(u8* p, u8 v)  {
     p[3] = (v & 0xC0) >> 6;
 }
 
-u8 ppu_read_u8(gbc_ppu *ppu, u16 address) {
-    switch (address) {
-        case IO_CURLINE:
-            return read_u8(ppu->mmu, IO_CURLINE);
-        case IO_CMPLINE:
-            return read_u8(ppu->mmu, IO_CMPLINE);
-        case IO_BGRDPAL:
-            return read_u8(ppu->mmu, IO_BGRDPAL);
-        case IO_OBJ0PAL:
-            return read_u8(ppu->mmu, IO_OBJ0PAL);
-        case IO_OBJ1PAL:
-            return read_u8(ppu->mmu, IO_OBJ1PAL);
-        case IO_SCROLLY:
-            return read_u8(ppu->mmu, IO_SCROLLY);
-        case IO_SCROLLX:
-            return read_u8(ppu->mmu, IO_SCROLLX);
-        case IO_WNDPOSY:
-            return read_u8(ppu->mmu, IO_WNDPOSX);
-        case IO_WNDPOSX:
-            return read_u8(ppu->mmu, IO_WNDPOSX);
-        case IO_LCDSTAT:
-            return read_u8(ppu->mmu, IO_LCDSTAT);
-        default:
-            return 0;
-    }
-}
-
 void ppu_start_frame(gbc_ppu *ppu) {
     int i, j;
-
 
     // set win and obj to transparent
     for (i = 0; i < 256; i++) {
@@ -402,11 +375,12 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         ppu->reset = 0;
         return 1;
     }
+    /*printf("cur:  %d     mode_clock: %d    cycles: %d \n", read_u8(ppu->mmu, IO_CURLINE), ppu->mode_clock, cycles);*/
 
     ppu->mode_clock += cycles;
 
     if (ppu->mode_clock > LCD_LINE_CYCLES) {
-    printf("%d\n", read_u8(ppu->mmu, IO_CURLINE));
+        /*printf("LY:  %d\n", read_u8(ppu->mmu, IO_CURLINE));*/
         ppu->mode_clock -= LCD_LINE_CYCLES;
 
         // LYC Update
@@ -424,6 +398,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
 
         // VBLANK
         if (read_u8(ppu->mmu, IO_CURLINE) == SIZE_Y) {
+            /*printf("vblank\n");*/
             write_u8(ppu->mmu, IO_LCDSTAT, (read_u8(ppu->mmu, IO_LCDSTAT) & 0xF3) | 0x01);
             // Set Mode Flag to VBLANK at LCDSTAT
             unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
@@ -437,7 +412,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
-            printf("normal line\n");
+            /*printf("normal line\n");*/
             if (read_u8(ppu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
 #if defined(SLOPPY_RENDER)

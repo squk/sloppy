@@ -68,8 +68,9 @@ typedef struct {
     u8 bg_disp[512*512];
     u8 win_disp[512*512];
     u8 obj_disp[512*512];
+    u8 LY, LYC;
 
-    int mode_clock; // Object Attribute Memory
+    u16 mode_clock; // Object Attribute Memory
     u8 bg_palette[4], obj0_palette[4], obj1_palette[4];
     u8 reset;
 
@@ -79,7 +80,6 @@ typedef struct {
 void set_palette(u8* p, u8 v);
 
 void ppu_write_u8(gbc_ppu *ppu, u16 address, u8 v);
-u8 ppu_read_u8(gbc_ppu *ppu, u16 address);
 
 void ppu_init(gbc_ppu *ppu);
 void ppu_start_frame(gbc_ppu *ppu);

@@ -20,6 +20,10 @@ bool flag_z(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
 bool flag_n(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }
 bool flag_h(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_H) == FLAG_H; }
 bool flag_c(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == FLAG_C; }
+bool flag_nz(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == 0x00; }
+bool flag_nn(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == 0x00; }
+bool flag_nh(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_H) == 0x00; }
+bool flag_nc(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == 0x00; }
 
 void set_flag_z(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_Z) | (val ? FLAG_Z : 0); }
 void set_flag_n(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_N) | (val ? FLAG_N : 0); }
@@ -102,7 +106,7 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
     if (r->f & FLAG_C) flags[3] = 'C';
 
     u8 temp = read_u8(cpu->mmu,cpu->registers.pc+1);
-    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx  %s, %x\n", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, OPS_STR[opcode], temp);
+    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx    %02hx %s, %x\n", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, opcode, op_string(opcode), temp);
     /*getchar();*/
 }
 
@@ -112,7 +116,7 @@ void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
     u8 pc = cpu->registers.pc;
     pc--;
     if (cpu->mmu->in_bios && pc == eq) {
-         printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);
+         printf("OP: %s, PC:%x\n", op_string(opcode), pc);
     }
 }
 
@@ -130,7 +134,7 @@ void d_pc_r(gbc_cpu *cpu, u16 pc, u8 opcode, u8 low, u8 high) {
     pc--;
     if (cpu->mmu->in_bios && pc >= low && pc <= high) {
         gbc_registers_debug(cpu, opcode);
-        /*printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);*/
+        /*printf("OP: %s, PC:%x\n", op_string(opcode), pc);*/
     }
 }
 
@@ -149,7 +153,7 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     old_pc--;
 
     if (old_pc == 0x0000 && !setup_stack) {
-        printf("%s: setup stack: sp(%x), expected sp(fffe)\n", OPS_STR[opcode], cpu->registers.sp);
+        printf("%s: setup stack: sp(%x), expected sp(fffe)\n", op_string(opcode), cpu->registers.sp);
         setup_stack = true;
     }
     if (old_pc == 0x000a && !vram_cleared) {
@@ -162,19 +166,19 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
             }
         }
         if (done) {
-            printf("vram cleared %s\n", OPS_STR[opcode]);
+            printf("vram cleared %s\n", op_string(opcode));
             vram_cleared = true;
         }
     }
     if (old_pc == 0x001d && !hit_at) {
-        printf("%s: setup BG palette\n", OPS_STR[opcode]);
+        printf("%s: setup BG palette\n", op_string(opcode));
     }
     if (old_pc == 0x003e && !hit_at) {
-        printf("%s: load bytes into vram for @\n", OPS_STR[opcode]);
+        printf("%s: load bytes into vram for @\n", op_string(opcode));
         hit_at = true;
     }
     if (old_pc == 0x0053 && !init_tile_map) {
-        printf("%s: initializing tile map\n", OPS_STR[opcode]);
+        printf("%s: initializing tile map\n", op_string(opcode));
         init_tile_map = true;
     }
     if (old_pc == 0x0055) {
@@ -215,6 +219,7 @@ void gbc_cpu_trace(gbc_cpu *cpu, u8 opcode) {
 }
 
 void gbc_cpu_step(gbc_cpu *cpu) {
+    /*write_u8(cpu->mmu, 0xFF44, 0x90);*/
 	if((cpu->IME || cpu->HALT) && (cpu->IF & cpu->IE & ANY_INTR)) {
 		cpu->HALT = 0;
 
@@ -253,7 +258,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    gbc_cpu_trace(cpu, opcode);
+    /*gbc_cpu_trace(cpu, opcode);*/
 
     u16 old_pc = cpu->registers.pc;
     execute_op(cpu, opcode);
