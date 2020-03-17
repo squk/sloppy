@@ -56,7 +56,8 @@ void gbc_mmu_init(gbc_mmu *mmu){
 
     memset(mmu->bios, 0, sizeof mmu->bios);
     memset(mmu->rom, 0, sizeof mmu-> rom);
-    memset(mmu->vram, 1, sizeof mmu->vram); // we load 1's into the vram to test the bootrom code
+    /*memset(mmu->vram, 1, sizeof mmu->vram); // we load 1's into the vram to test the bootrom code*/
+    memset(mmu->vram, 0, sizeof mmu->vram);
     memset(mmu->wram, 0, sizeof mmu->wram);
     memset(mmu->oam, 0, sizeof mmu->oam);
     memset(mmu->io, 0, sizeof mmu->io);
@@ -114,8 +115,9 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     }
     // https://gbdev.gg8.se/wiki/articles/Serial_Data_Transfer_(Link_Cable)#FF02_-_SC_-_Serial_Transfer_Control_.28R.2FW.29
     if (address == 0xFF02 && val & 0x81) {
-        printf("%c", read_u8(mmu, 0xFF01));
-        fflush(stdout);
+        printf("SERIAL: %c\n", read_u8(mmu, 0xFF01));
+        /*printf("%c", read_u8(mmu, 0xFF01));*/
+        /*fflush(stdout);*/
     }
     *ptr = val;
 }

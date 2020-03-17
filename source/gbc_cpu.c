@@ -253,19 +253,11 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    /*gbc_cpu_trace(cpu, opcode);*/
-        /*cpu->registers.pc--;*/
-    /*if (cpu->registers.pc == 0xfe) {*/
-        /*gbc_registers_debug(cpu, opcode);*/
-    /*}*/
-        /*cpu->registers.pc++;*/
+    gbc_cpu_trace(cpu, opcode);
 
     u16 old_pc = cpu->registers.pc;
-
-    void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
-    (funcPtr)(cpu);
-
-    debug_dmg_bootrom(cpu, old_pc, opcode);
+    execute_op(cpu, opcode);
+    /*debug_dmg_bootrom(cpu, old_pc, opcode);*/
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;

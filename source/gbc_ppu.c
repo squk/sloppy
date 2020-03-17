@@ -406,6 +406,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
     ppu->mode_clock += cycles;
 
     if (ppu->mode_clock > LCD_LINE_CYCLES) {
+    printf("%d\n", read_u8(ppu->mmu, IO_CURLINE));
         ppu->mode_clock -= LCD_LINE_CYCLES;
 
         // LYC Update
@@ -436,6 +437,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
+            printf("normal line\n");
             if (read_u8(ppu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
 #if defined(SLOPPY_RENDER)
