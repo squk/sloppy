@@ -103,6 +103,39 @@ void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {
     memcpy(mmu->rom, src, n);
 }
 
+void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
+    char *buffer;
+    long numbytes;
+
+    FILE *infile = fopen(fname, "r");
+
+    if(infile == NULL)
+        return;
+
+    // Get the number of bytes
+    fseek(infile, 0L, SEEK_END);
+    numbytes = ftell(infile);
+
+    // reset the file position indicator to the beginning of the file
+    fseek(infile, 0L, SEEK_SET);
+
+    // grab sufficient memory for the buffer to hold the text
+    buffer = (char*)calloc(numbytes, sizeof(char));
+
+    // memory error
+    if(buffer == NULL)
+        return;
+
+    // copy all the text into the buffer
+    fread(buffer, sizeof(char), numbytes, infile);
+    fclose(infile);
+
+    memcpy(mmu->rom, buffer, numbytes);
+
+     //free the memory we used for the buffer
+    free(buffer);
+}
+
 u8 read_u8(gbc_mmu *mmu , u16 address) {
     return *get_address_ptr(mmu, address);
 }
@@ -124,7 +157,7 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
 
 u16 read_u16(gbc_mmu *mmu , u16 address) {
     // swap bytes for little-endian
-    uint16_t temp = read_u8(mmu, address);
+    u16 temp = read_u8(mmu, address);
     temp |= read_u8(mmu, address+1) << 8;
     return temp;
 }

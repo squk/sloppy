@@ -5,8 +5,16 @@
 typedef void (*gbc_operator)(gbc_cpu *cpu);
 
 void execute_op(gbc_cpu *cpu, u8 opcode);
-void execute_cb_op(gbc_cpu *cpu);
+void execute_cb_op(gbc_cpu *cpu, u8 opcode);
 const char* op_string(u8 opcode);
+
+void SWAP(gbc_cpu *cpu, u8 opcode);
+void SRA(gbc_cpu* cpu, u8 opcode);
+void SRL(gbc_cpu *cpu, u8 opcode);
+void RL_RLC(gbc_cpu *cpu, u8 opcode);
+void RR(gbc_cpu *cpu, u8 opcode);
+void RRC(gbc_cpu *cpu, u8 opcode);
+void BIT_RES_SET(gbc_cpu *cpu, u8 opcode);
 
 void LD_r8_r8(gbc_cpu *cpu, u8 *r1, u8 *r2);
 void LD_r8_u8(gbc_cpu *cpu, u8 *r1, u8 v);
