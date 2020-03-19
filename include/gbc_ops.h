@@ -119,7 +119,5 @@ void NOP(gbc_cpu *cpu);
 void HALT(gbc_cpu *cpu);
 void DI(gbc_cpu *cpu);
 void EI(gbc_cpu *cpu);
-void rsv(gbc_cpu *cpu);
-void rrs(gbc_cpu *cpu);
 void PREFIX_CB(gbc_cpu *cpu);
 void XX(gbc_cpu *cpu);

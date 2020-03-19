@@ -258,7 +258,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // Fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    //gbc_cpu_trace(cpu, opcode);
+    /*gbc_cpu_trace(cpu, opcode);*/
 
     u16 old_pc = cpu->registers.pc;
     execute_op(cpu, opcode);
