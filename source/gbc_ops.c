@@ -537,6 +537,7 @@ void execute_op(gbc_cpu *cpu, u8 opcode) {
             break;
         case 0xAE: // XOR (HL)
             XOR_u8(cpu, read_u8(cpu->mmu, get_hl(cpu)));
+            cpu->registers.clk.m = 2;
             break;
         case 0xAF: // XOR A   slightly optimized
             cpu->registers.a = 0;
@@ -566,6 +567,7 @@ void execute_op(gbc_cpu *cpu, u8 opcode) {
             break;
         case 0xB6: // OR (HL)
             OR_u8(cpu, read_u8(cpu->mmu, get_hl(cpu)));
+            cpu->registers.clk.m = 2;
             break;
         case 0xB7: // OR A
             OR_u8(cpu, cpu->registers.a);
@@ -756,6 +758,7 @@ void execute_op(gbc_cpu *cpu, u8 opcode) {
             break;
         case 0xF6: // OR d8
             OR_u8(cpu, read_u8(cpu->mmu, cpu->registers.pc++));
+            cpu->registers.clk.m = 2;
             break;
         case 0xF7: // RST 30H
             RST_u8(cpu, 0x30);
@@ -1395,11 +1398,21 @@ void SWAP(gbc_cpu *cpu, u8 opcode) {
 }
 
 void SLA(gbc_cpu *cpu, u8 opcode) {
-    u8 *r8 = prefix_cb_target(cpu, opcode);
-	u8 b7 = (*r8 & 0x80) >> 7;
-	*r8 = *r8 << 1;
+    bool mHL = ((opcode & 0xF) == 0x6 || (opcode & 0xF) == 0xE);
+    u8 b7;
 
-	set_flag_z(cpu, *r8 == 0x00);
+    if (mHL) {
+        u8 v = read_u8(cpu->mmu, get_hl(cpu));
+	    b7 = (v & 0x80) >> 7;
+	    v = v << 1;
+	    set_flag_z(cpu, v == 0x00);
+        write_u8(cpu->mmu, get_hl(cpu), v);
+    } else {
+        u8 *r8 = prefix_cb_target(cpu, opcode);
+	    b7 = (*r8 & 0x80) >> 7;
+	    *r8 = *r8 << 1;
+	    set_flag_z(cpu, *r8 == 0x00);
+    }
 	set_flag_n(cpu, 0);
 	set_flag_h(cpu, 0);
 	set_flag_c(cpu, b7);
@@ -1435,16 +1448,20 @@ void SRA(gbc_cpu* cpu, u8 opcode) {
 
 void SRL(gbc_cpu *cpu, u8 opcode) {
     bool mHL = ((opcode & 0xF) == 0x6 || (opcode & 0xF) == 0xE);
+
     if (mHL) {
-        u8 v = read_u8(cpu, get_hl(cpu));
-        set_flag_c(cpu, v & 0x01);
+        u8 v = read_u8(cpu->mmu, get_hl(cpu));
+	    u8 b0 = v & 0x01;
 	    v = v >> 1;
-	    set_flag_z(cpu, (v == 0));
+	    set_flag_z(cpu, (v == 0x00));
+	    set_flag_c(cpu, b0);
+	    write_u8(cpu->mmu, get_hl(cpu), v);
     } else {
         u8 *r8 = prefix_cb_target(cpu, opcode);
-        set_flag_c(cpu, *r8 & 0x01);
+	    u8 b0 = *r8 & 0x01;
 	    *r8 = *r8 >> 1;
-	    set_flag_z(cpu, (*r8 == 0));
+	    set_flag_z(cpu, (*r8 == 0x00));
+	    set_flag_c(cpu, b0);
     }
 	set_flag_n(cpu, 0);
 	set_flag_h(cpu, 0);
@@ -1511,10 +1528,21 @@ void RL_RLC(gbc_cpu *cpu, u8 opcode) {
 }
 
 void RR(gbc_cpu *cpu, u8 opcode) {
-    u8 *r8 = prefix_cb_target(cpu, opcode);
-	u8 temp = *r8;
-	*r8 = temp >> 1 | (flag_c(cpu) << 7);
-	set_flag_z(cpu, *r8 == 0x00);
+    bool mHL = ((opcode & 0xF) == 0x6 || (opcode & 0xF) == 0xE);
+    u8 temp;
+
+    if (mHL) {
+        u8 val = read_u8(cpu->mmu, get_hl(cpu));
+	    temp = val;
+	    val = temp >> 1 | (flag_c(cpu) << 7);
+	    set_flag_z(cpu, val == 0x00);
+        write_u8(cpu->mmu, get_hl(cpu), val);
+    } else {
+        u8 *r8 = prefix_cb_target(cpu, opcode);
+	    temp = *r8;
+	    *r8 = temp >> 1 | (flag_c(cpu) << 7);
+	    set_flag_z(cpu, *r8 == 0x00);
+	}
 	set_flag_n(cpu, 0);
 	set_flag_h(cpu, 0);
 	set_flag_c(cpu, temp & 0x1);
@@ -1522,10 +1550,20 @@ void RR(gbc_cpu *cpu, u8 opcode) {
 }
 
 void RRC(gbc_cpu *cpu, u8 opcode) {
-    u8 *r8 = prefix_cb_target(cpu, opcode);
-	set_flag_c(cpu, *r8 & 0x01);
-	*r8 = (*r8 >> 1) | (*r8 << 7);
-	set_flag_z(cpu, *r8 == 0x00);
+    bool mHL = ((opcode & 0xF) == 0x6 || (opcode & 0xF) == 0xE);
+    if (mHL) {
+        u8 v = read_u8(cpu->mmu, get_hl(cpu));
+	    set_flag_c(cpu, v & 0x01);
+	    v = (v >> 1) | (v << 7);
+	    set_flag_z(cpu, v == 0x00);
+	    write_u8(cpu->mmu, get_hl(cpu), v);
+    } else {
+        u8 *r8 = prefix_cb_target(cpu, opcode);
+	    set_flag_c(cpu, *r8 & 0x01);
+	    *r8 = (*r8 >> 1) | (*r8 << 7);
+	    set_flag_z(cpu, *r8 == 0x00);
+	}
+
 	set_flag_n(cpu, 0);
 	set_flag_h(cpu, 0);
     cpu->registers.clk.m = 2;
@@ -1578,13 +1616,11 @@ void BIT_RES_SET(gbc_cpu *cpu, u8 opcode) {
         set_flag_h(cpu, 1);
     }
     else if ((opcode & 0xC0) == 0x80) { // RES
-        if (mHL) write_u8(cpu->mmu,
-                get_hl(cpu),
-                read_u8(cpu->mmu, (cpu, (get_hl(cpu) & ~bit)))); // sets the selected bit to 0
+        if (mHL) write_u8(cpu->mmu, get_hl(cpu), read_u8(cpu->mmu, get_hl(cpu)) & ~bit); // sets the selected bit to 0
         else *r8 = (*r8 & ~bit); // sets the selected bit to 0
     }
     else if ((opcode & 0xC0) == 0xC0) { // SET
-        if (mHL) set_hl(cpu, (get_hl(cpu) | bit)); // sets the selected bit to 0
+        if (mHL) write_u8(cpu->mmu, get_hl(cpu), read_u8(cpu->mmu, get_hl(cpu)) | bit); // sets the selected bit to 0
         else *r8 = (*r8 | bit); // sets the selected bit to 1
     }
 }
@@ -1653,11 +1689,11 @@ void LD_HL_d8(gbc_cpu *cpu) {
   }*/
 
 void LD_A_mBC(gbc_cpu *cpu) {
-    cpu->registers.a = read_u8(cpu->mmu,(cpu->registers.b<<8)+cpu->registers.c);
+    cpu->registers.a = read_u8(cpu->mmu, get_bc(cpu));
     cpu->registers.clk.m = 2;
 }
 void LD_A_mDE(gbc_cpu *cpu) {
-    cpu->registers.a = read_u8(cpu->mmu,(cpu->registers.d<<8)+cpu->registers.e);
+    cpu->registers.a = read_u8(cpu->mmu,get_de(cpu));
     cpu->registers.clk.m = 2;
 }
 
