@@ -32,7 +32,7 @@ void execute_op(gbc_cpu *cpu, u8 opcode) {
             RLCA(cpu);
             break;
         case 0x08: // LD (a16),SP
-            LD_A_a16(cpu);
+            LD_a16_SP(cpu);
             break;
         case 0x09: // ADD HL BC
             ADD_HL_BC(cpu);
@@ -1511,12 +1511,11 @@ void RL_RLC(gbc_cpu *cpu, u8 opcode) {
     cpu->registers.clk.m = 2;
 }
 
-
 void RR(gbc_cpu *cpu, u8 opcode) {
     u8 *r8 = prefix_cb_target(cpu, opcode);
 	u8 temp = *r8;
 	*r8 = temp >> 1 | (flag_c(cpu) << 7);
-	set_flag_z(cpu, 0);
+	set_flag_z(cpu, *r8 == 0x00);
 	set_flag_n(cpu, 0);
 	set_flag_h(cpu, 0);
 	set_flag_c(cpu, temp & 0x1);
@@ -1527,7 +1526,7 @@ void RRC(gbc_cpu *cpu, u8 opcode) {
     u8 *r8 = prefix_cb_target(cpu, opcode);
 	set_flag_c(cpu, *r8 & 0x01);
 	*r8 = (*r8 >> 1) | (*r8 << 7);
-	set_flag_z(cpu, 0);
+	set_flag_z(cpu, *r8 == 0x00);
 	set_flag_n(cpu, 0);
 	set_flag_h(cpu, 0);
     cpu->registers.clk.m = 2;
@@ -1680,8 +1679,6 @@ void LD_a16_SP(gbc_cpu *cpu) {
     temp |= read_u8(cpu->mmu, cpu->registers.pc++) << 8;
     write_u8(cpu->mmu, temp++, cpu->registers.sp & 0xFF);
     write_u8(cpu->mmu, temp, cpu->registers.sp >> 8);
-    /*write_u8(cpu->mmu,read_u16(cpu->mmu,cpu->registers.pc), cpu->registers.sp);
-    */
     cpu->registers.clk.m = 5;
 }
 
