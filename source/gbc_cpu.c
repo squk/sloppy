@@ -61,6 +61,7 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
     cpu->registers.h = 0x01;
     cpu->registers.l = 0x4D;
     cpu->registers.sp = 0xFFFE;
+    cpu->IME = 1;
 
     write_u8(cpu->mmu, 0xFF05, 0x00);
 	write_u8(cpu->mmu, 0xFF06, 0x00);
@@ -220,7 +221,7 @@ void gbc_cpu_trace(gbc_cpu *cpu, u8 opcode) {
 
 void gbc_cpu_step(gbc_cpu *cpu) {
     /*write_u8(cpu->mmu, 0xFF44, 0x90);*/
-	if((cpu->IME || cpu->HALT) && (cpu->IF & cpu->IE & ANY_INTR)) {
+	if((cpu->IME || cpu->HALT) && (read_u8(cpu->mmu, IO_IFLAGS) & read_u8(cpu->mmu, IO_IENABLE) & ANY_INTR)) {
 		cpu->HALT = 0;
 
 		if(cpu->IME) {
@@ -233,25 +234,25 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 			write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc & 0xFF);
 
 			/* Call interrupt handler if required. */
-			if(cpu->IF & cpu->IE & VBLANK_INTR) {
+			if(read_u8(cpu->mmu, IO_IFLAGS) & read_u8(cpu->mmu, IO_IENABLE) & VBLANK_INTR) {
 				cpu->registers.pc = VBLANK_INTR_ADDR;
-				cpu->IF ^= VBLANK_INTR;
+				write_u8(cpu->mmu, IO_IFLAGS, read_u8(cpu->mmu, IO_IFLAGS) ^ VBLANK_INTR);
 			}
-			else if(cpu->IF & cpu->IE & LCDC_INTR) {
+			else if(read_u8(cpu->mmu, IO_IFLAGS) & read_u8(cpu->mmu, IO_IENABLE) & LCDC_INTR) {
 				cpu->registers.pc = LCDC_INTR_ADDR;
-				cpu->IF ^= LCDC_INTR;
+				write_u8(cpu->mmu, IO_IFLAGS, read_u8(cpu->mmu, IO_IFLAGS) ^ LCDC_INTR);
 			}
-			else if(cpu->IF & cpu->IE & TIMER_INTR) {
+			else if(read_u8(cpu->mmu, IO_IFLAGS) & read_u8(cpu->mmu, IO_IENABLE) & TIMER_INTR) {
 				cpu->registers.pc = TIMER_INTR_ADDR;
-				cpu->IF ^= TIMER_INTR;
+				write_u8(cpu->mmu, IO_IFLAGS, read_u8(cpu->mmu, IO_IFLAGS) ^ TIMER_INTR);
 			}
-			else if(cpu->IF & cpu->IE & SERIAL_INTR) {
+			else if(read_u8(cpu->mmu, IO_IFLAGS) & read_u8(cpu->mmu, IO_IENABLE) & SERIAL_INTR) {
 				cpu->registers.pc = SERIAL_INTR_ADDR;
-				cpu->IF ^= SERIAL_INTR;
+				write_u8(cpu->mmu, IO_IFLAGS, read_u8(cpu->mmu, IO_IFLAGS) ^ SERIAL_INTR);
 			}
-			else if(cpu->IF & cpu->IE & CONTROL_INTR) {
+			else if(read_u8(cpu->mmu, IO_IFLAGS) & read_u8(cpu->mmu, IO_IENABLE) & CONTROL_INTR) {
 				cpu->registers.pc = CONTROL_INTR_ADDR;
-				cpu->IF ^= CONTROL_INTR;
+				write_u8(cpu->mmu, IO_IFLAGS, read_u8(cpu->mmu, IO_IFLAGS) ^ CONTROL_INTR);
 			}
 		}
 	}
