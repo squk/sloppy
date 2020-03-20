@@ -87,7 +87,8 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     //gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len); // PASSED
-    gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len);
+    //gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len); //
+    // PASSED
     //gbc_load_rom(&mmu, __03_op_sp_hl_gb, __03_op_sp_hl_gb_len); // PASSED
     //gbc_load_rom(&mmu, __04_op_r_imm_gb, __04_op_r_imm_gb_len); // PASSED
     //gbc_load_rom(&mmu, __05_op_rp_gb, __05_op_rp_gb_len); // PASSED

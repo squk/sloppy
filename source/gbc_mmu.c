@@ -145,8 +145,8 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     u8 *ptr = get_address_ptr(mmu, address);
     if (address == 0xFF50) {
         mmu->in_bios = false;
-        printf("OUT OF BIOS\n");
     }
+
     // https://gbdev.gg8.se/wiki/articles/Serial_Data_Transfer_(Link_Cable)#FF02_-_SC_-_Serial_Transfer_Control_.28R.2FW.29
     if (address == 0xFF02 && val & 0x81) {
         printf("%c", read_u8(mmu, 0xFF01));
@@ -154,9 +154,6 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     }
 
     switch (address) {
-        case IO_DIVIDER:
-            *ptr = 0x00;
-            break;
         case IO_IFLAGS:
             *ptr = (val | 0b11100000);
             break;
@@ -183,6 +180,12 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
             for(u8 i = 0; i < sizeof mmu->oam; i++)
                 mmu->oam[i] = read_u8(mmu, (*ptr << 8) + i);
             break;
+        case IO_DIVIDER:
+            *ptr = 0x00;
+            break;
+        case IO_TIMCONT:
+            //u8 f = *ptr & (MASK_IO_TIMCONT_clock);
+            //write_u8(mmu, IO_DIVIDER, TAC_CYCLES[f]);
         default:
             *ptr = val;
             break;

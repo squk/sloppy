@@ -98,7 +98,6 @@
 
 #define MASK_INT_High_to_Low_P10_P13    (0x01 << 4)
 #define MASK_INT_End_Serial_IO_Transfer (0x01 << 3)
-#define MASK_INT_Timer_Overflow         (0x01 << 2)
 
 #define MASK_IO_SIOCONT_Start_Flag (0x01 << 7)
 #define MASK_IO_SIOCONT_IO_Select  (0x01 << 0)

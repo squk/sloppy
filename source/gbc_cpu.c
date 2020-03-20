@@ -48,6 +48,7 @@ void gbc_cpu_reset(gbc_cpu *cpu) {
 
     cpu->clk.m = 0;
     cpu->clk.t = 0;
+    cpu->timer.enabled = true;
 }
 
 void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
@@ -64,36 +65,36 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
     cpu->IME = 1;
 
     write_u8(cpu->mmu, 0xFF05, 0x00);
-	write_u8(cpu->mmu, 0xFF06, 0x00);
-	write_u8(cpu->mmu, 0xFF07, 0x00);
-	write_u8(cpu->mmu, 0xFF10, 0x80);
-	write_u8(cpu->mmu, 0xFF11, 0xBF);
-	write_u8(cpu->mmu, 0xFF12, 0xF3);
-	write_u8(cpu->mmu, 0xFF14, 0xBF);
-	write_u8(cpu->mmu, 0xFF16, 0x3F);
-	write_u8(cpu->mmu, 0xFF17, 0x00);
-	write_u8(cpu->mmu, 0xFF19, 0xBF);
-	write_u8(cpu->mmu, 0xFF1A, 0x7F);
-	write_u8(cpu->mmu, 0xFF1B, 0xFF);
-	write_u8(cpu->mmu, 0xFF1C, 0x9F);
-	write_u8(cpu->mmu, 0xFF1E, 0xBF);
-	write_u8(cpu->mmu, 0xFF20, 0xFF);
-	write_u8(cpu->mmu, 0xFF21, 0x00);
-	write_u8(cpu->mmu, 0xFF22, 0x00);
-	write_u8(cpu->mmu, 0xFF23, 0xBF);
-	write_u8(cpu->mmu, 0xFF24, 0x77);
-	write_u8(cpu->mmu, 0xFF25, 0xF3);
-	write_u8(cpu->mmu, 0xFF26, 0xF1);
-	write_u8(cpu->mmu, 0xFF40, 0x91);
-	write_u8(cpu->mmu, 0xFF42, 0x00);
-	write_u8(cpu->mmu, 0xFF43, 0x00);
-	write_u8(cpu->mmu, 0xFF45, 0x00);
-	write_u8(cpu->mmu, 0xFF47, 0xFC);
-	write_u8(cpu->mmu, 0xFF48, 0xFF);
-	write_u8(cpu->mmu, 0xFF49, 0xFF);
-	write_u8(cpu->mmu, 0xFF4A, 0x00);
-	write_u8(cpu->mmu, 0xFF4B, 0x00);
-	write_u8(cpu->mmu, 0xFFFF, 0x00);
+    write_u8(cpu->mmu, 0xFF06, 0x00);
+    write_u8(cpu->mmu, 0xFF07, 0x00);
+    write_u8(cpu->mmu, 0xFF10, 0x80);
+    write_u8(cpu->mmu, 0xFF11, 0xBF);
+    write_u8(cpu->mmu, 0xFF12, 0xF3);
+    write_u8(cpu->mmu, 0xFF14, 0xBF);
+    write_u8(cpu->mmu, 0xFF16, 0x3F);
+    write_u8(cpu->mmu, 0xFF17, 0x00);
+    write_u8(cpu->mmu, 0xFF19, 0xBF);
+    write_u8(cpu->mmu, 0xFF1A, 0x7F);
+    write_u8(cpu->mmu, 0xFF1B, 0xFF);
+    write_u8(cpu->mmu, 0xFF1C, 0x9F);
+    write_u8(cpu->mmu, 0xFF1E, 0xBF);
+    write_u8(cpu->mmu, 0xFF20, 0xFF);
+    write_u8(cpu->mmu, 0xFF21, 0x00);
+    write_u8(cpu->mmu, 0xFF22, 0x00);
+    write_u8(cpu->mmu, 0xFF23, 0xBF);
+    write_u8(cpu->mmu, 0xFF24, 0x77);
+    write_u8(cpu->mmu, 0xFF25, 0xF3);
+    write_u8(cpu->mmu, 0xFF26, 0xF1);
+    write_u8(cpu->mmu, 0xFF40, 0x91);
+    write_u8(cpu->mmu, 0xFF42, 0x00);
+    write_u8(cpu->mmu, 0xFF43, 0x00);
+    write_u8(cpu->mmu, 0xFF45, 0x00);
+    write_u8(cpu->mmu, 0xFF47, 0xFC);
+    write_u8(cpu->mmu, 0xFF48, 0xFF);
+    write_u8(cpu->mmu, 0xFF49, 0xFF);
+    write_u8(cpu->mmu, 0xFF4A, 0x00);
+    write_u8(cpu->mmu, 0xFF4B, 0x00);
+    write_u8(cpu->mmu, 0xFFFF, 0x00);
 
     cpu->mmu->in_bios = false;
 }
@@ -191,49 +192,49 @@ void gbc_cpu_trace(gbc_cpu *cpu, u8 opcode) {
 void gbc_interrupt_handler(gbc_cpu *cpu) {
     u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
     u8 IE = read_u8(cpu->mmu, IO_IENABLE);
-	if((cpu->IME || cpu->HALT) && (IF & IE & ANY_INTR)) {
-		cpu->HALT = 0;
-		if(cpu->IME) {
+    if((cpu->IME || cpu->HALT) && (IF & IE & ANY_INTR)) {
+        cpu->HALT = 0;
+        if(cpu->IME) {
             // disable interrupts
-			cpu->IME = 0;
+            cpu->IME = 0;
 
             // push program counter
-			write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc >> 8);
-			write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc & 0xFF);
+            write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc >> 8);
+            write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc & 0xFF);
 
             // Call interrupt handler if required
-			if(IF & IE & VBLANK_INTR) {
-				cpu->registers.pc = VBLANK_INTR_ADDR;
-				//write_u8(cpu->mmu, IO_IFLAGS, IF ^ VBLANK_INTR);
+            if(IF & IE & VBLANK_INTR) {
+                cpu->registers.pc = VBLANK_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ VBLANK_INTR);
                 unset_bit(cpu->mmu, IO_IFLAGS, VBLANK_INTR);
                 cpu->registers.clk.m = 20;
-			}
-			else if(IF & IE & LCDC_INTR) {
-				cpu->registers.pc = LCDC_INTR_ADDR;
-				//write_u8(cpu->mmu, IO_IFLAGS, IF ^ LCDC_INTR);
+            }
+            else if(IF & IE & LCDC_INTR) {
+                cpu->registers.pc = LCDC_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ LCDC_INTR);
                 unset_bit(cpu->mmu, IO_IFLAGS, LCDC_INTR);
                 cpu->registers.clk.m = 20;
-			}
-			else if(IF & IE & TIMER_INTR) {
-				cpu->registers.pc = TIMER_INTR_ADDR;
-				//write_u8(cpu->mmu, IO_IFLAGS, IF ^ TIMER_INTR);
+            }
+            else if(IF & IE & TIMER_INTR) {
+                cpu->registers.pc = TIMER_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ TIMER_INTR);
                 unset_bit(cpu->mmu, IO_IFLAGS, TIMER_INTR);
                 cpu->registers.clk.m = 20;
-			}
-			else if(IF & IE & SERIAL_INTR) {
-				cpu->registers.pc = SERIAL_INTR_ADDR;
-				//write_u8(cpu->mmu, IO_IFLAGS, IF ^ SERIAL_INTR);
+            }
+            else if(IF & IE & SERIAL_INTR) {
+                cpu->registers.pc = SERIAL_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ SERIAL_INTR);
                 unset_bit(cpu->mmu, IO_IFLAGS, SERIAL_INTR);
                 cpu->registers.clk.m = 20;
-			}
-			else if(IF & IE & CONTROL_INTR) {
-				cpu->registers.pc = CONTROL_INTR_ADDR;
-				//write_u8(cpu->mmu, IO_IFLAGS, IF ^ CONTROL_INTR);
+            }
+            else if(IF & IE & CONTROL_INTR) {
+                cpu->registers.pc = CONTROL_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ CONTROL_INTR);
                 unset_bit(cpu->mmu, IO_IFLAGS, CONTROL_INTR);
                 cpu->registers.clk.m = 20;
-			}
-		}
-	}
+            }
+        }
+    }
 }
 
 void gbc_cpu_step(gbc_cpu *cpu) {
@@ -250,20 +251,22 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     cpu->clk.m += cpu->registers.clk.m;
     cpu->clk.t += cpu->registers.clk.t;
 
-    // if TIMER ENABLED ?
-    u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
-	cpu->timer.tima_count += cpu->registers.clk.m;
-	if(cpu->timer.tima_count >= TAC_CYCLES[IO_TACRATE]) {
-		cpu->timer.tima_count -= TAC_CYCLES[IO_TACRATE];
+    if (read_bit(cpu->mmu, IO_TIMCONT, 0x4)) {
+        u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
+        u8 TAC = read_u8(cpu->mmu, IO_TIMCONT);
+        cpu->timer.tima_count += cpu->registers.clk.m;
 
-        u8 temp = read_u8(cpu->mmu, IO_TIMECNT) + 1;
-        write_u8(cpu->mmu, IO_TIMECNT, temp);
-		if(temp == 0) {
-			write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR);
-            // overflow
-			write_u8(cpu->mmu, IO_TIMECNT, read_u8(cpu->mmu, IO_TIMEMOD));
-		}
-	}
+        if(cpu->timer.tima_count >= TAC_CYCLES[TAC]) {
+            cpu->timer.tima_count -= TAC_CYCLES[TAC];
+
+            u8 temp = read_u8(cpu->mmu, IO_TIMECNT) + 1;
+            write_u8(cpu->mmu, IO_TIMECNT, temp);
+            if(temp == 0) { // overflow
+                write_u8(cpu->mmu, IO_TIMECNT, read_u8(cpu->mmu, IO_TIMEMOD)); // reset to value in TMA
+                write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
+            }
+        }
+    }
 
     ppu_run(cpu->ppu, cpu->registers.clk.m);
 }
