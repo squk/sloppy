@@ -149,11 +149,44 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     }
     // https://gbdev.gg8.se/wiki/articles/Serial_Data_Transfer_(Link_Cable)#FF02_-_SC_-_Serial_Transfer_Control_.28R.2FW.29
     if (address == 0xFF02 && val & 0x81) {
-        /*printf("SERIAL: %c\n", read_u8(mmu, 0xFF01));*/
         printf("%c", read_u8(mmu, 0xFF01));
         fflush(stdout);
     }
-    *ptr = val;
+
+    switch (address) {
+        case IO_DIVIDER:
+            *ptr = 0x00;
+            break;
+        case IO_IFLAGS:
+            *ptr = (val | 0b11100000);
+            break;
+        case IO_LCDCONT:
+            *ptr = val;
+
+            // fix LY to 0 when LCD is off
+            if((*ptr & MASK_LCDCONT_LCD_Display_Enable) == 0)
+            {
+                // ensure LCD is on during vblank
+                if (!read_bit(mmu, IO_LCDSTAT, OPT_MODE_VBLANK)) {
+                /*if (!read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {*/
+                    *ptr |= MASK_LCDCONT_LCD_Display_Enable;
+                    return;
+                }
+                write_u8(mmu, IO_LCDSTAT, (read_u8(mmu, IO_LCDSTAT) & ~0x03) | OPT_MODE_VBLANK);
+                write_u8(mmu, IO_CURLINE, 0);
+                /*cpu->counter.lcd_count = 0;*/
+            }
+            break;
+        case IO_DMACONT:
+            *ptr = (val % 0xF1);
+
+            for(u8 i = 0; i < sizeof mmu->oam; i++)
+                mmu->oam[i] = read_u8(mmu, (*ptr << 8) + i);
+            break;
+        default:
+            *ptr = val;
+            break;
+    }
 }
 
 u16 read_u16(gbc_mmu *mmu , u16 address) {

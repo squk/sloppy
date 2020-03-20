@@ -9,6 +9,9 @@
 #define FLAG_H 0x20
 #define FLAG_C 0x10
 
+// http://bgb.bircd.org/pandocs.htm#timeranddividerregisters
+static const u16 TAC_CYCLES[4] = {1024, 16, 64, 256};
+
 typedef struct {
     // two types of timeclocks in the Z80
     int m;
@@ -38,10 +41,19 @@ typedef struct {
     u8 a, b, c, d, e, h, l, f;
 } gbc_cpu_rsv;
 
+typedef struct
+{
+    u16 lcd_count; // LCD Timing
+    u16 div_count; // Divider Register Counter
+    u16 tima_count;    // Timer Counter
+    u16 serial_count; // Serial Counter
+} gbc_timer;
+
 typedef struct {
     gbc_clock clk;
     gbc_cpu_registers registers;
     gbc_cpu_rsv rsv;
+    gbc_timer timer;
 
     u8 HALT;
     bool quit;

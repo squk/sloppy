@@ -2206,7 +2206,7 @@ void JP_NC_a16(gbc_cpu *cpu) {
 
 void RST_u8(gbc_cpu *cpu, u8 v) {
     cpu->registers.sp-=2;
-    write_u16(cpu->mmu,cpu->registers.sp,cpu->registers.pc);
+    write_u16(cpu->mmu, cpu->registers.sp, cpu->registers.pc);
     cpu->registers.pc = v;
     cpu->registers.clk.m = 3;
 }
@@ -2216,7 +2216,7 @@ void NOP(gbc_cpu *cpu) {
 }
 
 void HALT(gbc_cpu *cpu) {
-    cpu->HALT =1;
+    cpu->HALT = 1;
     cpu->registers.clk.m = 1;
 }
 void DI(gbc_cpu *cpu) {
@@ -2228,9 +2228,4 @@ void EI(gbc_cpu *cpu) {
     cpu->registers.clk.m = 1;
 }
 
-void XX(gbc_cpu *cpu) {
-    /*u8 opcode = read_u8(cpu->mmu, cpu->registers.pc-1);
-    */
-    /*printf("ERROR: OPCODE UNIMPLEMETED %x?\n", opcode);
-    */
-}
+void XX(gbc_cpu *cpu) {}

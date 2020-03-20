@@ -4,10 +4,19 @@
 #define IO_JOYPAD  0xFF00
 #define IO_SIODATA 0xFF01
 #define IO_SIOCONT 0xFF02
-#define IO_DIVIDER 0xFF04
-#define IO_TIMECNT 0xFF05
-#define IO_TIMEMOD 0xFF06
-#define IO_TIMCONT 0xFF07
+#define IO_DIVIDER 0xFF04 // DIV - Divider Register (R/W)
+#define IO_TIMECNT 0xFF05 // TIMA - Timer counter (R/W)
+#define IO_TIMEMOD 0xFF06 // TMA - Timer Modulo (R/W
+#define IO_TIMCONT 0xFF07 // TAC - Timer Control (R/W)
+#define IO_TACRATE 0x0002
+/*
+ * INT 50 - Timer Interrupt
+ * Each time when the timer overflows (ie. when TIMA gets bigger than FFh), then
+ * an interrupt is requested by setting Bit 2 in the IF Register (FF0F). When that
+ * interrupt is enabled, then the CPU will execute it by calling the timer
+ * interrupt vector at 0050h.
+ */
+
 #define IO_IFLAGS  0xFF0F
 
 // video registers
