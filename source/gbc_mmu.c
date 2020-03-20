@@ -137,6 +137,7 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
 }
 
 u8 read_u8(gbc_mmu *mmu , u16 address) {
+    /*if (address == 0xff44) return 0x90;*/
     return *get_address_ptr(mmu, address);
 }
 
