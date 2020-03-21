@@ -400,6 +400,30 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
             if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
                 set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
+
+            for (int y = 0; y < SIZE_Y; y++) {
+                for (int x = 0; x < SIZE_X; x++) {
+                    int px_index = y * SIZE_X + x;
+                    u8 color = ppu->fb[px_index];
+
+#if defined(SLOPPY_RENDER)
+                    SDL_SetRenderDrawColor(ppu->renderer, color, color, color, 0xFF);
+                    SDL_RenderDrawPoint(ppu->renderer, x, y);
+#endif
+                }
+            }
+
+#if defined(SLOPPY_RENDER)
+            SDL_Event e;
+            if (SDL_PollEvent(&e) != 0) {
+                /*printf("%d %d\n", e.type, SDL_KEYDOWN);*/
+                if (e.type == 12){ // Ctrl C ?
+                    printf("SDL_QUIT\n");
+                    ppu->quit = true;
+                }
+            }
+            SDL_RenderPresent(ppu->renderer);
+#endif
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
@@ -435,31 +459,6 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
         set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
         ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
-
-        for (int y = 0; y < SIZE_Y; y++) {
-            for (int x = 0; x < SIZE_X; x++) {
-                int px_index = y * SIZE_X + x;
-                u8 color = ppu->fb[px_index];
-
-#if defined(SLOPPY_RENDER)
-                SDL_SetRenderDrawColor(ppu->renderer, color, color, color, 0xFF);
-                SDL_RenderDrawPoint(ppu->renderer, x, y);
-#endif
-            }
-        }
-
-
-#if defined(SLOPPY_RENDER)
-        SDL_Event e;
-        if (SDL_PollEvent(&e) != 0) {
-            /*printf("%d %d\n", e.type, SDL_KEYDOWN);*/
-            if (e.type == 12){ // Ctrl C ?
-                printf("SDL_QUIT\n");
-                ppu->quit = true;
-            }
-        }
-        SDL_RenderPresent(ppu->renderer);
-#endif
     }
 }
 
