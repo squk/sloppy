@@ -359,7 +359,6 @@ The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 i
 Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
 */
 u8 ppu_run(gbc_ppu *ppu, int cycles) {
-    int byte_row_width = 160;
     if (!read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
         ppu->reset = 1;
         return 0;
