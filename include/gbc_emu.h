@@ -51,10 +51,12 @@ void emu_test() {
     int i;
 
 #if defined(SLOPPY_RENDER)
-    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Init(SDL_INIT_EVERYTHING);
     SDL_Renderer *renderer;
     SDL_Window *window;
-    SDL_CreateWindowAndRenderer(SIZE_X, SIZE_Y, 0, &window, &renderer);
+    float scale = 2.0f;
+    SDL_CreateWindowAndRenderer(SIZE_X*scale, SIZE_Y*scale, 0, &window, &renderer);
+    SDL_RenderSetScale(renderer, scale, scale);
     // Check that the window was successfully created
     if (window == NULL) {
         // In the case that the window could not be made...
@@ -81,8 +83,8 @@ void emu_test() {
     //gbc_cpu_set_boot_state(&cpu);
     cpu.mmu->io[0x00] = 0xFF;
 
-    gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
-    //gbc_load_rom_file(&mmu, "./Tetris.gb");
+    //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
+    gbc_load_rom_file(&mmu, "./Tetris.gb");
     //gbc_load_rom_file(&mmu, "./vblank_stat_intr-C.gb");
     //gbc_load_rom_file(&mmu, "./DrMario.gb");
     //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper

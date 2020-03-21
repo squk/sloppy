@@ -120,7 +120,7 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
     fseek(infile, 0L, SEEK_SET);
 
     // grab sufficient memory for the buffer to hold the text
-    buffer = (char*)calloc(numbytes, sizeof(char));
+    //buffer = (char*)calloc(numbytes, sizeof(char));
 
     // memory error
     if(buffer == NULL)
@@ -133,7 +133,7 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
     memcpy(mmu->rom, buffer, numbytes);
 
      //free the memory we used for the buffer
-    free(buffer);
+    //free(buffer);
 }
 
 u8 read_u8(gbc_mmu *mmu , u16 address) {
@@ -149,8 +149,8 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
 
     // https://gbdev.gg8.se/wiki/articles/Serial_Data_Transfer_(Link_Cable)#FF02_-_SC_-_Serial_Transfer_Control_.28R.2FW.29
     if (address == 0xFF02 && val & 0x81) {
-        printf("%c", read_u8(mmu, 0xFF01));
-        fflush(stdout);
+        //printf("%c", read_u8(mmu, 0xFF01));
+        //fflush(stdout);
     }
 
     switch (address) {

@@ -15,7 +15,6 @@ void SRL(gbc_cpu *cpu, u8 opcode);
 void RL_RLC(gbc_cpu *cpu, u8 opcode);
 void RR(gbc_cpu *cpu, u8 opcode);
 void RRC(gbc_cpu *cpu, u8 opcode);
-void RR_RRC(gbc_cpu *cpu, u8 opcode);
 void BIT_RES_SET(gbc_cpu *cpu, u8 opcode);
 
 void LD_r8_r8(gbc_cpu *cpu, u8 *r1, u8 *r2);

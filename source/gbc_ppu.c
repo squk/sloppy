@@ -185,7 +185,7 @@ void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
         for (j = 0; j < 8; j++) {
             ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
                 ppu->bg_palette[
-                    ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
                     ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
                 ];
         }
@@ -416,9 +416,76 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                 if (e.type == SDL_QUIT){
                     ppu->quit = true;
                 }
-            }
-            SDL_RenderPresent(ppu->renderer);
+
+                /*
+                 * Bit 7 - Not used
+                 * Bit 6 - Not used
+                 * Bit 5 - P15 Select Button Keys      (0=Select)
+                 * Bit 4 - P14 Select Direction Keys   (0=Select)
+                 * Bit 3 - P13 Input Down  or Start    (0=Pressed) (Read Only)
+                 * Bit 2 - P12 Input Up    or Select   (0=Pressed) (Read Only)
+                 * Bit 1 - P11 Input Left  or Button B (0=Pressed) (Read Only)
+                 * Bit 0 - P10 Input Right or Button A (0=Pressed) (Read Only)
+                 */
+                if (e.type == SDL_KEYDOWN) {
+                    if (e.key.keysym.sym == SDLK_ESCAPE){
+                        ppu->quit = true;
+                    }
+                    if (e.key.keysym.sym == SDLK_UP) {
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<2); // up
+                    } else if (e.key.keysym.sym == SDLK_DOWN) {
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<3); // down
+                    } else if (e.key.keysym.sym == SDLK_LEFT) {
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<1); // left
+                    } else if (e.key.keysym.sym == SDLK_LEFT) {
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<0); // right
+                    } else if (e.key.keysym.sym == SDLK_x) {
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<0); // A
+                    } else if (e.key.keysym.sym == SDLK_z) {
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<1); // B
+                    } else if (e.key.keysym.sym == SDLK_RETURN) {
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<3); // start
+                    } else if (e.key.keysym.sym == SDLK_TAB) {
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
+                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // select
+                    }
+                } else if (e.type == SDL_KEYUP) {
+                    if (e.key.keysym.sym == SDLK_UP) {
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<2); // up
+                    } else if (e.key.keysym.sym == SDLK_DOWN) {
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<3); // down
+                    } else if (e.key.keysym.sym == SDLK_LEFT) {
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<1); // left
+                    } else if (e.key.keysym.sym == SDLK_LEFT) {
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<0); // right
+                    } else if (e.key.keysym.sym == SDLK_x) {
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<0); // A
+                    } else if (e.key.keysym.sym == SDLK_z) {
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<1); // B
+                    } else if (e.key.keysym.sym == SDLK_RETURN) {
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<3); // start
+                    } else if (e.key.keysym.sym == SDLK_TAB) {
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
+                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // select
+                    }
+                }
+                SDL_RenderPresent(ppu->renderer);
 #endif
+            }
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
