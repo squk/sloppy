@@ -437,7 +437,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
             unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
             set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
 
-            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_0_HBLANK_INTERRUPT)) {
+            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
                 set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
         }
@@ -445,10 +445,6 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
     else if (((read_u8(ppu->mmu, IO_LCDSTAT) & 3) == OPT_MODE_HBLANK) && ppu->mode_clock >= END_HBLANK) {
         unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
         set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
-
-        if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
-            set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
-        }
     }
     else if (((read_u8(ppu->mmu, IO_LCDSTAT) & 3) == OPT_MODE_OAM) && ppu->mode_clock >= END_OAM) {
         unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
@@ -459,6 +455,10 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
         set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
         ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
+
+        if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_0_HBLANK_INTERRUPT)) {
+            set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+        }
     }
 }
 
