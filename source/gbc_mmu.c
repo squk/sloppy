@@ -56,7 +56,7 @@ void gbc_mmu_init(gbc_mmu *mmu){
 
     memset(mmu->bios, 0, sizeof mmu->bios);
     memset(mmu->rom, 0, sizeof mmu-> rom);
-    memset(mmu->vram, 1, sizeof mmu->vram); // we load 1's into the vram to test the bootrom code
+    memset(mmu->vram, 0, sizeof mmu->vram);
     memset(mmu->wram, 0, sizeof mmu->wram);
     memset(mmu->oam, 0, sizeof mmu->oam);
     memset(mmu->io, 0, sizeof mmu->io);
@@ -102,7 +102,41 @@ void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {
     memcpy(mmu->rom, src, n);
 }
 
+void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
+    char *buffer;
+    long numbytes;
+
+    FILE *infile = fopen(fname, "r");
+
+    if(infile == NULL)
+        return;
+
+    // Get the number of bytes
+    fseek(infile, 0L, SEEK_END);
+    numbytes = ftell(infile);
+
+    // reset the file position indicator to the beginning of the file
+    fseek(infile, 0L, SEEK_SET);
+
+    // grab sufficient memory for the buffer to hold the text
+    buffer = (char*)calloc(numbytes, sizeof(char));
+
+    // memory error
+    if(buffer == NULL)
+        return;
+
+    // copy all the text into the buffer
+    fread(buffer, sizeof(char), numbytes, infile);
+    fclose(infile);
+
+    memcpy(mmu->rom, buffer, numbytes);
+
+     //free the memory we used for the buffer
+    free(buffer);
+}
+
 u8 read_u8(gbc_mmu *mmu , u16 address) {
+    /*if (address == 0xff44) return 0x90;*/
     return *get_address_ptr(mmu, address);
 }
 
@@ -110,22 +144,66 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     u8 *ptr = get_address_ptr(mmu, address);
     if (address == 0xFF50) {
         mmu->in_bios = false;
-        printf("OUT OF BIOS\n");
     }
-    *ptr = val;
+
+    // https://gbdev.gg8.se/wiki/articles/Serial_Data_Transfer_(Link_Cable)#FF02_-_SC_-_Serial_Transfer_Control_.28R.2FW.29
+    if (address == 0xFF02 && val & 0x81) {
+        printf("%c", read_u8(mmu, 0xFF01));
+        fflush(stdout);
+    }
+
+    switch (address) {
+        case IO_IFLAGS:
+            *ptr = (val | 0b11100000);
+            break;
+        case IO_LCDCONT:
+            *ptr = val;
+
+            // fix LY to 0 when LCD is off
+            if((*ptr & MASK_LCDCONT_LCD_Display_Enable) == 0)
+            {
+                // ensure LCD is on during vblank
+                if (!read_bit(mmu, IO_LCDSTAT, OPT_MODE_VBLANK)) {
+                /*if (!read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {*/
+                    *ptr |= MASK_LCDCONT_LCD_Display_Enable;
+                    return;
+                }
+                write_u8(mmu, IO_LCDSTAT, (read_u8(mmu, IO_LCDSTAT) & ~0x03) | OPT_MODE_VBLANK);
+                write_u8(mmu, IO_CURLINE, 0);
+                /*cpu->counter.lcd_count = 0;*/
+            }
+            break;
+        case IO_DMACONT:
+            *ptr = (val % 0xF1);
+
+            for(u8 i = 0; i < sizeof mmu->oam; i++)
+                mmu->oam[i] = read_u8(mmu, (*ptr << 8) + i);
+            break;
+        case IO_DIVIDER:
+            *ptr = 0x00;
+            break;
+        case IO_TIMCONT:
+            //u8 f = *ptr & (MASK_IO_TIMCONT_clock);
+            //write_u8(mmu, IO_DIVIDER, TAC_CYCLES[f]);
+        case IO_JOYPAD:
+            break;
+        default:
+            *ptr = val;
+            break;
+    }
 }
 
 u16 read_u16(gbc_mmu *mmu , u16 address) {
     // swap bytes for little-endian
-    uint16_t temp = read_u8(mmu, address);
+    u16 temp = read_u8(mmu, address);
     temp |= read_u8(mmu, address+1) << 8;
     return temp;
 }
 
 void write_u16(gbc_mmu *mmu , u16 address, u16 val) {
     // swap bits for little-endian
-     write_u8(mmu, address, val & 0xFF);
-     write_u8(mmu, address+1, (u8)(val >> 8));
+    write_u8(mmu, address, val & 0xFF);
+    write_u8(mmu, address+1, (u8)(val >> 8));
 }
 
 bool read_bit(gbc_mmu *mmu, u16 address, u8 bit) {

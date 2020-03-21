@@ -3,6 +3,8 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_keyboard.h>
 
 // to display a sprite in the upper left corner of the screen set sprite X=8, Y=16.
 #define SPRITE_INI_X 8
@@ -25,9 +27,8 @@
 #define LCD_LINE_CYCLES     456
 
 #define DUR_FRAME 70224
-#define DUR_OAM 80
-#define DUR_OAM_VRAM 172
-#define DUR_HBLANK 204
+#define END_OAM 80
+#define END_OAM_VRAM 252
 #define DUR_LINE 456 // 80 + 172 + 204
 #define DUR_VBLANK 4560
 
@@ -50,12 +51,12 @@
 #define RGB8(r,g,b)	( (((b)>>3)<<10) | (((g)>>3)<<5) | ((r)>>3) )
 
 typedef struct {
-	uint8_t id;
-	uint8_t x;
-	uint8_t y;
-	uint8_t pat;
-	uint8_t flags;
-} gpu_obj;
+    uint8_t id;
+    uint8_t x;
+    uint8_t y;
+    uint8_t pat;
+    uint8_t flags;
+} ppu_obj;
 
 typedef struct {
     gbc_mmu *mmu;
@@ -67,25 +68,23 @@ typedef struct {
     u8 win_disp[512*512];
     u8 obj_disp[512*512];
 
-    int mode_clock; // Object Attribute Memory
-    u8 reset;
+    u16 mode_clock; // Object Attribute Memory
     u8 bg_palette[4], obj0_palette[4], obj1_palette[4];
 
     bool quit;
-} gbc_gpu;
+} gbc_ppu;
 
 void set_palette(u8* p, u8 v);
 
-void gpu_write_u8(gbc_gpu *gpu, u16 address, u8 v);
-u8 gpu_read_u8(gbc_gpu *gpu, u16 address);
+void ppu_write_u8(gbc_ppu *ppu, u16 address, u8 v);
 
-void gpu_init(gbc_gpu *gpu);
-void gpu_start_frame(gbc_gpu *gpu);
-void gpu_draw_line_fb(gbc_gpu *gpu, u8 line);
-void gpu_draw_line_bg(gbc_gpu *gpu, u8 line);
-void gpu_draw_line_obj(gbc_gpu *gpu, u8 line);
-void gpu_draw_line(gbc_gpu *gpu, u8 line);
-u8 gpu_run(gbc_gpu *gpu, int cycles);
+void ppu_init(gbc_ppu *ppu);
+void ppu_start_frame(gbc_ppu *ppu);
+void ppu_draw_line_fb(gbc_ppu *ppu, u8 line);
+void ppu_draw_line_bg(gbc_ppu *ppu, u8 line);
+void ppu_draw_line_obj(gbc_ppu *ppu, u8 line);
+void ppu_draw_line(gbc_ppu *ppu, u8 line);
+u8 ppu_run(gbc_ppu *ppu, int cycles);
 
 unsigned long gbcToRgb32(unsigned const bgr15);
 u16 rgb32ToRgb16(u32 rgb32);

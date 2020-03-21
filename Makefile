@@ -11,12 +11,12 @@
 
 APP_BIN = sloppy
 
-LIBS = -lSDL -lSDLmain -lSDL_image -lSDL2-2.0.0
-#LIBS =
-CC = gcc
-CFLAGS = -Wall
-#INCLUDES = -I/usr/X11R6/include -framework Cocoa -framework OpenGL
-INCLUDES =  -framework Cocoa -I/Library/Frameworks/SDL2.framework/Headers
+#LIBS = -lSDL -lSDLmain -lSDL_image -lSDL2-2.0.0
+LIBS =
+CC = g++
+#CFLAGS = -Wall
+CFLAGS = -Wall -DSLOPPY_RENDER
+INCLUDES =  -I`sdl2-config --cflags --libs`
 
 
 SRC_PATH = source

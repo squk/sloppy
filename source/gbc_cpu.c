@@ -9,23 +9,23 @@
 #include "gbc_ops.h"
 #include "gbc_io.h"
 
-bool FZ(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
-bool FN(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }
-bool FH(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
-bool FC(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == FLAG_C; }
+u16 get_hl(gbc_cpu *cpu) { return (cpu->registers.h<<8)+cpu->registers.l; }
+void set_hl(gbc_cpu *cpu, u16 hl) { cpu->registers.h=(hl>>8)&255; cpu->registers.l = hl&255; }
+u16 get_bc(gbc_cpu *cpu) { return (cpu->registers.b<<8)+cpu->registers.c; }
+void set_bc(gbc_cpu *cpu, u16 bc) { cpu->registers.b=(bc>>8)&255; cpu->registers.c = bc&255; }
+u16 get_de(gbc_cpu *cpu) { return (cpu->registers.d<<8)+cpu->registers.e; }
+void set_de(gbc_cpu *cpu, u16 de) { cpu->registers.d=(de>>8)&255; cpu->registers.e = de&255; }
 
-void set_f(gbc_cpu *cpu, u8 flag) {
-    cpu->registers.f |= flag;
-}
+bool flag_z(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
+bool flag_n(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }
+bool flag_h(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_H) == FLAG_H; }
+bool flag_c(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == FLAG_C; }
 
-void unset_f(gbc_cpu *cpu, u8 flag) {
-    cpu->registers.f &= ~flag;
-}
+void set_flag_z(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_Z) | (val ? FLAG_Z : 0); }
+void set_flag_n(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_N) | (val ? FLAG_N : 0); }
+void set_flag_h(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_H) | (val ? FLAG_H : 0); }
+void set_flag_c(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_C) | (val ? FLAG_C : 0); }
 
-void put_f(gbc_cpu *cpu, u8 flag, bool val) {
-    if (val) set_f(cpu, flag);
-    else unset_f(cpu, flag);
-}
 
 void gbc_cpu_reset(gbc_cpu *cpu) {
     cpu->registers.a = 0;
@@ -44,6 +44,16 @@ void gbc_cpu_reset(gbc_cpu *cpu) {
 
     cpu->clk.m = 0;
     cpu->clk.t = 0;
+
+    cpu->HALT = 0;
+    cpu->IME = 0;
+    cpu->IE = 0;
+    cpu->IF = 0;
+
+    cpu->timer.lcd_count = 0;
+    cpu->timer.div_count = 0;
+    cpu->timer.tima_count = 0;
+    cpu->timer.serial_count = 0;
 }
 
 void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
@@ -57,78 +67,53 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
     cpu->registers.h = 0x01;
     cpu->registers.l = 0x4D;
     cpu->registers.sp = 0xFFFE;
+    cpu->IME = 1;
 
     write_u8(cpu->mmu, 0xFF05, 0x00);
-	write_u8(cpu->mmu, 0xFF06, 0x00);
-	write_u8(cpu->mmu, 0xFF07, 0x00);
-	write_u8(cpu->mmu, 0xFF10, 0x80);
-	write_u8(cpu->mmu, 0xFF11, 0xBF);
-	write_u8(cpu->mmu, 0xFF12, 0xF3);
-	write_u8(cpu->mmu, 0xFF14, 0xBF);
-	write_u8(cpu->mmu, 0xFF16, 0x3F);
-	write_u8(cpu->mmu, 0xFF17, 0x00);
-	write_u8(cpu->mmu, 0xFF19, 0xBF);
-	write_u8(cpu->mmu, 0xFF1A, 0x7F);
-	write_u8(cpu->mmu, 0xFF1B, 0xFF);
-	write_u8(cpu->mmu, 0xFF1C, 0x9F);
-	write_u8(cpu->mmu, 0xFF1E, 0xBF);
-	write_u8(cpu->mmu, 0xFF20, 0xFF);
-	write_u8(cpu->mmu, 0xFF21, 0x00);
-	write_u8(cpu->mmu, 0xFF22, 0x00);
-	write_u8(cpu->mmu, 0xFF23, 0xBF);
-	write_u8(cpu->mmu, 0xFF24, 0x77);
-	write_u8(cpu->mmu, 0xFF25, 0xF3);
-	write_u8(cpu->mmu, 0xFF26, 0xF1);
-	write_u8(cpu->mmu, 0xFF40, 0x91);
-	write_u8(cpu->mmu, 0xFF42, 0x00);
-	write_u8(cpu->mmu, 0xFF43, 0x00);
-	write_u8(cpu->mmu, 0xFF45, 0x00);
-	write_u8(cpu->mmu, 0xFF47, 0xFC);
-	write_u8(cpu->mmu, 0xFF48, 0xFF);
-	write_u8(cpu->mmu, 0xFF49, 0xFF);
-	write_u8(cpu->mmu, 0xFF4A, 0x00);
-	write_u8(cpu->mmu, 0xFF4B, 0x00);
-	write_u8(cpu->mmu, 0xFFFF, 0x00);
+    write_u8(cpu->mmu, 0xFF06, 0x00);
+    write_u8(cpu->mmu, 0xFF07, 0x00);
+    write_u8(cpu->mmu, 0xFF10, 0x80);
+    write_u8(cpu->mmu, 0xFF11, 0xBF);
+    write_u8(cpu->mmu, 0xFF12, 0xF3);
+    write_u8(cpu->mmu, 0xFF14, 0xBF);
+    write_u8(cpu->mmu, 0xFF16, 0x3F);
+    write_u8(cpu->mmu, 0xFF17, 0x00);
+    write_u8(cpu->mmu, 0xFF19, 0xBF);
+    write_u8(cpu->mmu, 0xFF1A, 0x7F);
+    write_u8(cpu->mmu, 0xFF1B, 0xFF);
+    write_u8(cpu->mmu, 0xFF1C, 0x9F);
+    write_u8(cpu->mmu, 0xFF1E, 0xBF);
+    write_u8(cpu->mmu, 0xFF20, 0xFF);
+    write_u8(cpu->mmu, 0xFF21, 0x00);
+    write_u8(cpu->mmu, 0xFF22, 0x00);
+    write_u8(cpu->mmu, 0xFF23, 0xBF);
+    write_u8(cpu->mmu, 0xFF24, 0x77);
+    write_u8(cpu->mmu, 0xFF25, 0xF3);
+    write_u8(cpu->mmu, 0xFF26, 0xF1);
+    write_u8(cpu->mmu, 0xFF40, 0x91);
+    write_u8(cpu->mmu, 0xFF42, 0x00);
+    write_u8(cpu->mmu, 0xFF43, 0x00);
+    write_u8(cpu->mmu, 0xFF45, 0x00);
+    write_u8(cpu->mmu, 0xFF47, 0xFC);
+    write_u8(cpu->mmu, 0xFF48, 0xFF);
+    write_u8(cpu->mmu, 0xFF49, 0xFF);
+    write_u8(cpu->mmu, 0xFF4A, 0x00);
+    write_u8(cpu->mmu, 0xFF4B, 0x00);
+    write_u8(cpu->mmu, 0xFFFF, 0x00);
 
     cpu->mmu->in_bios = false;
 }
 
 void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
-    printf("OP: %x   %s\n", opcode, OPS_STR[opcode]);
-    printf("A: %x    B: %x    C: %x\n", cpu->registers.a, cpu->registers.b, cpu->registers.c);
-    printf("D: %x    E: %x    F: %x\n", cpu->registers.d, cpu->registers.e, cpu->registers.f);
-    printf("H: %x    L: %x    M: %x\n", cpu->registers.h, cpu->registers.l, cpu->registers.clk.m);
-    printf("T: %x    SP: %x    PC: %x\n", cpu->registers.clk.t, cpu->registers.sp, cpu->registers.pc);
-    printf("press enter\n");
-    getchar();
-}
+    gbc_cpu_registers *r = &cpu->registers;
+    char flags[] = "----";
+    if (r->f & FLAG_Z) flags[0] = 'Z';
+    if (r->f & FLAG_N) flags[1] = 'N';
+    if (r->f & FLAG_H) flags[2] = 'H';
+    if (r->f & FLAG_C) flags[3] = 'C';
 
-void d_pc_eq(gbc_cpu *cpu, u8 opcode, u8 eq) {
-    if (opcode == 0)
-        return;
-    u8 pc = cpu->registers.pc;
-    pc--;
-    if (cpu->mmu->in_bios && pc == eq) {
-         printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);
-    }
-}
-
-void d_pc_eq_v(gbc_cpu *cpu, u8 opcode, u8 eq) {
-    if (opcode == 0)
-        return;
-    u8 pc = cpu->registers.pc;
-    pc--;
-    if (cpu->mmu->in_bios && pc == eq) {
-        gbc_registers_debug(cpu, opcode);
-    }
-}
-
-void d_pc_r(gbc_cpu *cpu, u16 pc, u8 opcode, u8 low, u8 high) {
-    pc--;
-    if (cpu->mmu->in_bios && pc >= low && pc <= high) {
-        gbc_registers_debug(cpu, opcode);
-        /*printf("OP: %s, PC:%x\n", OPS_STR[opcode], pc);*/
-    }
+    u8 temp = read_u8(cpu->mmu,cpu->registers.pc+1);
+    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx    %02hx %s, %x\n", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, opcode, op_string(opcode), temp);
 }
 
 bool setup_stack = false;
@@ -142,11 +127,10 @@ bool hit_gfx_routine = false;
 bool wrote_fb_dump = false;
 
 void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
-    /*gbc_registers_debug(cpu, opcode);*/
     old_pc--;
 
     if (old_pc == 0x0000 && !setup_stack) {
-        printf("%s: setup stack: sp(%x), expected sp(fffe)\n", OPS_STR[opcode], cpu->registers.sp);
+        printf("%s: setup stack: sp(%x), expected sp(fffe)\n", op_string(opcode), cpu->registers.sp);
         setup_stack = true;
     }
     if (old_pc == 0x000a && !vram_cleared) {
@@ -159,19 +143,19 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
             }
         }
         if (done) {
-            printf("vram cleared %s\n", OPS_STR[opcode]);
+            printf("vram cleared %s\n", op_string(opcode));
             vram_cleared = true;
         }
     }
     if (old_pc == 0x001d && !hit_at) {
-        printf("%s: setup BG palette\n", OPS_STR[opcode]);
+        printf("%s: setup BG palette\n", op_string(opcode));
     }
     if (old_pc == 0x003e && !hit_at) {
-        printf("%s: load bytes into vram for @\n", OPS_STR[opcode]);
+        printf("%s: load bytes into vram for @\n", op_string(opcode));
         hit_at = true;
     }
     if (old_pc == 0x0053 && !init_tile_map) {
-        printf("%s: initializing tile map\n", OPS_STR[opcode]);
+        printf("%s: initializing tile map\n", op_string(opcode));
         init_tile_map = true;
     }
     if (old_pc == 0x0055) {
@@ -193,7 +177,7 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
         printf("Nintendo logo comparison routine\n");
         FILE *fp;
         fp = fopen("fb.bin" , "w" );
-        fwrite(&cpu->gpu->fb, 1, sizeof cpu->gpu->fb, fp);
+        fwrite(&cpu->ppu->fb, 1, sizeof cpu->ppu->fb, fp);
         fclose(fp);
         printf("dumped framebuffer to file\n");
     }
@@ -205,60 +189,91 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     }
 }
 
+void gbc_cpu_trace(gbc_cpu *cpu, u8 opcode) {
+    cpu->registers.pc--;
+    gbc_registers_debug(cpu, opcode);
+    cpu->registers.pc++;
+}
+void gbc_interrupt_handler(gbc_cpu *cpu) {
+    u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
+    u8 IE = read_u8(cpu->mmu, IO_IENABLE);
+    if((cpu->IME || cpu->HALT) && (IF & IE & ANY_INTR)) {
+        cpu->HALT = 0;
+        if(cpu->IME) {
+            // disable interrupts
+            cpu->IME = 0;
+
+            // push program counter
+            write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc >> 8);
+            write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc & 0xFF);
+
+            // Call interrupt handler if required
+            if(IF & IE & VBLANK_INTR) {
+                cpu->registers.pc = VBLANK_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ VBLANK_INTR);
+                unset_bit(cpu->mmu, IO_IFLAGS, VBLANK_INTR);
+                cpu->registers.clk.m = 20;
+            }
+            else if(IF & IE & LCDC_INTR) {
+                cpu->registers.pc = LCDC_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ LCDC_INTR);
+                unset_bit(cpu->mmu, IO_IFLAGS, LCDC_INTR);
+                cpu->registers.clk.m = 20;
+            }
+            else if(IF & IE & TIMER_INTR) {
+                cpu->registers.pc = TIMER_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ TIMER_INTR);
+                unset_bit(cpu->mmu, IO_IFLAGS, TIMER_INTR);
+                cpu->registers.clk.m = 20;
+            }
+            else if(IF & IE & SERIAL_INTR) {
+                cpu->registers.pc = SERIAL_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ SERIAL_INTR);
+                unset_bit(cpu->mmu, IO_IFLAGS, SERIAL_INTR);
+                cpu->registers.clk.m = 20;
+            }
+            else if(IF & IE & CONTROL_INTR) {
+                cpu->registers.pc = CONTROL_INTR_ADDR;
+                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ CONTROL_INTR);
+                unset_bit(cpu->mmu, IO_IFLAGS, CONTROL_INTR);
+                cpu->registers.clk.m = 20;
+            }
+        }
+    }
+}
+
 void gbc_cpu_step(gbc_cpu *cpu) {
-	if((cpu->IME || cpu->HALT) && (cpu->IF & cpu->IE & ANY_INTR)) {
-		cpu->HALT = 0;
+    gbc_interrupt_handler(cpu);
 
-		if(cpu->IME) {
-			printf("Interrupt Master Enable\n");
-			/* Disable interrupts */
-			cpu->IME = 0;
-
-			/* Push Program Counter */
-			write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc >> 8);
-			write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc & 0xFF);
-
-			/* Call interrupt handler if required. */
-			if(cpu->IF & cpu->IE & VBLANK_INTR) {
-				cpu->registers.pc = VBLANK_INTR_ADDR;
-				cpu->IF ^= VBLANK_INTR;
-			}
-			else if(cpu->IF & cpu->IE & LCDC_INTR) {
-				cpu->registers.pc = LCDC_INTR_ADDR;
-				cpu->IF ^= LCDC_INTR;
-			}
-			else if(cpu->IF & cpu->IE & TIMER_INTR) {
-				cpu->registers.pc = TIMER_INTR_ADDR;
-				cpu->IF ^= TIMER_INTR;
-			}
-			else if(cpu->IF & cpu->IE & SERIAL_INTR) {
-				cpu->registers.pc = SERIAL_INTR_ADDR;
-				cpu->IF ^= SERIAL_INTR;
-			}
-			else if(cpu->IF & cpu->IE & CONTROL_INTR) {
-				cpu->registers.pc = CONTROL_INTR_ADDR;
-				cpu->IF ^= CONTROL_INTR;
-			}
-		}
-	}
-
-    // Fetch and execute instruction
+    // fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
+    //gbc_cpu_trace(cpu, opcode);
 
     u16 old_pc = cpu->registers.pc;
-
-    void (*funcPtr)(gbc_cpu*) = *OPS[opcode];
-    (funcPtr)(cpu);
-
-    debug_dmg_bootrom(cpu, old_pc, opcode);
-    if (!cpu->mmu->in_bios) {
-        /*hex_dump("framebuffer2", cpu->gpu->fb, 0x200);*/
-    }
+    execute_op(cpu, opcode);
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
     cpu->clk.t += cpu->registers.clk.t;
-    gpu_run(cpu->gpu, cpu->registers.clk.m);
+
+    if (read_bit(cpu->mmu, IO_TIMCONT, 0x4)) {
+        u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
+        u8 TAC = read_u8(cpu->mmu, IO_TIMCONT);
+        cpu->timer.tima_count += cpu->registers.clk.m;
+
+        if(cpu->timer.tima_count >= TAC_CYCLES[TAC]) {
+            cpu->timer.tima_count -= TAC_CYCLES[TAC];
+
+            u8 temp = read_u8(cpu->mmu, IO_TIMECNT) + 1;
+            write_u8(cpu->mmu, IO_TIMECNT, temp);
+            if(temp == 0) { // overflow
+                write_u8(cpu->mmu, IO_TIMECNT, read_u8(cpu->mmu, IO_TIMEMOD)); // reset to value in TMA
+                write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
+            }
+        }
+    }
+
+    ppu_run(cpu->ppu, cpu->registers.clk.m);
 }
 
 // 0x014D is the header checksum.
@@ -296,20 +311,25 @@ void validate_memory(gbc_cpu *cpu) {
         printf("checksum failed at 0x%x   sum: %x    expected: %x\n", checksum_start, sum, expected);
     }
 
-    hex_dump("BIOS", cpu->mmu->bios, 0x100);
-    hex_dump("ROM", cpu->mmu->rom, 0x200);
+    /*hex_dump("BIOS", cpu->mmu->bios, 0x100);*/
+    /*hex_dump("ROM", cpu->mmu->rom, 0x200);*/
 }
 
 void gbc_cpu_loop(gbc_cpu *cpu) {
-    printf("init cpu loop\n");
+    /*printf("init cpu loop\n");*/
 
-    execute_init(cpu);
-    gpu_init(cpu->gpu);
-    printf("begin cpu loop\n");
+    ppu_init(cpu->ppu);
+    /*printf("begin cpu loop\n");*/
 
-    validate_memory(cpu);
-    while(!cpu->gpu->quit) {
+    /*validate_memory(cpu);*/
+    while(!cpu->quit) {
         gbc_cpu_step(cpu);
+        if (cpu->ppu->quit) {
+            cpu->quit = true;
+        }
     }
+#if defined(SLOPPY_RENDER)
     atexit(SDL_Quit);
+    SDL_Quit();
+#endif
 }

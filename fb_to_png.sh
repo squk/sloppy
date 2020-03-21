@@ -1,1 +1,1 @@
-convert -depth 8 -size 144x160+0 gray:fb.bin out.png
+convert -depth 8 -size 160x144+0 gray:fb.bin out.png
