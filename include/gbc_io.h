@@ -8,7 +8,6 @@
 #define IO_TIMECNT 0xFF05 // TIMA - Timer counter (R/W)
 #define IO_TIMEMOD 0xFF06 // TMA - Timer Modulo (R/W
 #define IO_TIMCONT 0xFF07 // TAC - Timer Control (R/W)
-#define IO_TACRATE 0x0002
 /*
  * INT 50 - Timer Interrupt
  * Each time when the timer overflows (ie. when TIMA gets bigger than FFh), then

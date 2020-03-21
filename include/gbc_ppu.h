@@ -27,9 +27,9 @@
 #define LCD_LINE_CYCLES     456
 
 #define DUR_FRAME 70224
-#define DUR_OAM 80
-#define DUR_OAM_VRAM 172
-#define DUR_HBLANK 204
+#define END_OAM 80
+#define END_OAM_VRAM 252
+#define END_HBLANK 456
 #define DUR_LINE 456 // 80 + 172 + 204
 #define DUR_VBLANK 4560
 

@@ -56,8 +56,8 @@ void gbc_mmu_init(gbc_mmu *mmu){
 
     memset(mmu->bios, 0, sizeof mmu->bios);
     memset(mmu->rom, 0, sizeof mmu-> rom);
-    /*memset(mmu->vram, 1, sizeof mmu->vram); // we load 1's into the vram to test the bootrom code*/
-    memset(mmu->vram, 0, sizeof mmu->vram);
+    memset(mmu->vram, 1, sizeof mmu->vram); // we load 1's into the vram to test the bootrom code
+    //memset(mmu->vram, 0, sizeof mmu->vram);
     memset(mmu->wram, 0, sizeof mmu->wram);
     memset(mmu->oam, 0, sizeof mmu->oam);
     memset(mmu->io, 0, sizeof mmu->io);
