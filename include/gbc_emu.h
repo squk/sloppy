@@ -79,7 +79,7 @@ void emu_test() {
 
     memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len); mmu.in_bios = true;
     //gbc_cpu_set_boot_state(&cpu);
-    write_u8(cpu.mmu, 0xFF00, 0xFF);
+    cpu.mmu->io[0x00] = 0xFF;
 
     gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
     //gbc_load_rom_file(&mmu, "./Tetris.gb");
