@@ -317,14 +317,16 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
 }
 
 void ppu_draw_line(gbc_ppu *ppu, u8 line) {
-    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
-        ppu_draw_line_bg(ppu, line);
-    }
-    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
-        ppu_draw_line_win(ppu, line);
-    }
-    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
-        ppu_draw_line_obj(ppu, line);
+    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
+        if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
+            ppu_draw_line_bg(ppu, line);
+        }
+        if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
+            ppu_draw_line_win(ppu, line);
+        }
+        if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
+            ppu_draw_line_obj(ppu, line);
+        }
     }
 
     ppu_draw_line_fb(ppu, line);
@@ -365,18 +367,9 @@ The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 i
 Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
 */
 u8 ppu_run(gbc_ppu *ppu, int cycles) {
-    if (!read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
-        ppu->reset = 1;
-        return 0;
-    }
-    if (ppu->reset) {
-        ppu->reset = 0;
-        return 1;
-    }
-
     ppu->mode_clock += cycles;
 
-    if (ppu->mode_clock > LCD_LINE_CYCLES) {
+    if (ppu->mode_clock >= LCD_LINE_CYCLES) {
         ppu->mode_clock -= LCD_LINE_CYCLES;
 
         // next line
@@ -389,7 +382,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                 set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
         } else {
-            write_u8(ppu->mmu, IO_LCDSTAT, read_u8(ppu->mmu, IO_LCDSTAT) & 0xFB);
+            unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
         }
 
         // VBLANK
@@ -408,22 +401,19 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                 set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
 
+#if defined(SLOPPY_RENDER)
+            SDL_RenderClear(ppu->renderer);
             for (int y = 0; y < SIZE_Y; y++) {
                 for (int x = 0; x < SIZE_X; x++) {
                     int px_index = y * SIZE_X + x;
                     u8 color = ppu->fb[px_index];
-#if defined(SLOPPY_RENDER)
                     SDL_SetRenderDrawColor(ppu->renderer, color, color, color, 0xFF);
                     SDL_RenderDrawPoint(ppu->renderer, x, y);
-#endif
                 }
             }
-
-#if defined(SLOPPY_RENDER)
             SDL_Event e;
-            if (SDL_PollEvent(&e) != 0) {
-                if (e.type == 12){ // Ctrl C ?
-                    printf("SDL_QUIT\n");
+            while (SDL_PollEvent(&e)) {
+                if (e.type == SDL_QUIT){
                     ppu->quit = true;
                 }
             }
@@ -432,12 +422,6 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
-            if (read_u8(ppu->mmu, IO_CURLINE) == 0) {
-                // CLEAR SCREEN
-#if defined(SLOPPY_RENDER)
-                SDL_RenderClear(ppu->renderer);
-#endif
-            }
             unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
             set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
 
@@ -445,10 +429,10 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                 set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
         }
-    } else if (((read_u8(ppu->mmu, IO_LCDSTAT) & 3) == OPT_MODE_OAM) && ppu->mode_clock >= END_OAM) {
+    } else if (((read_u8(ppu->mmu, IO_LCDSTAT) & MASK_LCDSTAT_MODE_FLAG) == OPT_MODE_OAM) && ppu->mode_clock >= END_OAM) {
         unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
         set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
-    } else if (((read_u8(ppu->mmu, IO_LCDSTAT) & 3) == OPT_MODE_OAM_VRAM) && ppu->mode_clock >= END_OAM_VRAM) {
+    } else if (((read_u8(ppu->mmu, IO_LCDSTAT) & MASK_LCDSTAT_MODE_FLAG) == OPT_MODE_OAM_VRAM) && ppu->mode_clock >= END_OAM_VRAM) {
         unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
         set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
         ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));

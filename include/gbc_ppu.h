@@ -29,7 +29,6 @@
 #define DUR_FRAME 70224
 #define END_OAM 80
 #define END_OAM_VRAM 252
-#define END_HBLANK 456
 #define DUR_LINE 456 // 80 + 172 + 204
 #define DUR_VBLANK 4560
 
@@ -72,7 +71,6 @@ typedef struct {
 
     u16 mode_clock; // Object Attribute Memory
     u8 bg_palette[4], obj0_palette[4], obj1_palette[4];
-    u8 reset;
 
     bool quit;
 } gbc_ppu;

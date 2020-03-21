@@ -186,6 +186,8 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
         case IO_TIMCONT:
             //u8 f = *ptr & (MASK_IO_TIMCONT_clock);
             //write_u8(mmu, IO_DIVIDER, TAC_CYCLES[f]);
+        case IO_JOYPAD:
+            break;
         default:
             *ptr = val;
             break;
