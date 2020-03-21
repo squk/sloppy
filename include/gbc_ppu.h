@@ -52,11 +52,11 @@
 #define RGB8(r,g,b)	( (((b)>>3)<<10) | (((g)>>3)<<5) | ((r)>>3) )
 
 typedef struct {
-	uint8_t id;
-	uint8_t x;
-	uint8_t y;
-	uint8_t pat;
-	uint8_t flags;
+    uint8_t id;
+    uint8_t x;
+    uint8_t y;
+    uint8_t pat;
+    uint8_t flags;
 } ppu_obj;
 
 typedef struct {

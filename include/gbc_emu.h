@@ -77,12 +77,13 @@ void emu_test() {
     gbc_mmu_init(&mmu);
     gbc_cpu_reset(&cpu);
 
-    //memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len); mmu.in_bios = true;
-    gbc_cpu_set_boot_state(&cpu);
+    memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len); mmu.in_bios = true;
+    //gbc_cpu_set_boot_state(&cpu);
     write_u8(cpu.mmu, 0xFF00, 0xFF);
 
     gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
     //gbc_load_rom_file(&mmu, "./Tetris.gb");
+    //gbc_load_rom_file(&mmu, "./vblank_stat_intr-C.gb");
     //gbc_load_rom_file(&mmu, "./DrMario.gb");
     //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
@@ -98,7 +99,6 @@ void emu_test() {
     //gbc_load_rom(&mmu, __09_op_r_r_gb, __09_op_r_r_gb_len); // PASSED
     //gbc_load_rom(&mmu, __10_bit_ops_gb, __10_bit_ops_gb_len); // PASSED
     //gbc_load_rom(&mmu, __11_op_a__hl__gb, __11_op_a__hl__gb_len); // PASSED
-    //hex_dump("7ff0", cpu.mmu->rom[0x7ff3], 0x10);
 
     //printf("emulator initialized\n");
     gbc_cpu_loop(&cpu);

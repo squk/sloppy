@@ -15,6 +15,12 @@
 void ppu_init(gbc_ppu *ppu) {
     ppu->quit = false;
     ppu->mode_clock = 0;
+    //set_palette(ppu->bg_palette, 0xf4);
+    //set_palette(ppu->obj0_palette, 0xf4);
+    //set_palette(ppu->obj1_palette, 0xf4);
+    //set_palette(ppu->bg_palette, 0x1b);
+    //set_palette(ppu->obj0_palette, 0x1b);
+    //set_palette(ppu->obj1_palette, 0x1b);
     ppu_start_frame(ppu);
 }
 
@@ -60,6 +66,17 @@ void ppu_start_frame(gbc_ppu *ppu) {
     u8 r = ppu_run(ppu, 0);
 }
 
+void dump(gbc_ppu *ppu) {
+    int i, j;
+    for (j = 0; j < 128; j++) {
+        for (i = 0; i < 256; i++) {
+            printf("%d", ppu->obj_disp[j * 256 + i]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
 // TODO: cleanup and optimize
 void ppu_draw_line_fb(gbc_ppu *ppu, u8 line) {
     for (int i = 0; i < SIZE_X; i++) {
@@ -72,15 +89,18 @@ void ppu_draw_line_fb(gbc_ppu *ppu, u8 line) {
         }
 
         // check transparency
-        if (ppu->obj_disp[(line + SPRITE_INI_Y) * 256 +
-                i + SPRITE_INI_X] < 8) {
-            if (ppu->fb[px_index] != 0
-                    && ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] >= 4) {
+        if (ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] < 8) {
+            if (ppu->fb[px_index] != 0 && ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] >= 4) {
                 continue;
             }
             ppu->fb[px_index] = ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] & 0x03;
+            //ppu->fb[px_index] = ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X];
         }
     }
+}
+
+void ppu_draw_tiles_line(gbc_ppu *ppu, u8 line) {
+
 }
 
 void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
@@ -89,22 +109,16 @@ void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
     u8 obj_line_a, obj_line_b;
     s16 obj;
 
-    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
-        case OPT_BG_Tile_Map_0:
-            bg_tile_map = 0x9800;
-            break;
-        case OPT_BG_Tile_Map_1:
-            bg_tile_map = 0x9C00;
-            break;
+    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
+        bg_tile_map = 0x9C00;
+    } else {
+        bg_tile_map = 0x9800;
     }
 
-    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
-        case OPT_BGWindow_Tile_Data_0:
-            tile_data = 0x9000;
-            break;
-        case OPT_BGWindow_Tile_Data_1:
-            tile_data = 0x8000;
-            break;
+    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+        tile_data = 0x8000;
+    } else {
+        tile_data = 0x9000;
     }
 
     // optimization for GBA. it's ARM CPU struggled with div and mod operators
@@ -142,22 +156,16 @@ void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
         return;
     }
 
-    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Tile_Map_Display_Select)) {
-        case OPT_Window_Tile_Map_0:
-            win_tile_map = 0x9800;
-            break;
-        case OPT_Window_Tile_Map_1:
-            win_tile_map = 0x9C00;
-            break;
+    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Tile_Map_Display_Select)) {
+        win_tile_map = 0x9C00;
+    } else {
+        win_tile_map = 0x9800;
     }
 
-    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
-        case OPT_BGWindow_Tile_Data_0:
-            tile_data = 0x9000;
-            break;
-        case OPT_BGWindow_Tile_Data_1:
-            tile_data = 0x8000;
-            break;
+    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+        tile_data = 0x8000;
+    } else {
+        tile_data = 0x9000;
     }
 
     // optimization for GBA. it's ARM CPU struggled with div and mod operators
@@ -177,7 +185,7 @@ void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
         for (j = 0; j < 8; j++) {
             ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
                 ppu->bg_palette[
-                ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                    ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
                     ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
                 ];
         }
@@ -257,7 +265,7 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
         if((objs[i].y != 0)
                 && (objs[i].y < SPRITE_END_Y)
                 && (objs[i].y <= line)
-                && ((objs[i].y + obj_height) > line)) {
+                && ((objs[i].y + obj_height) > line)) { // does the sprite intercept the scanline?
             objs_line[objs_line_len++] = &objs[i];
         }
     }
@@ -279,10 +287,8 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
         if (y_flip) {
             obj_line = obj_height - 1 - obj_line;
         }
-        obj_line_a = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 +
-                obj_line * 2);
-        obj_line_b = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 +
-                obj_line * 2 + 1);
+        obj_line_a = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 + obj_line * 2);
+        obj_line_b = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 + obj_line * 2 + 1);
         if (objs_line[i]->flags & OPT_OBJ_Flag_palette) {
             pal = ppu->obj1_palette;
         } else {
@@ -367,12 +373,10 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         ppu->reset = 0;
         return 1;
     }
-    /*printf("cur:  %d     mode_clock: %d    cycles: %d \n", read_u8(ppu->mmu, IO_CURLINE), ppu->mode_clock, cycles);*/
 
     ppu->mode_clock += cycles;
 
     if (ppu->mode_clock > LCD_LINE_CYCLES) {
-        /*printf("LY:  %d\n", read_u8(ppu->mmu, IO_CURLINE));*/
         ppu->mode_clock -= LCD_LINE_CYCLES;
 
         // next line
@@ -390,7 +394,6 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
 
         // VBLANK
         if (read_u8(ppu->mmu, IO_CURLINE) == SIZE_Y) {
-            /*printf("vblank\n");*/
             // Set Mode Flag to VBLANK at LCDSTAT
             unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
             set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_VBLANK);
@@ -401,11 +404,14 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                 set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
 
+            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
+                set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+            }
+
             for (int y = 0; y < SIZE_Y; y++) {
                 for (int x = 0; x < SIZE_X; x++) {
                     int px_index = y * SIZE_X + x;
                     u8 color = ppu->fb[px_index];
-
 #if defined(SLOPPY_RENDER)
                     SDL_SetRenderDrawColor(ppu->renderer, color, color, color, 0xFF);
                     SDL_RenderDrawPoint(ppu->renderer, x, y);
@@ -416,7 +422,6 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
 #if defined(SLOPPY_RENDER)
             SDL_Event e;
             if (SDL_PollEvent(&e) != 0) {
-                /*printf("%d %d\n", e.type, SDL_KEYDOWN);*/
                 if (e.type == 12){ // Ctrl C ?
                     printf("SDL_QUIT\n");
                     ppu->quit = true;
@@ -427,7 +432,6 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
-            //printf("normal line\n");
             if (read_u8(ppu->mmu, IO_CURLINE) == 0) {
                 // CLEAR SCREEN
 #if defined(SLOPPY_RENDER)
@@ -444,7 +448,6 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
     } else if (((read_u8(ppu->mmu, IO_LCDSTAT) & 3) == OPT_MODE_OAM) && ppu->mode_clock >= END_OAM) {
         unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
         set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
-        //ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
     } else if (((read_u8(ppu->mmu, IO_LCDSTAT) & 3) == OPT_MODE_OAM_VRAM) && ppu->mode_clock >= END_OAM_VRAM) {
         unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
         set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);

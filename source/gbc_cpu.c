@@ -20,10 +20,6 @@ bool flag_z(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == FLAG_Z; }
 bool flag_n(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == FLAG_N; }
 bool flag_h(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_H) == FLAG_H; }
 bool flag_c(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == FLAG_C; }
-bool flag_nz(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_Z) == 0x00; }
-bool flag_nn(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_N) == 0x00; }
-bool flag_nh(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_H) == 0x00; }
-bool flag_nc(gbc_cpu *cpu) { return (cpu->registers.f & FLAG_C) == 0x00; }
 
 void set_flag_z(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_Z) | (val ? FLAG_Z : 0); }
 void set_flag_n(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f & ~FLAG_N) | (val ? FLAG_N : 0); }
