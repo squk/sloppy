@@ -67,7 +67,6 @@ typedef struct {
     u8 bg_disp[512*512];
     u8 win_disp[512*512];
     u8 obj_disp[512*512];
-    u8 LY, LYC;
 
     u16 mode_clock; // Object Attribute Memory
     u8 bg_palette[4], obj0_palette[4], obj1_palette[4];

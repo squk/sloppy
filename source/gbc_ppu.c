@@ -15,12 +15,10 @@
 void ppu_init(gbc_ppu *ppu) {
     ppu->quit = false;
     ppu->mode_clock = 0;
-    //set_palette(ppu->bg_palette, 0xf4);
-    //set_palette(ppu->obj0_palette, 0xf4);
-    //set_palette(ppu->obj1_palette, 0xf4);
-    //set_palette(ppu->bg_palette, 0x1b);
-    //set_palette(ppu->obj0_palette, 0x1b);
-    //set_palette(ppu->obj1_palette, 0x1b);
+    memset(ppu->fb, 0, sizeof ppu->fb);
+    memset(ppu->bg_disp, 0, sizeof ppu->bg_disp);
+    memset(ppu->win_disp, 0, sizeof ppu->win_disp);
+    memset(ppu->obj_disp, 0, sizeof ppu->obj_disp);
     ppu_start_frame(ppu);
 }
 
@@ -483,9 +481,9 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                         unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // select
                     }
                 }
-                SDL_RenderPresent(ppu->renderer);
-#endif
             }
+            SDL_RenderPresent(ppu->renderer);
+#endif
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {

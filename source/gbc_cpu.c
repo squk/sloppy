@@ -44,7 +44,16 @@ void gbc_cpu_reset(gbc_cpu *cpu) {
 
     cpu->clk.m = 0;
     cpu->clk.t = 0;
-    cpu->timer.enabled = true;
+
+    cpu->HALT = 0;
+    cpu->IME = 0;
+    cpu->IE = 0;
+    cpu->IF = 0;
+
+    cpu->timer.lcd_count = 0;
+    cpu->timer.div_count = 0;
+    cpu->timer.tima_count = 0;
+    cpu->timer.serial_count = 0;
 }
 
 void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
