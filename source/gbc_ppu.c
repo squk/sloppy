@@ -400,6 +400,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
             }
 
 #if defined(SLOPPY_RENDER)
+            SDL_Delay(16); // hack for ~60FPS
             SDL_RenderClear(ppu->renderer);
             for (int y = 0; y < SIZE_Y; y++) {
                 for (int x = 0; x < SIZE_X; x++) {

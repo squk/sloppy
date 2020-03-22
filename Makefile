@@ -11,9 +11,8 @@
 
 APP_BIN = sloppy
 
-#LIBS = -lSDL -lSDLmain -lSDL_image -lSDL2-2.0.0
 LIBS =
-CC = g++
+CC = gcc
 #CFLAGS = -Wall
 CFLAGS = -Wall -DSLOPPY_RENDER
 INCLUDES =  -I`sdl2-config --cflags --libs`

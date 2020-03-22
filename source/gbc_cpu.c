@@ -210,32 +210,27 @@ void gbc_interrupt_handler(gbc_cpu *cpu) {
             // Call interrupt handler if required
             if(IF & IE & VBLANK_INTR) {
                 cpu->registers.pc = VBLANK_INTR_ADDR;
-                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ VBLANK_INTR);
-                unset_bit(cpu->mmu, IO_IFLAGS, VBLANK_INTR);
+                write_u8(cpu->mmu, IO_IFLAGS, IF ^ VBLANK_INTR);
                 cpu->registers.clk.m = 20;
             }
             else if(IF & IE & LCDC_INTR) {
                 cpu->registers.pc = LCDC_INTR_ADDR;
-                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ LCDC_INTR);
-                unset_bit(cpu->mmu, IO_IFLAGS, LCDC_INTR);
+                write_u8(cpu->mmu, IO_IFLAGS, IF ^ LCDC_INTR);
                 cpu->registers.clk.m = 20;
             }
             else if(IF & IE & TIMER_INTR) {
                 cpu->registers.pc = TIMER_INTR_ADDR;
-                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ TIMER_INTR);
-                unset_bit(cpu->mmu, IO_IFLAGS, TIMER_INTR);
+                write_u8(cpu->mmu, IO_IFLAGS, IF ^ TIMER_INTR);
                 cpu->registers.clk.m = 20;
             }
             else if(IF & IE & SERIAL_INTR) {
                 cpu->registers.pc = SERIAL_INTR_ADDR;
-                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ SERIAL_INTR);
-                unset_bit(cpu->mmu, IO_IFLAGS, SERIAL_INTR);
+                write_u8(cpu->mmu, IO_IFLAGS, IF ^ SERIAL_INTR);
                 cpu->registers.clk.m = 20;
             }
             else if(IF & IE & CONTROL_INTR) {
                 cpu->registers.pc = CONTROL_INTR_ADDR;
-                //write_u8(cpu->mmu, IO_IFLAGS, IF ^ CONTROL_INTR);
-                unset_bit(cpu->mmu, IO_IFLAGS, CONTROL_INTR);
+                write_u8(cpu->mmu, IO_IFLAGS, IF ^ CONTROL_INTR);
                 cpu->registers.clk.m = 20;
             }
         }
@@ -266,7 +261,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
             u8 temp = read_u8(cpu->mmu, IO_TIMECNT) + 1;
             write_u8(cpu->mmu, IO_TIMECNT, temp);
-            if(temp == 0) { // overflow
+            if(temp == 0x00) { // overflow
                 write_u8(cpu->mmu, IO_TIMECNT, read_u8(cpu->mmu, IO_TIMEMOD)); // reset to value in TMA
                 write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
             }
@@ -310,17 +305,10 @@ void validate_memory(gbc_cpu *cpu) {
     if (sum != expected) {
         printf("checksum failed at 0x%x   sum: %x    expected: %x\n", checksum_start, sum, expected);
     }
-
-    /*hex_dump("BIOS", cpu->mmu->bios, 0x100);*/
-    /*hex_dump("ROM", cpu->mmu->rom, 0x200);*/
 }
 
 void gbc_cpu_loop(gbc_cpu *cpu) {
-    /*printf("init cpu loop\n");*/
-
     ppu_init(cpu->ppu);
-    /*printf("begin cpu loop\n");*/
-
     /*validate_memory(cpu);*/
     while(!cpu->quit) {
         gbc_cpu_step(cpu);

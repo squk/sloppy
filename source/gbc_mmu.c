@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "types.h"
 #include "gbc_mmu.h"
@@ -164,7 +165,6 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
             {
                 // ensure LCD is on during vblank
                 if (!read_bit(mmu, IO_LCDSTAT, OPT_MODE_VBLANK)) {
-                /*if (!read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {*/
                     *ptr |= MASK_LCDCONT_LCD_Display_Enable;
                     return;
                 }
@@ -182,10 +182,7 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
         case IO_DIVIDER:
             *ptr = 0x00;
             break;
-        case IO_TIMCONT:
-            //u8 f = *ptr & (MASK_IO_TIMCONT_clock);
-            //write_u8(mmu, IO_DIVIDER, TAC_CYCLES[f]);
-        case IO_JOYPAD:
+        case IO_JOYPAD: // READ ONLY
             break;
         default:
             *ptr = val;

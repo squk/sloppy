@@ -58,6 +58,7 @@ void emu_test() {
     SDL_CreateWindowAndRenderer(SIZE_X*scale, SIZE_Y*scale, 0, &window, &renderer);
     SDL_RenderSetScale(renderer, scale, scale);
     SDL_SetWindowTitle(window, "sloppy emu");
+    SDL_GL_SetSwapInterval(1);
     // Check that the window was successfully created
     if (window == NULL) {
         // In the case that the window could not be made...
@@ -87,12 +88,12 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
     //gbc_load_rom_file(&mmu, "./Tetris.gb");
     //gbc_load_rom_file(&mmu, "./vblank_stat_intr-C.gb");
-    gbc_load_rom_file(&mmu, "./DrMario.gb");
+    //gbc_load_rom_file(&mmu, "./DrMario.gb");
     //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     //gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len); // PASSED
+    gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len); // PASSED
     //gbc_load_rom(&mmu, __03_op_sp_hl_gb, __03_op_sp_hl_gb_len); // PASSED
     //gbc_load_rom(&mmu, __04_op_r_imm_gb, __04_op_r_imm_gb_len); // PASSED
     //gbc_load_rom(&mmu, __05_op_rp_gb, __05_op_rp_gb_len); // PASSED
