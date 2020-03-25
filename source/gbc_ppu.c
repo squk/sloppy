@@ -39,10 +39,18 @@ void insertion_sort(void *array, int length,
     }
 }
 
-// Bit 7-6 - Shade for Color Number 3
-// Bit 5-4 - Shade for Color Number 2
-// Bit 3-2 - Shade for Color Number 1
-// Bit 1-0 - Shade for Color Number 0
+/*
+ * Bit 7-6 - Shade for Color Number 3
+ * Bit 5-4 - Shade for Color Number 2
+ * Bit 3-2 - Shade for Color Number 1
+ * Bit 1-0 - Shade for Color Number 0
+ *
+ * The four possible gray shades are:
+ *  0  White
+ *  1  Light gray
+ *  2  Dark gray
+ *  3  Black
+ */
 void set_palette(u8* p, u8 v)  {
     p[0] = v & 0x03;
     p[1] = (v & 0x0C) >> 2;
@@ -137,7 +145,7 @@ void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
         for (j = 0; j < 8; j++) {
             ppu->bg_disp[line * 256 + (u8)(i * 8 - read_u8(ppu->mmu, IO_SCROLLX) + j)] =
                 ppu->bg_palette[
-                ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                    ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
                     ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
                 ];
         }
@@ -255,6 +263,7 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
         objs[i].x = read_u8(ppu->mmu, addr++);
         objs[i].pat = read_u8(ppu->mmu, addr++);
         objs[i].flags = read_u8(ppu->mmu, addr);
+        //printf("id:%d  x:%d  y:%d  pat:%d  f:%x\n", objs[i].id, objs[i].y, objs[i].x, objs[i].pat, objs[i].flags);
     }
 
     // Take the candidate objects to be drawn in the line
@@ -298,11 +307,10 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             behind = 0;
         }
         for (j = 0; j < 8; j++) {
-            pos = line * 256 +
-                (objs_line[i]->x + (x_flip ? 7 - j : j)) % 256;
+            pos = line * 256 + (objs_line[i]->x + (x_flip ? 7 - j : j)) % 256;
             color = pal[
                 ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-                    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
+                ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
             ];
             if (color < 8) {
                 ppu->obj_disp[pos] = color;
@@ -312,6 +320,7 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             }
         }
     }
+        //while(1) {}
 }
 
 void ppu_draw_line(gbc_ppu *ppu, u8 line) {

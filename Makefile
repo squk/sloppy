@@ -13,8 +13,8 @@ APP_BIN = sloppy
 
 LIBS =
 CC = gcc
-#CFLAGS = -Wall
-CFLAGS = -Wall -DSLOPPY_RENDER
+#CFLAGS = -Wall -Wextra -std=c99
+CFLAGS = -Wall -Wextra -DSLOPPY_RENDER
 INCLUDES =  -I`sdl2-config --cflags --libs`
 
 

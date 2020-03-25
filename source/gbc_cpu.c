@@ -290,7 +290,6 @@ void validate_memory(gbc_cpu *cpu) {
     }
 
     // header checksum
-    size_t checksum_size = 0x19;
     u16 checksum_start = 0x0134;
     u16 checksum_end = 0x014C;
 

@@ -1374,8 +1374,8 @@ u8* prefix_cb_target(gbc_cpu *cpu, u8 opcode) {
         case 0xD: return &cpu->registers.l;
                   // case 0xE: HL
         case 0xF: return &cpu->registers.a;
-                  /*default: printf("%x   ERORRRRRRRR AHHH!!!\n", opcode); return &cpu->registers.a;*/
     }
+    return &cpu->mmu->zram[0];
 }
 
 // swap upper 4 bits in register r8 and the lower ones.
@@ -1468,35 +1468,7 @@ void SRL(gbc_cpu *cpu, u8 opcode) {
     cpu->registers.clk.m = 2;
 }
 
-void RR_RRC(gbc_cpu *cpu, u8 opcode) {
-    bool mHL = ((opcode & 0xF) == 0x6 || (opcode & 0xF) == 0xE);
-    cpu->registers.clk.m = 2;
-	u8 val, temp;
-    if (mHL) {
-        val = read_u8(cpu->mmu, get_hl(cpu));
-	    val = (val >> 1);
-        opcode = (opcode >> 4) & 0x3;
-	    val |= opcode ? (flag_c(cpu) << 7) : (temp << 7);
-        write_u8(cpu->mmu, get_hl(cpu), val);
-	    set_flag_z(cpu, (val == 0x00));
-	    set_flag_n(cpu, 0);
-	    set_flag_h(cpu, 0);
-	    set_flag_c(cpu, (temp & 0x01));
-        cpu->registers.clk.m += 1;
-    } else {
-        u8 *r8 = prefix_cb_target(cpu, opcode);
-	    val = (val >> 1);
-	    val |= opcode ? (flag_c(cpu) << 7) : (temp << 7);
-	    *r8 = val;
-	    set_flag_z(cpu, (val == 0x00));
-	    set_flag_n(cpu, 0);
-	    set_flag_h(cpu, 0);
-	    set_flag_c(cpu, (temp & 0x01));
-    }
-}
-
 void RL_RLC(gbc_cpu *cpu, u8 opcode) {
-    u8 val;
     bool mHL = ((opcode & 0xF) == 0x6 || (opcode & 0xF) == 0xE);
 
     if (mHL) {
@@ -1676,18 +1648,6 @@ void LD_HL_d8(gbc_cpu *cpu) {
     cpu->registers.clk.m = 3;
 }
 
-
-/*void LD_d16_A(gbc_cpu *cpu) {
-  write_u8(cpu->mmu, read_u16(cpu->mmu, cpu->registers.pc), cpu->registers.a);
-  cpu->registers.pc += 2;
-  cpu->registers.clk.m = 4;
-  }*/
-/*void LD_A_d16(gbc_cpu *cpu) {
-  cpu->registers.a = read_u8(cpu->mmu, read_u16(cpu->mmu, cpu->registers.pc));
-  cpu->registers.pc += 2;
-  cpu->registers.clk.m = 4;
-  }*/
-
 void LD_A_mBC(gbc_cpu *cpu) {
     cpu->registers.a = read_u8(cpu->mmu, get_bc(cpu));
     cpu->registers.clk.m = 2;
@@ -1730,7 +1690,6 @@ void LD_DE_d16(gbc_cpu *cpu) {
 void LD_HL_d16(gbc_cpu *cpu) {
     cpu->registers.l = read_u8(cpu->mmu, cpu->registers.pc++);
     cpu->registers.h = read_u8(cpu->mmu, cpu->registers.pc++);
-    /*set_hl(read_u16(cpu->mmu, cpu->registers.pc));*/
     cpu->registers.clk.m = 3;
 }
 
@@ -2155,9 +2114,10 @@ void RET(gbc_cpu *cpu) {
 }
 
 void RET_I(gbc_cpu *cpu) {
-    cpu->registers.pc = read_u16(cpu->mmu,cpu->registers.sp);
+    u16 temp = read_u8(cpu->mmu, cpu->registers.sp++);
+    temp |= read_u8(cpu->mmu, cpu->registers.sp++) << 8;
+    cpu->registers.pc = temp;
     cpu->IME = 1;
-    cpu->registers.sp+=2;
     cpu->registers.clk.m = 3;
 }
 void RET_NZ(gbc_cpu *cpu) {
@@ -2205,8 +2165,8 @@ void JP_NC_a16(gbc_cpu *cpu) {
 }
 
 void RST_u8(gbc_cpu *cpu, u8 v) {
-    cpu->registers.sp-=2;
-    write_u16(cpu->mmu, cpu->registers.sp, cpu->registers.pc);
+    write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc >> 8);
+    write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc & 0xFF);
     cpu->registers.pc = v;
     cpu->registers.clk.m = 3;
 }
@@ -2227,5 +2187,3 @@ void EI(gbc_cpu *cpu) {
     cpu->IME = 1;
     cpu->registers.clk.m = 1;
 }
-
-void XX(gbc_cpu *cpu) {}

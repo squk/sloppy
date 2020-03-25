@@ -51,11 +51,29 @@
 #define RGB8(r,g,b)	( (((b)>>3)<<10) | (((g)>>3)<<5) | ((r)>>3) )
 
 typedef struct {
-    uint8_t id;
-    uint8_t x;
-    uint8_t y;
-    uint8_t pat;
-    uint8_t flags;
+    u8 id;
+    u8 x;
+    u8 y;
+
+    /*
+     *Specifies the sprites Tile Number (00-FF). This (unsigned) value selects
+     a tile *from memory at 8000h-8FFFh. In CGB Mode this could be either in
+     VRAM Bank 0 *or 1, depending on Bit 3 of the following byte. In 8x16 mode,
+     the lower bit *of the tile number is ignored. IE: the upper 8x8 tile is
+     "NN AND FEh", and *the lower 8x8 tile is "NN OR 01h".
+     */
+    u8 pat;
+
+    /*
+     *Bit7   OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
+     *       (Used for both BG and Window. BG color 0 is always behind OBJ)
+     *Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
+     *Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
+     *Bit4   Palette number  **Non CGB Mode Only** (0=OBP0, 1=OBP1)
+     *Bit3   Tile VRAM-Bank  **CGB Mode Only**     (0=Bank 0, 1=Bank 1)
+     *Bit2-0 Palette number  **CGB Mode Only**     (OBP0-7)
+     */
+    u8 flags;
 } ppu_obj;
 
 typedef struct {
@@ -74,6 +92,24 @@ typedef struct {
     bool quit;
 } gbc_ppu;
 
+/*
+ * FF47 - BGP - BG Palette Data (R/W) - Non CGB Mode Only
+ * FF48 - OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
+ * FF49 - OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
+ */
+
+/*
+ * Bit 7-6 - Shade for Color Number 3
+ * Bit 5-4 - Shade for Color Number 2
+ * Bit 3-2 - Shade for Color Number 1
+ * Bit 1-0 - Shade for Color Number 0
+ *
+ * The four possible gray shades are:
+ *  0  White
+ *  1  Light gray
+ *  2  Dark gray
+ *  3  Black
+ */
 void set_palette(u8* p, u8 v);
 
 void ppu_write_u8(gbc_ppu *ppu, u16 address, u8 v);
