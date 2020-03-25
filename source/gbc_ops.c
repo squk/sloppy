@@ -1676,18 +1676,6 @@ void LD_HL_d8(gbc_cpu *cpu) {
     cpu->registers.clk.m = 3;
 }
 
-
-/*void LD_d16_A(gbc_cpu *cpu) {
-  write_u8(cpu->mmu, read_u16(cpu->mmu, cpu->registers.pc), cpu->registers.a);
-  cpu->registers.pc += 2;
-  cpu->registers.clk.m = 4;
-  }*/
-/*void LD_A_d16(gbc_cpu *cpu) {
-  cpu->registers.a = read_u8(cpu->mmu, read_u16(cpu->mmu, cpu->registers.pc));
-  cpu->registers.pc += 2;
-  cpu->registers.clk.m = 4;
-  }*/
-
 void LD_A_mBC(gbc_cpu *cpu) {
     cpu->registers.a = read_u8(cpu->mmu, get_bc(cpu));
     cpu->registers.clk.m = 2;
@@ -1730,7 +1718,6 @@ void LD_DE_d16(gbc_cpu *cpu) {
 void LD_HL_d16(gbc_cpu *cpu) {
     cpu->registers.l = read_u8(cpu->mmu, cpu->registers.pc++);
     cpu->registers.h = read_u8(cpu->mmu, cpu->registers.pc++);
-    /*set_hl(read_u16(cpu->mmu, cpu->registers.pc));*/
     cpu->registers.clk.m = 3;
 }
 
@@ -1739,8 +1726,10 @@ void LD_SP_HL(gbc_cpu *cpu) {
     cpu->registers.clk.m = 2;
 }
 void LD_SP_d16(gbc_cpu *cpu) {
-    cpu->registers.sp = read_u16(cpu->mmu, cpu->registers.pc);
-    cpu->registers.pc += 2;
+    u16 temp =  read_u8(cpu->mmu, cpu->registers.pc++);
+    temp |= read_u8(cpu->mmu, cpu->registers.pc++);
+    cpu->registers.pc = temp;
+
     cpu->registers.clk.m = 3;
 }
 
@@ -2155,9 +2144,10 @@ void RET(gbc_cpu *cpu) {
 }
 
 void RET_I(gbc_cpu *cpu) {
-    cpu->registers.pc = read_u16(cpu->mmu,cpu->registers.sp);
+    u16 temp =  read_u8(cpu->mmu, cpu->registers.sp++);
+    temp |= read_u8(cpu->mmu, cpu->registers.sp++);
+    cpu->registers.pc = temp;
     cpu->IME = 1;
-    cpu->registers.sp+=2;
     cpu->registers.clk.m = 3;
 }
 void RET_NZ(gbc_cpu *cpu) {
@@ -2177,7 +2167,9 @@ void RET_C(gbc_cpu *cpu) {
     if (flag_c(cpu)) RET(cpu);
 }
 void JP_a16(gbc_cpu *cpu) {
-    cpu->registers.pc = read_u16(cpu->mmu ,cpu->registers.pc);
+    u16 temp =  read_u8(cpu->mmu, cpu->registers.pc++);
+    temp |= read_u8(cpu->mmu, cpu->registers.pc++);
+    cpu->registers.pc = temp;
     cpu->registers.clk.m = 3;
 }
 void JP_mHL(gbc_cpu *cpu) {
@@ -2205,8 +2197,8 @@ void JP_NC_a16(gbc_cpu *cpu) {
 }
 
 void RST_u8(gbc_cpu *cpu, u8 v) {
-    cpu->registers.sp-=2;
-    write_u16(cpu->mmu, cpu->registers.sp, cpu->registers.pc);
+    write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc >> 8);
+	write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.pc & 0xFF);
     cpu->registers.pc = v;
     cpu->registers.clk.m = 3;
 }

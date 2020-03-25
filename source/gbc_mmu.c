@@ -4,6 +4,7 @@
 
 #include "types.h"
 #include "gbc_mmu.h"
+#include "gbc_mbc.h"
 #include "gbc_io.h"
 
 // from https://gist.github.com/domnikl/af00cc154e3da1c5d965k
@@ -56,7 +57,6 @@ void gbc_mmu_init(gbc_mmu *mmu){
     mmu->in_bios = true;
 
     memset(mmu->bios, 0, sizeof mmu->bios);
-    memset(mmu->rom, 0, sizeof mmu-> rom);
     memset(mmu->vram, 0, sizeof mmu->vram);
     memset(mmu->wram, 0, sizeof mmu->wram);
     memset(mmu->oam, 0, sizeof mmu->oam);
@@ -66,17 +66,19 @@ void gbc_mmu_init(gbc_mmu *mmu){
 }
 
 u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
-    if (address < 0x100 && mmu->in_bios) {
-        return &mmu->bios[address];
-    }
     if (address < 0x8000) {
-        return &mmu->rom[address];
+         printf("oh no invalid\n");
+        // should never occurr, read_u8 or write_u8 should intercept before
+        return &mmu->zram[0];
     }
     if (address < 0xA000) {
         return &mmu->vram[address & 0x1FFF];
     }
     if (address < 0xC000) {
-        return &mmu->eram[address & 0x1FFF];
+        //return &mmu->eram[address & 0x1FFF];
+        // should never occurr, read_u8 or write_u8 should intercept before
+         printf("oh no invalid\n");
+        return &mmu->zram[0];
     }
     if (address < 0xE000) {
         return &mmu->wram[address & 0x1FFF];
@@ -99,52 +101,34 @@ u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
     return &mmu->zram[address & 0x7F]; // zero page
 }
 
-void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {
-    memcpy(mmu->rom, src, n);
-}
-
-void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
-    char *buffer;
-    long numbytes;
-
-    FILE *infile = fopen(fname, "r");
-
-    if(infile == NULL)
-        return;
-
-    // Get the number of bytes
-    fseek(infile, 0L, SEEK_END);
-    numbytes = ftell(infile);
-
-    // reset the file position indicator to the beginning of the file
-    fseek(infile, 0L, SEEK_SET);
-
-    // grab sufficient memory for the buffer to hold the text
-    buffer = (char*)calloc(numbytes, sizeof(char));
-
-    // memory error
-    if(buffer == NULL)
-        return;
-
-    // copy all the text into the buffer
-    fread(buffer, sizeof(char), numbytes, infile);
-    fclose(infile);
-
-    memcpy(mmu->rom, buffer, numbytes);
-
-     //free the memory we used for the buffer
-    free(buffer);
-}
-
 u8 read_u8(gbc_mmu *mmu , u16 address) {
-    /*if (address == 0xff44) return 0x90;*/
+    if (address < 0x100 && mmu->in_bios) {
+        return mmu->bios[address];
+    }
+    if (address < 0x8000) {
+        return gbc_mbc_read_u8(mmu->cart->mbc, address);
+    }
+    if (address >= 0xA000 && address < 0xC000) { // cartridge RAM
+        return gbc_mbc_read_u8(mmu->cart->mbc, address);
+    }
     return *get_address_ptr(mmu, address);
 }
 
 void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
-    u8 *ptr = get_address_ptr(mmu, address);
+    if (address < 0x100 && mmu->in_bios) {
+        return;
+    }
     if (address == 0xFF50) {
         mmu->in_bios = false;
+        return;
+    }
+    if (address < 0x8000) {
+        gbc_mbc_write_u8(mmu->cart->mbc, address, val);
+        return;
+    }
+    if (address >= 0xA000 && address < 0xC000) { // cartridge RAM
+        gbc_mbc_write_u8(mmu->cart->mbc, address, val);
+        return;
     }
 
     // https://gbdev.gg8.se/wiki/articles/Serial_Data_Transfer_(Link_Cable)#FF02_-_SC_-_Serial_Transfer_Control_.28R.2FW.29
@@ -153,16 +137,15 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
         fflush(stdout);
     }
 
+    u8 *ptr = get_address_ptr(mmu, address);
     switch (address) {
         case IO_IFLAGS:
             *ptr = (val | 0b11100000);
             break;
         case IO_LCDCONT:
             *ptr = val;
-
             // fix LY to 0 when LCD is off
-            if((*ptr & MASK_LCDCONT_LCD_Display_Enable) == 0)
-            {
+            if((*ptr & MASK_LCDCONT_LCD_Display_Enable) == 0) {
                 // ensure LCD is on during vblank
                 if (!read_bit(mmu, IO_LCDSTAT, OPT_MODE_VBLANK)) {
                     *ptr |= MASK_LCDCONT_LCD_Display_Enable;
@@ -190,29 +173,16 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
     }
 }
 
-u16 read_u16(gbc_mmu *mmu , u16 address) {
-    // swap bytes for little-endian
-    u16 temp = read_u8(mmu, address);
-    temp |= read_u8(mmu, address+1) << 8;
-    return temp;
-}
-
-void write_u16(gbc_mmu *mmu , u16 address, u16 val) {
-    // swap bits for little-endian
-    write_u8(mmu, address, val & 0xFF);
-    write_u8(mmu, address+1, (u8)(val >> 8));
-}
-
 bool read_bit(gbc_mmu *mmu, u16 address, u8 bit) {
     return ((read_u8(mmu, address) & bit) > 0);
 }
 
 void set_bit(gbc_mmu *mmu, u16 address, u8 bit) {
-    u8 *ptr = get_address_ptr(mmu, address);
-    *ptr |= bit;
+    u8 v = read_u8(mmu, address);
+    write_u8(mmu, address, v | bit);
 }
 
 void unset_bit(gbc_mmu *mmu, u16 address, u8 bit) {
-    u8 *ptr = get_address_ptr(mmu, address);
-    *ptr &= ~bit;
+    u8 v = read_u8(mmu, address);
+    write_u8(mmu, address, v & ~bit);
 }
