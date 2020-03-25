@@ -43,11 +43,11 @@ typedef struct {
 
 typedef struct
 {
-	u16 lcd_count; // LCD Timing
-	u16 div_count; // Divider Register Counter
-	u16 tima_count;	// Timer Counter
-	u16 serial_count; // Serial Counter
-	bool enabled;
+    u16 lcd_count;     // LCD Timing
+    u16 div_count;     // Divider Register Counter
+    u16 tima_count;     // Timer Counter
+    u16 serial_count;     // Serial Counter
+    bool enabled;
 } gbc_timer;
 
 typedef struct {

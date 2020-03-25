@@ -23,7 +23,7 @@ void ppu_init(gbc_ppu *ppu) {
 }
 
 void insertion_sort(void *array, int length,
-        int compare(void*, int, int), void swap(void *, int, int)) {
+                    int compare(void*, int, int), void swap(void *, int, int)) {
     int i, j; // loop indexes
 
     for (j = 1; j < length; j++) {// index to insert array
@@ -191,7 +191,7 @@ void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
         for (j = 0; j < 8; j++) {
             ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
                 ppu->bg_palette[
-                ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                    ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
                     ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
                 ];
         }
@@ -270,9 +270,9 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
     objs_line_len = 0;
     for (i = 0; i < 40; i++) {
         if((objs[i].y != 0)
-                && (objs[i].y < SPRITE_END_Y)
-                && (objs[i].y <= line)
-                && ((objs[i].y + obj_height) > line)) { // does the sprite intercept the scanline?
+           && (objs[i].y < SPRITE_END_Y)
+           && (objs[i].y <= line)
+           && ((objs[i].y + obj_height) > line)) {      // does the sprite intercept the scanline?
             objs_line[objs_line_len++] = &objs[i];
         }
     }
@@ -311,7 +311,7 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             color = pal[
                 ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
                 ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
-            ];
+                    ];
             if (color < 8) {
                 ppu->obj_disp[pos] = color;
                 if (behind) {
@@ -320,7 +320,7 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             }
         }
     }
-        //while(1) {}
+    //while(1) {}
 }
 
 void ppu_draw_line(gbc_ppu *ppu, u8 line) {
@@ -341,38 +341,38 @@ void ppu_draw_line(gbc_ppu *ppu, u8 line) {
 
 
 /**
-  FF41 - STAT - LCDC Status (R/W)
-  Bit 6 - LYC=LY Coincidence Interrupt (1=Enable) (Read/Write)
-  Bit 5 - Mode 2 OAM Interrupt         (1=Enable) (Read/Write)
-  Bit 4 - Mode 1 V-Blank Interrupt     (1=Enable) (Read/Write)
-  Bit 3 - Mode 0 H-Blank Interrupt     (1=Enable) (Read/Write)
-  Bit 2 - Coincidence Flag  (0:LYC<>LY, 1:LYC=LY) (Read Only)
-  Bit 1-0 - Mode Flag       (Mode 0-3, see below) (Read Only)
-0: During H-Blank
-1: During V-Blank
-2: During Searching OAM-RAM
-3: During Transfering Data to LCD Driver
-The two lower STAT bits show the current status of the LCD controller.
-Mode 0: The LCD controller is in the H-Blank period and
-the CPU can access both the display RAM (8000h-9FFFh)
-and OAM (FE00h-FE9Fh)
-Mode 1: The LCD contoller is in the V-Blank period (or the
-display is disabled) and the CPU can access both the
-display RAM (8000h-9FFFh) and OAM (FE00h-FE9Fh)
-Mode 2: The LCD controller is reading from OAM memory.
-The CPU <cannot> access OAM memory (FE00h-FE9Fh)
-during this period.
-Mode 3: The LCD controller is reading from both OAM and VRAM,
-The CPU <cannot> access OAM and VRAM during this period.
-CGB Mode: Cannot access Palette Data (FF69,FF6B) either.
-The following are typical when the display is enabled:
-Mode 2  2_____2_____2_____2_____2_____2___________________2____
-Mode 3  _33____33____33____33____33____33__________________3___
-Mode 0  ___000___000___000___000___000___000________________000
-Mode 1  ____________________________________11111111111111_____
-The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 is present about 48.6uS, 2 about 19uS, and 3 about 41uS. This is interrupted every 16.6ms by the VBlank (1). The mode flag stays set at 1 for about 1.08 ms.
-Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
-*/
+   FF41 - STAT - LCDC Status (R/W)
+   Bit 6 - LYC=LY Coincidence Interrupt (1=Enable) (Read/Write)
+   Bit 5 - Mode 2 OAM Interrupt         (1=Enable) (Read/Write)
+   Bit 4 - Mode 1 V-Blank Interrupt     (1=Enable) (Read/Write)
+   Bit 3 - Mode 0 H-Blank Interrupt     (1=Enable) (Read/Write)
+   Bit 2 - Coincidence Flag  (0:LYC<>LY, 1:LYC=LY) (Read Only)
+   Bit 1-0 - Mode Flag       (Mode 0-3, see below) (Read Only)
+   0: During H-Blank
+   1: During V-Blank
+   2: During Searching OAM-RAM
+   3: During Transfering Data to LCD Driver
+   The two lower STAT bits show the current status of the LCD controller.
+   Mode 0: The LCD controller is in the H-Blank period and
+   the CPU can access both the display RAM (8000h-9FFFh)
+   and OAM (FE00h-FE9Fh)
+   Mode 1: The LCD contoller is in the V-Blank period (or the
+   display is disabled) and the CPU can access both the
+   display RAM (8000h-9FFFh) and OAM (FE00h-FE9Fh)
+   Mode 2: The LCD controller is reading from OAM memory.
+   The CPU <cannot> access OAM memory (FE00h-FE9Fh)
+   during this period.
+   Mode 3: The LCD controller is reading from both OAM and VRAM,
+   The CPU <cannot> access OAM and VRAM during this period.
+   CGB Mode: Cannot access Palette Data (FF69,FF6B) either.
+   The following are typical when the display is enabled:
+   Mode 2  2_____2_____2_____2_____2_____2___________________2____
+   Mode 3  _33____33____33____33____33____33__________________3___
+   Mode 0  ___000___000___000___000___000___000________________000
+   Mode 1  ____________________________________11111111111111_____
+   The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 is present about 48.6uS, 2 about 19uS, and 3 about 41uS. This is interrupted every 16.6ms by the VBlank (1). The mode flag stays set at 1 for about 1.08 ms.
+   Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
+ */
 u8 ppu_run(gbc_ppu *ppu, int cycles) {
     ppu->mode_clock += cycles;
 
@@ -421,7 +421,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
             }
             SDL_Event e;
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT){
+                if (e.type == SDL_QUIT) {
                     ppu->quit = true;
                 }
 
@@ -436,7 +436,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                  * Bit 0 - P10 Input Right or Button A (0=Pressed) (Read Only)
                  */
                 if (e.type == SDL_KEYDOWN) {
-                    if (e.key.keysym.sym == SDLK_ESCAPE){
+                    if (e.key.keysym.sym == SDLK_ESCAPE) {
                         ppu->quit = true;
                     }
                     if (e.key.keysym.sym == SDLK_UP) {
@@ -524,8 +524,8 @@ unsigned long gbcToRgb32(unsigned const bgr15) {
     unsigned long const b = bgr15 >> 10 & 0x1F;
 
     return ((r * 13 + g * 2 + b) >> 1) << 16
-        | (g * 3 + b) << 9
-        | (r * 3 + g * 2 + b * 11) >> 1;
+           | (g * 3 + b) << 9
+           | (r * 3 + g * 2 + b * 11) >> 1;
 }
 
 /*u16 rgb32ToRgb16(u32 rgb32) {*/

@@ -176,7 +176,7 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     if (old_pc == 0x00e0) {
         printf("Nintendo logo comparison routine\n");
         FILE *fp;
-        fp = fopen("fb.bin" , "w" );
+        fp = fopen("fb.bin", "w" );
         fwrite(&cpu->ppu->fb, 1, sizeof cpu->ppu->fb, fp);
         fclose(fp);
         printf("dumped framebuffer to file\n");

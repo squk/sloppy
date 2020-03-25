@@ -47,8 +47,8 @@
 
 #define TRANSPARENT 8
 
-#define RGB5(r,g,b)	((r)|((g)<<5)|((b)<<10))
-#define RGB8(r,g,b)	( (((b)>>3)<<10) | (((g)>>3)<<5) | ((r)>>3) )
+#define RGB5(r,g,b)     ((r)|((g)<<5)|((b)<<10))
+#define RGB8(r,g,b)     ( (((b)>>3)<<10) | (((g)>>3)<<5) | ((r)>>3) )
 
 typedef struct {
     u8 id;
@@ -56,22 +56,22 @@ typedef struct {
     u8 y;
 
     /*
-     *Specifies the sprites Tile Number (00-FF). This (unsigned) value selects
-     a tile *from memory at 8000h-8FFFh. In CGB Mode this could be either in
-     VRAM Bank 0 *or 1, depending on Bit 3 of the following byte. In 8x16 mode,
-     the lower bit *of the tile number is ignored. IE: the upper 8x8 tile is
-     "NN AND FEh", and *the lower 8x8 tile is "NN OR 01h".
+     * Specifies the sprites Tile Number (00-FF). This (unsigned) value selects
+       a tile *from memory at 8000h-8FFFh. In CGB Mode this could be either in
+       VRAM Bank 0 *or 1, depending on Bit 3 of the following byte. In 8x16 mode,
+       the lower bit *of the tile number is ignored. IE: the upper 8x8 tile is
+       "NN AND FEh", and *the lower 8x8 tile is "NN OR 01h".
      */
     u8 pat;
 
     /*
-     *Bit7   OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
+     * Bit7   OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
      *       (Used for both BG and Window. BG color 0 is always behind OBJ)
-     *Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
-     *Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
-     *Bit4   Palette number  **Non CGB Mode Only** (0=OBP0, 1=OBP1)
-     *Bit3   Tile VRAM-Bank  **CGB Mode Only**     (0=Bank 0, 1=Bank 1)
-     *Bit2-0 Palette number  **CGB Mode Only**     (OBP0-7)
+     * Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
+     * Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
+     * Bit4   Palette number  **Non CGB Mode Only** (0=OBP0, 1=OBP1)
+     * Bit3   Tile VRAM-Bank  **CGB Mode Only**     (0=Bank 0, 1=Bank 1)
+     * Bit2-0 Palette number  **CGB Mode Only**     (OBP0-7)
      */
     u8 flags;
 } ppu_obj;
