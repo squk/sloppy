@@ -1647,6 +1647,12 @@ void LD_mHLD_A(gbc_cpu *cpu) {
     cpu->registers.clk.m = 2;
 }
 
+void LD_HL_d8(gbc_cpu *cpu) {
+    write_u8(cpu->mmu, get_hl(cpu), read_u8(cpu->mmu, cpu->registers.pc));
+    cpu->registers.pc++;
+    cpu->registers.clk.m = 3;
+}
+
 void LD_A_mBC(gbc_cpu *cpu) {
     cpu->registers.a = read_u8(cpu->mmu, get_bc(cpu));
     cpu->registers.clk.m = 2;
@@ -1789,7 +1795,7 @@ void ADD_u8(gbc_cpu *cpu, u8 v) {
     set_flag_h(cpu, (cpu->registers.a ^ v ^ temp) & 0x10);
     set_flag_c(cpu, temp & 0xFF00);
     cpu->registers.a = (temp & 0xFF);
-    cpu->registers.clk.m = 2;
+    cpu->registers.clk.m = 1;
 }
 
 void ADD_HL_BC(gbc_cpu *cpu) {
@@ -1849,6 +1855,7 @@ void SUB_u8(gbc_cpu *cpu, u8 v) {
     set_flag_h(cpu, (cpu->registers.a ^ v ^ temp) & 0x10);
     set_flag_c(cpu, temp & 0xFF00);
     cpu->registers.a = (temp & 0xFF);
+    cpu->registers.clk.m = 1;
 }
 
 void SBC_A_u8(gbc_cpu *cpu, u8 v) {
@@ -1912,14 +1919,13 @@ void CP_u8(gbc_cpu *cpu, u8 v) {
     set_flag_n(cpu, 1);
     set_flag_h(cpu, (cpu->registers.a ^ v ^ temp) & 0x10);
     set_flag_c(cpu, temp & 0xFF00);
-    cpu->registers.clk.m = 1;
+    cpu->registers.clk.m=1;
 }
 
 void INC_r8(gbc_cpu *cpu, u8 *r) {
     (*r)++;
     set_flag_z(cpu, *r == 0x00);
     set_flag_n(cpu, 0);
-    /*set_flag_h(cpu, half_carry(*r, 1));*/
     set_flag_h(cpu, (*r & 0x0F) == 0x00);
     cpu->registers.clk.m = 1;
 }
@@ -2034,17 +2040,17 @@ void PUSH_AF(gbc_cpu *cpu) {
 void POP_BC(gbc_cpu *cpu) {
     cpu->registers.c = read_u8(cpu->mmu, cpu->registers.sp++);
     cpu->registers.b = read_u8(cpu->mmu, cpu->registers.sp++);
-    cpu->registers.clk.m = 4;
+    cpu->registers.clk.m = 3;
 }
 void POP_DE(gbc_cpu *cpu) {
     cpu->registers.e = read_u8(cpu->mmu, cpu->registers.sp++);
     cpu->registers.d = read_u8(cpu->mmu, cpu->registers.sp++);
-    cpu->registers.clk.m = 4;
+    cpu->registers.clk.m = 3;
 }
 void POP_HL(gbc_cpu *cpu) {
     cpu->registers.l = read_u8(cpu->mmu, cpu->registers.sp++);
     cpu->registers.h = read_u8(cpu->mmu, cpu->registers.sp++);
-    cpu->registers.clk.m = 4;
+    cpu->registers.clk.m = 3;
 }
 void POP_AF(gbc_cpu *cpu) {
     u8 temp_8 = read_u8(cpu->mmu, cpu->registers.sp++);
@@ -2053,12 +2059,12 @@ void POP_AF(gbc_cpu *cpu) {
     set_flag_h(cpu, (temp_8 >> 5) & 1);
     set_flag_c(cpu, (temp_8 >> 4) & 1);
     cpu->registers.a = read_u8(cpu->mmu, cpu->registers.sp++);
-    cpu->registers.clk.m = 4;
+    cpu->registers.clk.m = 3;
 }
 void JR_r8(gbc_cpu *cpu) {
     s8 i = read_u8(cpu->mmu,cpu->registers.pc++);
     cpu->registers.pc += i;
-    cpu->registers.clk.m = 4;
+    cpu->registers.clk.m = 3;
 }
 void JR_NZ_r8(gbc_cpu *cpu) {
     cpu->registers.clk.m = 2;
@@ -2092,23 +2098,27 @@ void CALL_a16(gbc_cpu *cpu) {
 }
 
 void CALL_NZ_a16(gbc_cpu *cpu) {
+    cpu->registers.clk.m = 3;
     if (!flag_z(cpu)) CALL_a16(cpu);
-    else cpu->registers.pc = 3;
+     else cpu->registers.pc += 2;
 }
 
 void CALL_Z_a16(gbc_cpu *cpu) {
+    cpu->registers.clk.m = 3;
     if (flag_z(cpu)) CALL_a16(cpu);
-    else cpu->registers.pc = 3;
+    else cpu->registers.pc += 2;
 }
 
 void CALL_NC_a16(gbc_cpu *cpu) {
+    cpu->registers.clk.m = 3;
     if (!flag_c(cpu)) CALL_a16(cpu);
-    else cpu->registers.pc = 3;
+    else cpu->registers.pc += 2;
 }
 
 void CALL_C_a16(gbc_cpu *cpu) {
+    cpu->registers.clk.m = 3;
     if (flag_c(cpu)) CALL_a16(cpu);
-    else cpu->registers.pc = 3;
+    else cpu->registers.pc += 2;
 }
 
 void RET(gbc_cpu *cpu) {
@@ -2120,8 +2130,8 @@ void RET(gbc_cpu *cpu) {
 }
 
 void RET_I(gbc_cpu *cpu) {
-    cpu->IME = 1;
     cpu->registers.clk.m = 0;
+    cpu->IME = 1;
     RET(cpu);
 }
 void RET_NZ(gbc_cpu *cpu) {
@@ -2153,20 +2163,24 @@ void JP_mHL(gbc_cpu *cpu) {
     cpu->registers.clk.m = 1;
 }
 void JP_C_a16(gbc_cpu *cpu) {
+    cpu->registers.clk.m = 3;
     if(flag_c(cpu)) JP_a16(cpu);
-    else cpu->registers.pc += 3;
+    else cpu->registers.pc += 2;
 }
 void JP_Z_a16(gbc_cpu *cpu) {
+    cpu->registers.clk.m = 3;
     if(flag_z(cpu)) JP_a16(cpu);
-    else cpu->registers.pc += 3;
+    else cpu->registers.pc += 2;
 }
 void JP_NZ_a16(gbc_cpu *cpu) {
+    cpu->registers.clk.m = 3;
     if (!flag_z(cpu)) JP_a16(cpu);
-    else cpu->registers.pc += 3;
+    else cpu->registers.pc += 2;
 }
 void JP_NC_a16(gbc_cpu *cpu) {
+    cpu->registers.clk.m = 3;
     if(!flag_c(cpu)) JP_a16(cpu);
-    else cpu->registers.pc += 3;
+    else cpu->registers.pc += 2;
 }
 
 void RST_u8(gbc_cpu *cpu, u8 v) {
