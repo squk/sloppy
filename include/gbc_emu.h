@@ -12,9 +12,6 @@
 #include "gbc_mmu.h"
 #include "dmg_rom.h"
 
-#include "tetris_gb.h"
-#include "cpu_instrs_gb.h"
-
 #include "01_special.h"
 #include "02_interrupts.h"
 #include "03_op_sp_hl.h"
@@ -26,8 +23,6 @@
 #include "09_op_r_r.h"
 #include "10_bit_ops.h"
 #include "11_op_a_mhl.h"
-
-#include "mario.h"
 
 void emu_run() {
     gbc_cpu cpu;
@@ -42,8 +37,6 @@ void emu_run() {
     gbc_cpu_reset(&cpu);
     ppu_init(&cpu);
     gbc_cpu_set_boot_state(&cpu);
-    //CpuFastSet(tetris_gb_bin, (u8*)mmu.rom, (tetris_gb_bin_size / 4) | COPY32);
-    //CpuFastSet(cpu_instrs_gb_bin, (u8*)mmu.rom, (cpu_instrs_gb_bin_size / 4) | COPY32);
 
     gbc_cpu_loop(&cpu);
 }
