@@ -186,3 +186,17 @@ void unset_bit(gbc_mmu *mmu, u16 address, u8 bit) {
     u8 v = read_u8(mmu, address);
     write_u8(mmu, address, v & ~bit);
 }
+
+
+u16 read_u16(gbc_mmu *mmu , u16 address) {
+    // swap bytes for little-endian
+    u16 temp = read_u8(mmu, address);
+    temp |= read_u8(mmu, address+1) << 8;
+    return temp;
+}
+
+void write_u16(gbc_mmu *mmu , u16 address, u16 val) {
+    // swap bits for little-endian
+    write_u8(mmu, address, val & 0xFF);
+    write_u8(mmu, address+1, (u8)(val >> 8));
+}
