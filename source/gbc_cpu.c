@@ -211,27 +211,27 @@ void gbc_interrupt_handler(gbc_cpu *cpu) {
             if(IF & IE & VBLANK_INTR) {
                 cpu->registers.pc = VBLANK_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ VBLANK_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
             }
             else if(IF & IE & LCDC_INTR) {
                 cpu->registers.pc = LCDC_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ LCDC_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
             }
             else if(IF & IE & TIMER_INTR) {
                 cpu->registers.pc = TIMER_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ TIMER_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
             }
             else if(IF & IE & SERIAL_INTR) {
                 cpu->registers.pc = SERIAL_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ SERIAL_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
             }
             else if(IF & IE & CONTROL_INTR) {
                 cpu->registers.pc = CONTROL_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ CONTROL_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
             }
         }
     }

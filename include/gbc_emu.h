@@ -72,11 +72,12 @@ void emu_test() {
     gbc_mmu_init(&mmu);
     gbc_cpu_reset(&cpu);
 
-    //memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len); mmu.in_bios = true;
+    memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len); mmu.in_bios = true;
     gbc_cpu_set_boot_state(&cpu);
     cpu.mmu->io[0x00] = 0xFF;
 
     //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
+    //gbc_load_rom_file(&mmu, "data/tests/instr_timing/instr_timing.gb");
     gbc_load_rom_file(&mmu, "./Tetris.gb");
     //gbc_load_rom_file(&mmu, "./vblank_stat_intr-C.gb");
     //gbc_load_rom_file(&mmu, "./DrMario.gb");
