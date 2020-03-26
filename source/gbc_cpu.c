@@ -242,7 +242,7 @@ void gbc_interrupt_handler(gbc_cpu *cpu) {
  *            11: CPU Clock / 256  (DMG, CGB:  16384 Hz, SGB:  ~16780 Hz)
  *
  * Note: The "Timer Enable" bit only affects the timer, the divider is ALWAYS counting
-*/
+ */
 void gbc_cpu_timer_run(gbc_cpu *cpu) {
     // DIV register timing
     cpu->counter.div += cpu->registers.clk.m;
@@ -264,7 +264,7 @@ void gbc_cpu_timer_run(gbc_cpu *cpu) {
 
             u8 temp = read_u8(cpu->mmu, IO_TIMA);
             if(temp == 0xFF) { // overflow
-               write_u8(cpu->mmu, IO_TIMA, read_u8(cpu->mmu, IO_TMA)); // reset to value in TMA
+                write_u8(cpu->mmu, IO_TIMA, read_u8(cpu->mmu, IO_TMA)); // reset to value in TMA
                 write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
             } else {
                 write_u8(cpu->mmu, IO_TIMA, temp + 1);
