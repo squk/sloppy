@@ -2035,9 +2035,7 @@ void PUSH_HL(gbc_cpu *cpu) {
 }
 void PUSH_AF(gbc_cpu *cpu) {
     write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.a);
-    write_u8(cpu->mmu, --cpu->registers.sp,
-             flag_z(cpu) << 7 | flag_n(cpu)<< 6 |
-             flag_h(cpu) << 5 | flag_c(cpu)<< 4);
+    write_u8(cpu->mmu, --cpu->registers.sp, cpu->registers.f);
     cpu->registers.clk.m = 4;
 }
 

@@ -170,7 +170,6 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
                 }
                 write_u8(mmu, IO_LCDSTAT, (read_u8(mmu, IO_LCDSTAT) & ~0x03) | OPT_MODE_VBLANK);
                 write_u8(mmu, IO_CURLINE, 0);
-                /*cpu->counter.lcd_count = 0;*/
             }
             break;
         case IO_DMACONT:
@@ -179,7 +178,7 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
             for(u8 i = 0; i < sizeof mmu->oam; i++)
                 mmu->oam[i] = read_u8(mmu, (*ptr << 8) + i);
             break;
-        case IO_DIVIDER:
+        case IO_DIV:
             *ptr = 0x00;
             break;
         case IO_JOYPAD: // READ ONLY

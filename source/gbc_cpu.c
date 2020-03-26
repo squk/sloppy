@@ -233,6 +233,46 @@ void gbc_interrupt_handler(gbc_cpu *cpu) {
     }
 }
 
+/*
+ * Bit  2   - Timer Enable
+ * Bits 1-0 - Input Clock Select
+ *            00: CPU Clock / 1024 (DMG, CGB:   4096 Hz, SGB:   ~4194 Hz)
+ *            01: CPU Clock / 16   (DMG, CGB: 262144 Hz, SGB: ~268400 Hz)
+ *            10: CPU Clock / 64   (DMG, CGB:  65536 Hz, SGB:  ~67110 Hz)
+ *            11: CPU Clock / 256  (DMG, CGB:  16384 Hz, SGB:  ~16780 Hz)
+ *
+ * Note: The "Timer Enable" bit only affects the timer, the divider is ALWAYS counting
+*/
+void gbc_cpu_timer_run(gbc_cpu *cpu) {
+    // DIV register timing
+    cpu->counter.div += cpu->registers.clk.m;
+    if (cpu->counter.div >= DIV_CYCLES) {
+        cpu->mmu->io[IO_DIV & 0xFF]++;
+        cpu->counter.div -= DIV_CYCLES;
+    }
+
+    // TIMA register timing
+    u8 TAC = read_u8(cpu->mmu, IO_TAC);
+    if (TAC & 0x4) {
+        u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
+
+        cpu->counter.tima  += cpu->registers.clk.m;
+        TAC &= 0x3; // TAC_CYCLES are determined by lower 2 bits
+
+        if(cpu->counter.tima >= TAC_CYCLES[TAC]) {
+            cpu->counter.tima -= TAC_CYCLES[TAC];
+
+            u8 temp = read_u8(cpu->mmu, IO_TIMA);
+            if(temp == 0xFF) { // overflow
+               write_u8(cpu->mmu, IO_TIMA, read_u8(cpu->mmu, IO_TMA)); // reset to value in TMA
+                write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
+            } else {
+                write_u8(cpu->mmu, IO_TIMA, temp + 1);
+            }
+        }
+    }
+}
+
 void gbc_cpu_step(gbc_cpu *cpu) {
     gbc_interrupt_handler(cpu);
 
@@ -248,23 +288,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     cpu->clk.m += cpu->registers.clk.m;
     cpu->clk.t += cpu->registers.clk.t;
 
-    if (read_bit(cpu->mmu, IO_TIMCONT, 0x4)) {
-        u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
-        u8 TAC = read_u8(cpu->mmu, IO_TIMCONT);
-        cpu->mmu->io[IO_TIMECNT & 0xFF] =+ cpu->registers.clk.m;
-
-        if(cpu->mmu->io[IO_TIMECNT & 0xFF] >= TAC_CYCLES[TAC]) {
-            cpu->mmu->io[IO_TIMECNT & 0xFF] -= TAC_CYCLES[TAC];
-
-            u8 temp = read_u8(cpu->mmu, IO_TIMECNT) + 1;
-            write_u8(cpu->mmu, IO_TIMECNT, temp);
-            if(temp == 0x00) { // overflow
-                write_u8(cpu->mmu, IO_TIMECNT, read_u8(cpu->mmu, IO_TIMEMOD)); // reset to value in TMA
-                write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
-            }
-        }
-    }
-
+    gbc_cpu_timer_run(cpu);
     ppu_run(cpu->ppu, cpu->registers.clk.m);
 }
 
