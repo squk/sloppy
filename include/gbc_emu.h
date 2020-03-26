@@ -35,7 +35,7 @@ void emu_run() {
 
     gbc_mmu_init(&mmu);
     gbc_cpu_reset(&cpu);
-    ppu_init(&cpu);
+    ppu_init(&ppu);
     gbc_cpu_set_boot_state(&cpu);
 
     gbc_cpu_loop(&cpu);
@@ -73,7 +73,7 @@ void emu_test() {
     gbc_cpu_reset(&cpu);
 
     memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len); mmu.in_bios = true;
-    gbc_cpu_set_boot_state(&cpu);
+    //gbc_cpu_set_boot_state(&cpu);
     cpu.mmu->io[0x00] = 0xFF;
 
     //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");

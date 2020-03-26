@@ -180,6 +180,7 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
         fwrite(&cpu->ppu->fb, 1, sizeof cpu->ppu->fb, fp);
         fclose(fp);
         printf("dumped framebuffer to file\n");
+        //hex_dump("bg_disp", &cpu->ppu->bg_disp, 512*512);
     }
     if (old_pc == 0x00f9) {
         printf("\nlock up?\n");
@@ -246,6 +247,7 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     u16 old_pc = cpu->registers.pc;
     execute_op(cpu, opcode);
+    //bug_dmg_bootrom(cpu, old_pc, opcode);
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;

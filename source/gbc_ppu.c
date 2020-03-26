@@ -65,23 +65,26 @@ u8 ppu_get_palette_color(gbc_ppu *ppu, u16 palette_addr, u8 color) {
             return 0;
     }
 
-    //u8 bits = 0;
-    //switch (i) {
-        //case 0: bits = p & 0x03;
-        //case 1: bits = (p & 0x0C) >> 2;
-        //case 2: bits = (p & 0x30) >> 4;
-        //case 3: bits = (p & 0xC0) >> 6;
-        //default: return 0;
-    //}
-
-    //return bits;
+    u8 bits = 0;
     switch (color) {
-        case 0: return p & 0x03;
-        case 1: return (p & 0x0C);
-        case 2: return (p & 0x30);
-        case 3: return (p & 0xC0);
-        default: return 0;
+        case 0:
+            bits = p & 0x03;
+            break;
+        case 1:
+            bits = (p & 0x0C) >> 2;
+            break;
+        case 2:
+            bits = (p & 0x30) >> 4;
+            break;
+        case 3:
+            bits = (p & 0xC0) >> 6;
+            break;
+        default:
+            printf("invalid color %x\n", color);
+            return 0;
     }
+
+    return bits;
 }
 
 void ppu_start_frame(gbc_ppu *ppu) {
@@ -131,10 +134,6 @@ void ppu_draw_line_fb(gbc_ppu *ppu, u8 line) {
     }
 }
 
-void ppu_draw_tiles_line(gbc_ppu *ppu, u8 line) {
-
-}
-
 void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
     u16 bg_tile_map, tile_data;
     u8 oam_row, obj_line;
@@ -171,9 +170,9 @@ void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
         for (j = 0; j < 8; j++) {
             ppu->bg_disp[line * 256 + (u8)(i * 8 - read_u8(ppu->mmu, IO_SCROLLX) + j)] =
                 ppu_get_palette_color(ppu, IO_BGRDPAL,
-                    ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-                    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
-                );
+                                      ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                                      ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
+                                      );
         }
     }
 }
@@ -217,9 +216,9 @@ void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
         for (j = 0; j < 8; j++) {
             ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
                 ppu_get_palette_color(ppu, IO_BGRDPAL,
-                    ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-                    ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
-                );
+                                      ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                                      ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
+                                      );
         }
     }
 }
@@ -266,7 +265,6 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
     u8 obj_height, objs_line_len, obj_line;
     u8 obj_line_a, obj_line_b, color;
     u8 x_flip, y_flip, behind;
-    u8 *pal;
     ppu_obj objs[40];
     ppu_obj *objs_line[40];
 
@@ -331,11 +329,11 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             pos = line * 256 + (objs_line[i]->x + (x_flip ? 7 - j : j)) % 256;
 
             u8 color_index = ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-                ((obj_line_b & (1 << (7 - j))) ? 2 : 0);
+                             ((obj_line_b & (1 << (7 - j))) ? 2 : 0);
             if (objs_line[i]->flags & OPT_OBJ_Flag_palette) {
-                ppu_get_palette_color(ppu, IO_OBJ1PAL, color_index);
+                color = ppu_get_palette_color(ppu, IO_OBJ1PAL, color_index);
             } else {
-                ppu_get_palette_color(ppu, IO_OBJ0PAL, color_index);
+                color = ppu_get_palette_color(ppu, IO_OBJ0PAL, color_index);
             }
             if (color < 8) { /// WTF is this?
                 ppu->obj_disp[pos] = color;
@@ -440,7 +438,23 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                 for (int x = 0; x < SIZE_X; x++) {
                     int px_index = y * SIZE_X + x;
                     u8 color = ppu->fb[px_index];
-                    SDL_SetRenderDrawColor(ppu->renderer, color, color, color, 0xFF);
+                    u8 r,g,b;
+                    switch(color) {
+                        case 0: // 332c50
+                            r = 0x33; g = 0x2c; b = 0x50;
+                            break;
+                        case 1: // 46878f
+                            r = 0x46; g = 0x87; b = 0x8f;
+                            break;
+                        case 2: // 94e344
+                            r = 0x94; g = 0xe3; b = 0x44;
+                            break;
+                        case 3: // e2f3e4
+                            r = 0xe2; g = 0xf3; b = 0xe4;
+                            break;
+                    }
+
+                    SDL_SetRenderDrawColor(ppu->renderer, r, g, b, 0xFF);
                     SDL_RenderDrawPoint(ppu->renderer, x, y);
                 }
             }
@@ -541,6 +555,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
             set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
         }
     }
+    return 0;
 }
 
 unsigned long gbcToRgb32(unsigned const bgr15) {
