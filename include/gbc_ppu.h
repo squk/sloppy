@@ -87,7 +87,6 @@ typedef struct {
     u8 obj_disp[512*512];
 
     u16 mode_clock; // Object Attribute Memory
-    u8 bg_palette[4], obj0_palette[4], obj1_palette[4];
 
     bool quit;
 } gbc_ppu;
@@ -115,6 +114,7 @@ void set_palette(u8* p, u8 v);
 void ppu_write_u8(gbc_ppu *ppu, u16 address, u8 v);
 
 void ppu_init(gbc_ppu *ppu);
+u8 ppu_get_palette_color(gbc_ppu *ppu, u16 palette_addr, u8 color);
 void ppu_start_frame(gbc_ppu *ppu);
 void ppu_draw_line_fb(gbc_ppu *ppu, u8 line);
 void ppu_draw_line_bg(gbc_ppu *ppu, u8 line);

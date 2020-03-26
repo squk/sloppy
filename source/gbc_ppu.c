@@ -19,6 +19,7 @@ void ppu_init(gbc_ppu *ppu) {
     memset(ppu->bg_disp, 0, sizeof ppu->bg_disp);
     memset(ppu->win_disp, 0, sizeof ppu->win_disp);
     memset(ppu->obj_disp, 0, sizeof ppu->obj_disp);
+
     ppu_start_frame(ppu);
 }
 
@@ -51,11 +52,36 @@ void insertion_sort(void *array, int length,
  *  2  Dark gray
  *  3  Black
  */
-void set_palette(u8* p, u8 v)  {
-    p[0] = v & 0x03;
-    p[1] = (v & 0x0C) >> 2;
-    p[2] = (v & 0x30) >> 4;
-    p[3] = (v & 0xC0) >> 6;
+u8 ppu_get_palette_color(gbc_ppu *ppu, u16 palette_addr, u8 color) {
+    u8 p = 0;
+    switch (palette_addr) {
+        case IO_BGRDPAL:
+        case IO_OBJ0PAL:
+        case IO_OBJ1PAL:
+            p = read_u8(ppu->mmu, palette_addr);
+            break;
+        default:
+            printf("invalid PPU palette address: %x\n", palette_addr);
+            return 0;
+    }
+
+    //u8 bits = 0;
+    //switch (i) {
+        //case 0: bits = p & 0x03;
+        //case 1: bits = (p & 0x0C) >> 2;
+        //case 2: bits = (p & 0x30) >> 4;
+        //case 3: bits = (p & 0xC0) >> 6;
+        //default: return 0;
+    //}
+
+    //return bits;
+    switch (color) {
+        case 0: return p & 0x03;
+        case 1: return (p & 0x0C);
+        case 2: return (p & 0x30);
+        case 3: return (p & 0xC0);
+        default: return 0;
+    }
 }
 
 void ppu_start_frame(gbc_ppu *ppu) {
@@ -144,10 +170,10 @@ void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
         obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
         for (j = 0; j < 8; j++) {
             ppu->bg_disp[line * 256 + (u8)(i * 8 - read_u8(ppu->mmu, IO_SCROLLX) + j)] =
-                ppu->bg_palette[
+                ppu_get_palette_color(ppu, IO_BGRDPAL,
                     ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
                     ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
-                ];
+                );
         }
     }
 }
@@ -190,10 +216,10 @@ void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
         obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
         for (j = 0; j < 8; j++) {
             ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
-                ppu->bg_palette[
+                ppu_get_palette_color(ppu, IO_BGRDPAL,
                     ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
                     ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
-                ];
+                );
         }
     }
 }
@@ -296,11 +322,6 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
         }
         obj_line_a = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 + obj_line * 2);
         obj_line_b = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 + obj_line * 2 + 1);
-        if (objs_line[i]->flags & OPT_OBJ_Flag_palette) {
-            pal = ppu->obj1_palette;
-        } else {
-            pal = ppu->obj0_palette;
-        }
         if (objs_line[i]->flags & OPT_OBJ_Flag_priority) {
             behind = 1;
         } else {
@@ -308,11 +329,15 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
         }
         for (j = 0; j < 8; j++) {
             pos = line * 256 + (objs_line[i]->x + (x_flip ? 7 - j : j)) % 256;
-            color = pal[
-                ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-                ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
-                    ];
-            if (color < 8) {
+
+            u8 color_index = ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
+                ((obj_line_b & (1 << (7 - j))) ? 2 : 0);
+            if (objs_line[i]->flags & OPT_OBJ_Flag_palette) {
+                ppu_get_palette_color(ppu, IO_OBJ1PAL, color_index);
+            } else {
+                ppu_get_palette_color(ppu, IO_OBJ0PAL, color_index);
+            }
+            if (color < 8) { /// WTF is this?
                 ppu->obj_disp[pos] = color;
                 if (behind) {
                     ppu->obj_disp[pos] |= 4;
