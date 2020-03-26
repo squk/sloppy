@@ -5,6 +5,24 @@ A Gameboy Color emulator for the Gameboy Advance.
 
 Work in progress. Currently debugging emulator opcodes on a computer's CLI. 
 
+# Tests
+## Blargg's tests
+
+| cpu instrs test         |  pass/fail |
+| ----------------------- | ---------- |
+| 01-special              | :+1:       |
+| 02-interrupts           | :x:       |
+| 03-op sp,hl             | :+1:       |
+| 04-op r,imm             | :+1:       |
+| 04_op_r_imm.h           | :+1:       |
+| 05-op rp                | :+1:       |
+| 06-ld r,r               | :+1:       |
+| 07-jr,jp,call,ret,rst   | :+1:       |
+| 08-misc instrs          | :+1:       |
+| 09-op r,r               | :+1:       |
+| 10-bit ops              | :+1:       |
+| 11-op a,(hl)            | :+1:       |
+
 # deps
 https://devkitpro.org/
 https://github.com/devkitPro/libgba
