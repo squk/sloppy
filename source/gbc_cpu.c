@@ -49,11 +49,6 @@ void gbc_cpu_reset(gbc_cpu *cpu) {
     cpu->IME = 0;
     cpu->IE = 0;
     cpu->IF = 0;
-
-    cpu->timer.lcd_count = 0;
-    cpu->timer.div_count = 0;
-    cpu->timer.tima_count = 0;
-    cpu->timer.serial_count = 0;
 }
 
 void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
@@ -243,11 +238,11 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    //gbc_cpu_trace(cpu, opcode);
+    /*gbc_cpu_trace(cpu, opcode);*/
 
     u16 old_pc = cpu->registers.pc;
     execute_op(cpu, opcode);
-    //bug_dmg_bootrom(cpu, old_pc, opcode);
+    //debug_dmg_bootrom(cpu, old_pc, opcode);
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
@@ -256,10 +251,10 @@ void gbc_cpu_step(gbc_cpu *cpu) {
     if (read_bit(cpu->mmu, IO_TIMCONT, 0x4)) {
         u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
         u8 TAC = read_u8(cpu->mmu, IO_TIMCONT);
-        cpu->timer.tima_count += cpu->registers.clk.m;
+        cpu->mmu->io[IO_TIMECNT & 0xFF] =+ cpu->registers.clk.m;
 
-        if(cpu->timer.tima_count >= TAC_CYCLES[TAC]) {
-            cpu->timer.tima_count -= TAC_CYCLES[TAC];
+        if(cpu->mmu->io[IO_TIMECNT & 0xFF] >= TAC_CYCLES[TAC]) {
+            cpu->mmu->io[IO_TIMECNT & 0xFF] -= TAC_CYCLES[TAC];
 
             u8 temp = read_u8(cpu->mmu, IO_TIMECNT) + 1;
             write_u8(cpu->mmu, IO_TIMECNT, temp);

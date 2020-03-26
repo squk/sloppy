@@ -96,7 +96,7 @@ u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
     if (address < 0xFFFF) {
         return &mmu->hram[address & 0xFF];
     }
-    return &mmu->zram[address & 0x7F]; // zero page
+    return &mmu->nullish; // zero page
 }
 
 void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {

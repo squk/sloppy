@@ -23,6 +23,7 @@ typedef struct {
     u8 io[0x80];
     u8 hram[0x80];
     u8 zram[0xFFFF];
+    u8 nullish;
 
     bool in_bios;
 } gbc_mmu;
