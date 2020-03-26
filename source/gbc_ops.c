@@ -1412,11 +1412,13 @@ void SLA(gbc_cpu *cpu, u8 opcode) {
         v = v << 1;
         set_flag_z(cpu, v == 0x00);
         write_u8(cpu->mmu, get_hl(cpu), v);
+        cpu->registers.clk.m = 4;
     } else {
         u8 *r8 = prefix_cb_target(cpu, opcode);
         b7 = (*r8 & 0x80) >> 7;
         *r8 = *r8 << 1;
         set_flag_z(cpu, *r8 == 0x00);
+        cpu->registers.clk.m = 2;
     }
     set_flag_n(cpu, 0);
     set_flag_h(cpu, 0);
@@ -1436,6 +1438,7 @@ void SRA(gbc_cpu* cpu, u8 opcode) {
         v += b7 << 7;
         write_u8(cpu->mmu, get_hl(cpu), v);
         set_flag_z(cpu, (v == 0x00));
+        cpu->registers.clk.m = 4;
     } else {
         u8 *r8 = prefix_cb_target(cpu, opcode);
         b0 = *r8 & 0x01;
@@ -1443,12 +1446,12 @@ void SRA(gbc_cpu* cpu, u8 opcode) {
         *r8 = *r8 >> 1;
         *r8 += b7 << 7;
         set_flag_z(cpu, (*r8 == 0x00));
+        cpu->registers.clk.m = 2;
     }
 
     set_flag_n(cpu, 0);
     set_flag_h(cpu, 0);
     set_flag_c(cpu, b0);
-    cpu->registers.clk.m = 2;
 }
 
 void SRL(gbc_cpu *cpu, u8 opcode) {
@@ -1461,16 +1464,17 @@ void SRL(gbc_cpu *cpu, u8 opcode) {
         set_flag_z(cpu, (v == 0x00));
         set_flag_c(cpu, b0);
         write_u8(cpu->mmu, get_hl(cpu), v);
+        cpu->registers.clk.m = 4;
     } else {
         u8 *r8 = prefix_cb_target(cpu, opcode);
         u8 b0 = *r8 & 0x01;
         *r8 = *r8 >> 1;
         set_flag_z(cpu, (*r8 == 0x00));
         set_flag_c(cpu, b0);
+        cpu->registers.clk.m = 2;
     }
     set_flag_n(cpu, 0);
     set_flag_h(cpu, 0);
-    cpu->registers.clk.m = 2;
 }
 
 void RL_RLC(gbc_cpu *cpu, u8 opcode) {
@@ -1485,6 +1489,7 @@ void RL_RLC(gbc_cpu *cpu, u8 opcode) {
         set_flag_z(cpu, (val == 0));
         set_flag_c(cpu, temp >> 7);
         write_u8(cpu->mmu, get_hl(cpu), val);
+        cpu->registers.clk.m = 4;
     } else {
         u8 *r8 = prefix_cb_target(cpu, opcode);
         u8 val = *r8;
@@ -1495,13 +1500,11 @@ void RL_RLC(gbc_cpu *cpu, u8 opcode) {
         set_flag_z(cpu, (val == 0));
         set_flag_c(cpu, temp >> 7);
         *r8 = val;
+        cpu->registers.clk.m = 2;
     }
 
     set_flag_n(cpu, 0);
     set_flag_h(cpu, 0);
-
-
-    cpu->registers.clk.m = 2;
 }
 
 void RR(gbc_cpu *cpu, u8 opcode) {
@@ -1534,16 +1537,17 @@ void RRC(gbc_cpu *cpu, u8 opcode) {
         v = (v >> 1) | (v << 7);
         set_flag_z(cpu, v == 0x00);
         write_u8(cpu->mmu, get_hl(cpu), v);
+        cpu->registers.clk.m = 4;
     } else {
         u8 *r8 = prefix_cb_target(cpu, opcode);
         set_flag_c(cpu, *r8 & 0x01);
         *r8 = (*r8 >> 1) | (*r8 << 7);
         set_flag_z(cpu, *r8 == 0x00);
+        cpu->registers.clk.m = 2;
     }
 
     set_flag_n(cpu, 0);
     set_flag_h(cpu, 0);
-    cpu->registers.clk.m = 2;
 }
 
 void RLA(gbc_cpu *cpu) {
