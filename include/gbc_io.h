@@ -4,10 +4,14 @@
 #define IO_JOYPAD  0xFF00
 #define IO_SIODATA 0xFF01
 #define IO_SIOCONT 0xFF02
+
 #define IO_DIV 0xFF04 // DIV - Divider Register (R/W)
 #define IO_TIMA 0xFF05 // TIMA - Timer counter (R/W)
 #define IO_TMA 0xFF06 // TMA - Timer Modulo (R/W)
 #define IO_TAC 0xFF07 // TAC - Timer Control (R/W)
+#define MASK_TAC_ENABLE (0x01 << 2)
+#define MASK_TAC_CYCLES ((0x01 << 0) | (0x01 << 1))
+
 #define IO_IFLAGS  0xFF0F
 
 /* DIV Register is incremented at rate of 16384Hz.
