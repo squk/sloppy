@@ -145,10 +145,6 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
 
 u8 read_u8(gbc_mmu *mmu, u16 address) {
     /*if (address == 0xff44) return 0x90;*/
-
-    if (address == IO_DIV) {
-        return mmu->counter->div >> 8;
-    }
     return *get_address_ptr(mmu, address);
 }
 
@@ -193,6 +189,7 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
             /* - When writing to DIV, the whole counter is reseted, so the timer
              *    is also affected. */
             mmu->counter->tima = 0;
+            mmu->counter->div = 0;
 
             /* - When writing to DIV, if the current output is '1' and timer is
              *    enabled, as the new value after reseting DIV will be '0', the
@@ -212,6 +209,7 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
              * https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour */
             u8 old_TAC = *ptr;
             u8 new_TAC = val;
+            *ptr = val;
             bool glitch = false;
 
             u16 old_clocks = TAC_CYCLES[old_TAC & MASK_TAC_CYCLES];
@@ -237,11 +235,17 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
                 }
             }
 
-            printf("glitch: %d\n", glitch);
-            write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + glitch);
-            *ptr = val;
+            if (glitch) {
+                printf("glitch: %d\n", glitch);
+                write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);
+            }
         }
         break;
+        case IO_TIMA:
+            //If you write to TIMA during the cycle that TMA is being loaded to it [B], the write will be ignored and TMA value will be written to TIMA instead.
+            //write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);
+            (*ptr) = val;
+            break;
         case IO_JOYPAD:     // READ ONLY
             break;
         default:

@@ -115,7 +115,7 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
 
     u8 temp = read_u8(cpu->mmu,cpu->registers.pc+1);
     printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx    %02hx %s, %x", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, opcode, op_string(opcode), temp);
-    printf("M: %d  TIMA: %d  DIV: %d  TAC: %X\n", cpu->registers.clk.m, read_u8(cpu->mmu, IO_TIMA), read_u8(cpu->mmu, IO_DIV), read_u8(cpu->mmu, IO_DIV));
+    printf("  M: %d  TIMA: %d  DIV: %d  TAC: %X\n", cpu->registers.clk.m, read_u8(cpu->mmu, IO_TIMA), read_u8(cpu->mmu, IO_DIV), read_u8(cpu->mmu, IO_DIV));
 }
 
 bool setup_stack = false;
@@ -254,28 +254,27 @@ void gbc_cpu_timer_run(gbc_cpu *cpu) {
     // DIV register timing
     //The divider register increments at a fixed frequency (1 per 256 clock cycles = 1 per 64 machine cycles)
     cpu->counter.div += cpu->registers.clk.m;
-    if (cpu->counter.div > DIV_CYCLES) {
+    if (cpu->counter.div >= DIV_CYCLES) {
         cpu->counter.div -= DIV_CYCLES;
-        /*cpu->counter.div = cpu->counter.div >> 8; // TODO: see if this is more optimal*/
-        write_io(cpu->mmu, IO_DIV, read_io(cpu->mmu, IO_DIV) + 1);
+        write_io(cpu->mmu, IO_DIV, cpu->counter.div >> 8);
     }
 
     // TIMA register timing
-    u8 TAC = read_u8(cpu->mmu, IO_TAC);
-    if (TAC & MASK_TAC_ENABLE) {
-        u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
+    u8 TAC = read_io(cpu->mmu, IO_TAC);
+    if ((TAC & MASK_TAC_ENABLE)) {
+        u8 IF = read_io(cpu->mmu, IO_IFLAGS);
         cpu->counter.tima  += cpu->registers.clk.m * 4; // *4 since we clk.m is in machine cycles
 
-        TAC &= MASK_TAC_CYCLES;
-        if(cpu->counter.tima >= TAC_CYCLES[TAC]) {
-            cpu->counter.tima -= TAC_CYCLES[TAC];
+        if(cpu->counter.tima >= TAC_CYCLES[TAC & MASK_TAC_CYCLES]) {
+            cpu->counter.tima -= TAC_CYCLES[TAC & MASK_TAC_CYCLES];
 
-            u8 temp = read_u8(cpu->mmu, IO_TIMA) + 1;
-            if(temp == 0x00) { // overflow
-                write_u8(cpu->mmu, IO_TIMA, read_u8(cpu->mmu, IO_TMA)); // reset to value in TMA
-                write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
+            u8 temp = read_io(cpu->mmu, IO_TIMA);
+            // For one cycle, after overflowing TIMA, the value in TIMA is 00h, not TMA
+            if(temp == 0xFF) { // overflow
+                write_io(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
+                write_io(cpu->mmu, IO_TIMA, read_io(cpu->mmu, IO_TMA));
             } else {
-                write_u8(cpu->mmu, IO_TIMA, temp);
+                write_io(cpu->mmu, IO_TIMA, temp);
             }
         }
     }

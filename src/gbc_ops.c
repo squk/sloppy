@@ -706,7 +706,7 @@ void execute_op(gbc_cpu *cpu, u8 opcode) {
             POP_HL(cpu);
             break;
         case 0xE2: // LD (C),A
-            LD_mC_A(cpu);
+            LDH_mC_A(cpu);
             break;
         case 0xE3: // BLANK
         case 0xE4:
@@ -750,7 +750,7 @@ void execute_op(gbc_cpu *cpu, u8 opcode) {
             POP_AF(cpu);
             break;
         case 0xF2: // LD A,(C)
-            LD_A_mC(cpu);
+            LDH_A_mC(cpu);
             break;
         case 0xF3: // DI
             DI(cpu);
@@ -1612,7 +1612,7 @@ void LD_r8_r8(gbc_cpu *cpu, u8 *r1, u8 *r2) {
 }
 void LD_r8_u8(gbc_cpu *cpu, u8 *r1, u8 v) {
     *r1 = v;
-    cpu->registers.clk.m = 1;
+    cpu->registers.clk.m = 2;
 }
 
 void LD_r8_mHL(gbc_cpu *cpu, u8 *r) {
@@ -1633,23 +1633,37 @@ void LD_mDE_A(gbc_cpu *cpu) {
     write_u8(cpu->mmu, get_de(cpu), cpu->registers.a);
     cpu->registers.clk.m = 2;
 }
+void LDH_mC_A(gbc_cpu *cpu) {
+    write_u8(cpu->mmu,0xFF00+cpu->registers.c,cpu->registers.a);
+    cpu->registers.clk.m = 2;
+}
+
 void LD_mHLI_A(gbc_cpu *cpu) {
     write_u8(cpu->mmu, get_hl(cpu), cpu->registers.a);
     cpu->registers.l=(cpu->registers.l+1)&255;
     if(!cpu->registers.l) cpu->registers.h=(cpu->registers.h+1)&255;
     cpu->registers.clk.m = 2;
 }
-void LD_mC_A(gbc_cpu *cpu) {
-    write_u8(cpu->mmu,0xFF00+cpu->registers.c,cpu->registers.a);
-    cpu->registers.clk.m = 2;
-}
-
 void LD_mHLD_A(gbc_cpu *cpu) {
     write_u8(cpu->mmu, get_hl(cpu), cpu->registers.a);
     cpu->registers.l=(cpu->registers.l-1)&255;
     if(cpu->registers.l==255) cpu->registers.h=(cpu->registers.h-1)&255;
     cpu->registers.clk.m = 2;
 }
+void LD_A_mHLI(gbc_cpu *cpu) {
+    cpu->registers.a = read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
+    cpu->registers.l=(cpu->registers.l+1)&255;
+    if(!cpu->registers.l) cpu->registers.h=(cpu->registers.h+1)&255;
+    cpu->registers.clk.m = 2;
+}
+
+void LD_A_mHLD(gbc_cpu *cpu) {
+    cpu->registers.a = read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
+    cpu->registers.l=(cpu->registers.l-1)&255;
+    if(cpu->registers.l==255) cpu->registers.h=(cpu->registers.h-1)&255;
+    cpu->registers.clk.m = 2;
+}
+
 
 void LD_HL_d8(gbc_cpu *cpu) {
     write_u8(cpu->mmu, get_hl(cpu), read_u8(cpu->mmu, cpu->registers.pc));
@@ -1712,21 +1726,6 @@ void LD_SP_d16(gbc_cpu *cpu) {
     cpu->registers.pc += 2;
     cpu->registers.clk.m = 3;
 }
-
-void LD_A_mHLI(gbc_cpu *cpu) {
-    cpu->registers.a = read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
-    cpu->registers.l=(cpu->registers.l+1)&255;
-    if(!cpu->registers.l) cpu->registers.h=(cpu->registers.h+1)&255;
-    cpu->registers.clk.m = 2;
-}
-
-void LD_A_mHLD(gbc_cpu *cpu) {
-    cpu->registers.a = read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
-    cpu->registers.l=(cpu->registers.l-1)&255;
-    if(cpu->registers.l==255) cpu->registers.h=(cpu->registers.h-1)&255;
-    cpu->registers.clk.m = 2;
-}
-
 void LDH_a8_A(gbc_cpu *cpu) {
     write_u8(cpu->mmu, 0xFF00 | read_u8(cpu->mmu, cpu->registers.pc++), cpu->registers.a);
     cpu->registers.clk.m = 3;
@@ -1744,7 +1743,7 @@ void LD_HL_SP_r8(gbc_cpu *cpu) {
     set_flag_c(cpu, ((cpu->registers.sp & 0xFF) + (offset & 0xFF) > 0xFF));
     cpu->registers.clk.m = 3;
 }
-void LD_A_mC(gbc_cpu *cpu) {
+void LDH_A_mC(gbc_cpu *cpu) {
     cpu->registers.a = read_u8(cpu->mmu,0xFF00+cpu->registers.c);
     cpu->registers.clk.m = 2;
 }
@@ -2102,7 +2101,7 @@ void CALL_a16(gbc_cpu *cpu) {
 void CALL_NZ_a16(gbc_cpu *cpu) {
     cpu->registers.clk.m = 3;
     if (!flag_z(cpu)) CALL_a16(cpu);
-     else cpu->registers.pc += 2;
+    else cpu->registers.pc += 2;
 }
 
 void CALL_Z_a16(gbc_cpu *cpu) {
