@@ -189,15 +189,15 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
             /* - When writing to DIV, the whole counter is reseted, so the timer
              *    is also affected. */
             mmu->counter->tima = 0;
-            mmu->counter->div = 0;
+            /*mmu->counter->div = 0;*/
 
             /* - When writing to DIV, if the current output is '1' and timer is
              *    enabled, as the new value after reseting DIV will be '0', the
              *    falling edge detector will detect a falling edge and TIMA will
              *    increase. */
-            if (*ptr == 1 && (read_io(mmu, IO_TAC) & MASK_TAC_ENABLE)) {
-                write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);
-            }
+            /*if (*ptr == 1 && (read_io(mmu, IO_TAC) & MASK_TAC_ENABLE)) {*/
+                /*write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);*/
+            /*}*/
             *ptr = 0x00;
             break;
         case IO_TAC: {
@@ -210,14 +210,14 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
             u8 old_TAC = *ptr;
             u8 new_TAC = val;
             *ptr = val;
-            bool glitch = false;
+            /*bool glitch = false;*/
 
-            u16 old_clocks = TAC_CYCLES[old_TAC & MASK_TAC_CYCLES];
-            u16 new_clocks = TAC_CYCLES[new_TAC & MASK_TAC_CYCLES];
-            u8 old_enable = old_TAC & MASK_TAC_ENABLE;
-            u8 new_enable = new_TAC & MASK_TAC_ENABLE;
+            /*u16 old_clocks = TAC_CYCLES[old_TAC & MASK_TAC_CYCLES];*/
+            /*u16 new_clocks = TAC_CYCLES[new_TAC & MASK_TAC_CYCLES];*/
+            /*u8 old_enable = old_TAC & MASK_TAC_ENABLE;*/
+            /*u8 new_enable = new_TAC & MASK_TAC_ENABLE;*/
 
-            if (old_enable == 0) {
+            /*if (old_enable == 0) {*/
                 /* TODO:
                  * has a different behaviour in GBC (AGB and AGS seem to have
                  * strange behaviour even in the other statements). When
@@ -226,19 +226,19 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
                  * either. When another change of value happens (so timer is
                  * enabled after the write), the behaviour depends on a race
                  * condition, so it cannot be predicted for every device. */
-                glitch = 0;
-            } else {
-                if (new_enable == 0) {
-                    glitch = (mmu->counter->div & (old_clocks/2)) != 0;
-                } else {
-                    glitch = ((mmu->counter->div & (old_clocks/2)) != 0) && ((mmu->counter->div & (new_clocks/2)) == 0);
-                }
-            }
+                /*glitch = 0;*/
+            /*} else {*/
+                /*if (new_enable == 0) {*/
+                    /*glitch = (mmu->counter->div & (old_clocks/2)) != 0;*/
+                /*} else {*/
+                    /*glitch = ((mmu->counter->div & (old_clocks/2)) != 0) && ((mmu->counter->div & (new_clocks/2)) == 0);*/
+                /*}*/
+            /*}*/
 
-            if (glitch) {
-                printf("glitch: %d\n", glitch);
-                write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);
-            }
+            /*if (glitch) {*/
+                /*printf("glitch: %d\n", glitch);*/
+                /*write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);*/
+            /*}*/
         }
         break;
         case IO_TIMA:

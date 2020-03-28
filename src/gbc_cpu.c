@@ -256,7 +256,7 @@ void gbc_cpu_timer_run(gbc_cpu *cpu) {
     cpu->counter.div += cpu->registers.clk.m;
     if (cpu->counter.div >= DIV_CYCLES) {
         cpu->counter.div -= DIV_CYCLES;
-        write_io(cpu->mmu, IO_DIV, cpu->counter.div >> 8);
+        write_io(cpu->mmu, IO_DIV, read_io(cpu->mmu, IO_DIV)+1);
     }
 
     // TIMA register timing
@@ -274,7 +274,7 @@ void gbc_cpu_timer_run(gbc_cpu *cpu) {
                 write_io(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
                 write_io(cpu->mmu, IO_TIMA, read_io(cpu->mmu, IO_TMA));
             } else {
-                write_io(cpu->mmu, IO_TIMA, temp);
+                write_io(cpu->mmu, IO_TIMA, temp+1);
             }
         }
     }
