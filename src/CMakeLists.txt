@@ -4,8 +4,6 @@ list(APPEND MAIN_APP_SOURCES
     gbc_mmu.c
     gbc_ops.c
     gbc_ppu.c
-    imgui/imgui_impl_sdl.cpp
-    imgui/imgui_impl_opengl3.cpp
     )
 
 set(ENV{PATH} ${CMAKE_SOURCE_DIR}:$ENV{PATH})
@@ -16,11 +14,14 @@ set(CMAKE_C_COMPILER g++)
 #list(APPEND MAIN_APP_SOURCES ${GLOB_RESULT})
 
 set(MAIN_APP_LIBRARIES
-        imgui
         glfw
+        GLEW
+        GLU
+        GL
         )
 
 list(APPEND MAIN_APP_INCLUDE_DIRS
+        "/usr/local/include"
         "${CMAKE_SOURCE_DIR}/include"
         "${CMAKE_SOURCE_DIR}/modules/nuklear"
         )

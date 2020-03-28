@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 project (sloppy-emu)
+LINK_DIRECTORIES(/usr/local/lib)
 
 set(CMAKE_CXX_STANDARD 98)
 #SET(CMAKE_C_COMPILER /usr/bin/gcc)
@@ -12,7 +13,6 @@ find_package(SDL2_image REQUIRED)
 find_package(SDL2_ttf REQUIRED)
 
 add_definitions("-DCPP_SRC_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\"")
-add_definitions("-DIMGUI_IMPL_OPENGL_LOADER_GLAD")
 
 add_subdirectory(src)
 

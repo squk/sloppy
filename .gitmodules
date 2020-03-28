@@ -1,3 +1,6 @@
 [submodule "modules/nuklear"]
 	path = modules/nuklear
 	url = https://github.com/Immediate-Mode-UI/Nuklear
+[submodule "modules/sdl2-cmake-scripts"]
+	path = modules/sdl2-cmake-scripts
+	url = https://github.com/tcbrindle/sdl2-cmake-scripts
