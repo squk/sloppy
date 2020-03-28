@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gbc_counter.h"
+
 #define MEM_OAM 0xFE00
 // 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 // 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -24,6 +26,8 @@ typedef struct {
     u8 hram[0x80];
     u8 zram[0xFFFF];
     u8 nullish;
+
+    gbc_counter *counter;
 
     bool in_bios;
 } gbc_mmu;
