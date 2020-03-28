@@ -14,10 +14,10 @@ set(CMAKE_C_COMPILER g++)
 #list(APPEND MAIN_APP_SOURCES ${GLOB_RESULT})
 
 set(MAIN_APP_LIBRARIES
-        glfw
-        GLEW
-        GLU
-        GL
+        #glfw
+        #GLEW
+        #GLU
+        #GL
         )
 
 list(APPEND MAIN_APP_INCLUDE_DIRS
