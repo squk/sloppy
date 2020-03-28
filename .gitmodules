@@ -1,3 +1,3 @@
-[submodule "modules/cimgui"]
-	path = modules/cimgui
-	url = https://github.com/cimgui/cimgui
+[submodule "modules/nuklear"]
+	path = modules/nuklear
+	url = https://github.com/Immediate-Mode-UI/Nuklear
