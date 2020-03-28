@@ -268,13 +268,13 @@ void gbc_cpu_timer_run(gbc_cpu *cpu) {
         if(cpu->counter.tima >= TAC_CYCLES[TAC & MASK_TAC_CYCLES]) {
             cpu->counter.tima -= TAC_CYCLES[TAC & MASK_TAC_CYCLES];
 
-            u8 temp = read_io(cpu->mmu, IO_TIMA);
+            u8 temp = read_io(cpu->mmu, IO_TIMA)+1;
             // For one cycle, after overflowing TIMA, the value in TIMA is 00h, not TMA
-            if(temp == 0xFF) { // overflow
+            if(temp == 0x00) { // overflow
                 write_io(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
                 write_io(cpu->mmu, IO_TIMA, read_io(cpu->mmu, IO_TMA));
             } else {
-                write_io(cpu->mmu, IO_TIMA, temp+1);
+                write_io(cpu->mmu, IO_TIMA, temp);
             }
         }
     }
