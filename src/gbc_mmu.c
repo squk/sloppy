@@ -56,7 +56,7 @@ void gbc_mmu_init(gbc_mmu *mmu){
     mmu->in_bios = true;
 
     memset(mmu->bios, 0, sizeof mmu->bios);
-    memset(mmu->rom, 0, sizeof mmu-> rom);
+    memset(mmu->rom, 0, sizeof mmu->rom);
     memset(mmu->vram, 0, sizeof mmu->vram);
     memset(mmu->wram, 0, sizeof mmu->wram);
     memset(mmu->oam, 0, sizeof mmu->oam);
@@ -65,7 +65,7 @@ void gbc_mmu_init(gbc_mmu *mmu){
     memset(mmu->zram, 0, sizeof mmu->zram);
 }
 
-u8* get_address_ptr(gbc_mmu *mmu , u16 address) {
+u8* get_address_ptr(gbc_mmu *mmu, u16 address) {
     if (address < 0x100 && mmu->in_bios) {
         return &mmu->bios[address];
     }
@@ -124,6 +124,7 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
 
     // memory error
     if(buffer == NULL)
+        fclose(infile);
         return;
 
     // copy all the text into the buffer
@@ -132,16 +133,20 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
 
     memcpy(mmu->rom, buffer, numbytes);
 
-     //free the memory we used for the buffer
+    //free the memory we used for the buffer
     free(buffer);
 }
 
-u8 read_u8(gbc_mmu *mmu , u16 address) {
+u8 read_u8(gbc_mmu *mmu, u16 address) {
     /*if (address == 0xff44) return 0x90;*/
+
+    if (address == IO_DIV) {
+        return mmu->counter->div >> 8;
+    }
     return *get_address_ptr(mmu, address);
 }
 
-void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
+void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
     u8 *ptr = get_address_ptr(mmu, address);
     if (address == 0xFF50) {
         mmu->in_bios = false;
@@ -161,8 +166,7 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
             *ptr = val;
 
             // fix LY to 0 when LCD is off
-            if((*ptr & MASK_LCDCONT_LCD_Display_Enable) == 0)
-            {
+            if((*ptr & MASK_LCDCONT_LCD_Display_Enable) == 0) {
                 // ensure LCD is on during vblank
                 if (!read_bit(mmu, IO_LCDSTAT, OPT_MODE_VBLANK)) {
                     *ptr |= MASK_LCDCONT_LCD_Display_Enable;
@@ -175,13 +179,64 @@ void write_u8(gbc_mmu *mmu , u16 address, u8 val) {
         case IO_DMACONT:
             *ptr = (val % 0xF1);
 
-            for(u8 i = 0; i < sizeof mmu->oam; i++)
+            for(u8 i = 0; i < sizeof mmu->oam; i++) {
                 mmu->oam[i] = read_u8(mmu, (*ptr << 8) + i);
+            }
             break;
         case IO_DIV:
+            /* - When writing to DIV, the whole counter is reseted, so the timer
+             *    is also affected. */
+            mmu->counter->tima = 0;
+
+            /* - When writing to DIV, if the current output is '1' and timer is
+             *    enabled, as the new value after reseting DIV will be '0', the
+             *    falling edge detector will detect a falling edge and TIMA will
+             *    increase. */
+            if (*ptr == 1 && (read_io(mmu, IO_TAC) & MASK_TAC_ENABLE)) {
+                write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);
+            }
             *ptr = 0x00;
             break;
-        case IO_JOYPAD: // READ ONLY
+        case IO_TAC: {
+            /* When writing to TAC, if the previously selected multiplexer
+             * input was '1' and the new input is '0', TIMA will increase too.
+             * This doesn't happen when the timer is disabled, but it also
+             * happens when disabling the timer (the same effect as writing to
+             * DIV).
+             * https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour */
+            u8 old_TAC = *ptr;
+            u8 new_TAC = val;
+            bool glitch = false;
+
+            u16 old_clocks = TAC_CYCLES[old_TAC & MASK_TAC_CYCLES];
+            u16 new_clocks = TAC_CYCLES[new_TAC & MASK_TAC_CYCLES];
+            u8 old_enable = old_TAC & MASK_TAC_ENABLE;
+            u8 new_enable = new_TAC & MASK_TAC_ENABLE;
+
+            if (old_enable == 0) {
+                /* TODO:
+                 * has a different behaviour in GBC (AGB and AGS seem to have
+                 * strange behaviour even in the other statements). When
+                 * enabling the timer and maintaining the same frequency it
+                 * doesn't glitch. When disabling the timer it doesn't glitch
+                 * either. When another change of value happens (so timer is
+                 * enabled after the write), the behaviour depends on a race
+                 * condition, so it cannot be predicted for every device. */
+                glitch = 0;
+            } else {
+                if (new_enable == 0) {
+                    glitch = (mmu->counter->div & (old_clocks/2)) != 0;
+                } else {
+                    glitch = ((mmu->counter->div & (old_clocks/2)) != 0) && ((mmu->counter->div & (new_clocks/2)) == 0);
+                }
+            }
+
+            printf("glitch: %d\n", glitch);
+            write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + glitch);
+            *ptr = val;
+        }
+        break;
+        case IO_JOYPAD:     // READ ONLY
             break;
         default:
             *ptr = val;
@@ -204,6 +259,9 @@ void write_u16(gbc_mmu *mmu, u16 address, u16 val) {
 
 u8 read_io(gbc_mmu *mmu, u16 address) {
     if (address >= 0xFF00  && address < 0xFF80) {
+        if (address == IO_DIV) {
+            return mmu->counter->div >> 8;
+        }
         return mmu->io[address & 0xFF];
     } else {
         printf("invalid IO read: %x\n", address);

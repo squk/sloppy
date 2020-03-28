@@ -28,6 +28,10 @@ void set_flag_c(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f &
 
 
 void gbc_cpu_reset(gbc_cpu *cpu) {
+    gbc_counter counter;
+    cpu->counter = &counter;
+    cpu->mmu->counter = &counter;
+
     cpu->registers.a = 0;
     cpu->registers.b = 0;
     cpu->registers.c = 0;
@@ -64,36 +68,37 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
     cpu->registers.sp = 0xFFFE;
     cpu->IME = 1;
 
-    write_u8(cpu->mmu, 0xFF05, 0x00);
-    write_u8(cpu->mmu, 0xFF06, 0x00);
-    write_u8(cpu->mmu, 0xFF07, 0x00);
-    write_u8(cpu->mmu, 0xFF10, 0x80);
-    write_u8(cpu->mmu, 0xFF11, 0xBF);
-    write_u8(cpu->mmu, 0xFF12, 0xF3);
-    write_u8(cpu->mmu, 0xFF14, 0xBF);
-    write_u8(cpu->mmu, 0xFF16, 0x3F);
-    write_u8(cpu->mmu, 0xFF17, 0x00);
-    write_u8(cpu->mmu, 0xFF19, 0xBF);
-    write_u8(cpu->mmu, 0xFF1A, 0x7F);
-    write_u8(cpu->mmu, 0xFF1B, 0xFF);
-    write_u8(cpu->mmu, 0xFF1C, 0x9F);
-    write_u8(cpu->mmu, 0xFF1E, 0xBF);
-    write_u8(cpu->mmu, 0xFF20, 0xFF);
-    write_u8(cpu->mmu, 0xFF21, 0x00);
-    write_u8(cpu->mmu, 0xFF22, 0x00);
-    write_u8(cpu->mmu, 0xFF23, 0xBF);
-    write_u8(cpu->mmu, 0xFF24, 0x77);
-    write_u8(cpu->mmu, 0xFF25, 0xF3);
-    write_u8(cpu->mmu, 0xFF26, 0xF1);
-    write_u8(cpu->mmu, 0xFF40, 0x91);
-    write_u8(cpu->mmu, 0xFF42, 0x00);
-    write_u8(cpu->mmu, 0xFF43, 0x00);
-    write_u8(cpu->mmu, 0xFF45, 0x00);
-    write_u8(cpu->mmu, 0xFF47, 0xFC);
-    write_u8(cpu->mmu, 0xFF48, 0xFF);
-    write_u8(cpu->mmu, 0xFF49, 0xFF);
-    write_u8(cpu->mmu, 0xFF4A, 0x00);
-    write_u8(cpu->mmu, 0xFF4B, 0x00);
+    write_io(cpu->mmu, 0xFF05, 0x00);
+    write_io(cpu->mmu, 0xFF06, 0x00);
+    write_io(cpu->mmu, 0xFF07, 0x00);
+    write_io(cpu->mmu, 0xFF10, 0x80);
+    write_io(cpu->mmu, 0xFF11, 0xBF);
+    write_io(cpu->mmu, 0xFF12, 0xF3);
+    write_io(cpu->mmu, 0xFF14, 0xBF);
+    write_io(cpu->mmu, 0xFF16, 0x3F);
+    write_io(cpu->mmu, 0xFF17, 0x00);
+    write_io(cpu->mmu, 0xFF19, 0xBF);
+    write_io(cpu->mmu, 0xFF1A, 0x7F);
+    write_io(cpu->mmu, 0xFF1B, 0xFF);
+    write_io(cpu->mmu, 0xFF1C, 0x9F);
+    write_io(cpu->mmu, 0xFF1E, 0xBF);
+    write_io(cpu->mmu, 0xFF20, 0xFF);
+    write_io(cpu->mmu, 0xFF21, 0x00);
+    write_io(cpu->mmu, 0xFF22, 0x00);
+    write_io(cpu->mmu, 0xFF23, 0xBF);
+    write_io(cpu->mmu, 0xFF24, 0x77);
+    write_io(cpu->mmu, 0xFF25, 0xF3);
+    write_io(cpu->mmu, 0xFF26, 0xF1);
+    write_io(cpu->mmu, 0xFF40, 0x91);
+    write_io(cpu->mmu, 0xFF42, 0x00);
+    write_io(cpu->mmu, 0xFF43, 0x00);
+    write_io(cpu->mmu, 0xFF45, 0x00);
+    write_io(cpu->mmu, 0xFF47, 0xFC);
+    write_io(cpu->mmu, 0xFF48, 0xFF);
+    write_io(cpu->mmu, 0xFF49, 0xFF);
+    write_io(cpu->mmu, 0xFF4A, 0x00);
+    write_io(cpu->mmu, 0xFF4B, 0x00);
+
     write_u8(cpu->mmu, 0xFFFF, 0x00);
 
     cpu->mmu->in_bios = false;
@@ -108,7 +113,8 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
     if (r->f & FLAG_C) flags[3] = 'C';
 
     u8 temp = read_u8(cpu->mmu,cpu->registers.pc+1);
-    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx    %02hx %s, %x\n", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, opcode, op_string(opcode), temp);
+    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx    %02hx %s, %x", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, opcode, op_string(opcode), temp);
+    printf("M: %d  TIMA: %d  DIV: %d  TAC: %X\n", cpu->registers.clk.m, read_u8(cpu->mmu, IO_TIMA), read_u8(cpu->mmu, IO_DIV), read_u8(cpu->mmu, IO_DIV));
 }
 
 bool setup_stack = false;
@@ -245,29 +251,30 @@ void gbc_interrupt_handler(gbc_cpu *cpu) {
  */
 void gbc_cpu_timer_run(gbc_cpu *cpu) {
     // DIV register timing
-    cpu->counter.div += cpu->registers.clk.m;
-    if (cpu->counter.div >= DIV_CYCLES) {
-        cpu->mmu->io[IO_DIV & 0xFF]++;
-        cpu->counter.div -= DIV_CYCLES;
+    //The divider register increments at a fixed frequency (1 per 256 clock cycles = 1 per 64 machine cycles)
+    cpu->counter->div += cpu->registers.clk.m;
+    if (cpu->counter->div > DIV_CYCLES) {
+        cpu->counter->div -= DIV_CYCLES;
+        /*cpu->counter->div = cpu->counter->div >> 8; // TODO: see if this is more optimal*/
+        write_io(cpu->mmu, IO_DIV, read_io(cpu->mmu, IO_DIV) + 1);
     }
 
     // TIMA register timing
     u8 TAC = read_u8(cpu->mmu, IO_TAC);
-    if (TAC & 0x4) {
+    if (TAC & MASK_TAC_ENABLE) {
         u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
+        cpu->counter->tima  += cpu->registers.clk.m * 4; // *4 since we clk.m is in machine cycles
 
-        cpu->counter.tima  += cpu->registers.clk.m;
-        TAC &= 0x3; // TAC_CYCLES are determined by lower 2 bits
+        TAC &= MASK_TAC_CYCLES;
+        if(cpu->counter->tima >= TAC_CYCLES[TAC]) {
+            cpu->counter->tima -= TAC_CYCLES[TAC];
 
-        if(cpu->counter.tima >= TAC_CYCLES[TAC]) {
-            cpu->counter.tima -= TAC_CYCLES[TAC];
-
-            u8 temp = read_u8(cpu->mmu, IO_TIMA);
-            if(temp == 0xFF) { // overflow
+            u8 temp = read_u8(cpu->mmu, IO_TIMA) + 1;
+            if(temp == 0x00) { // overflow
                 write_u8(cpu->mmu, IO_TIMA, read_u8(cpu->mmu, IO_TMA)); // reset to value in TMA
                 write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
             } else {
-                write_u8(cpu->mmu, IO_TIMA, temp + 1);
+                write_u8(cpu->mmu, IO_TIMA, temp);
             }
         }
     }
@@ -282,13 +289,13 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     u16 old_pc = cpu->registers.pc;
     execute_op(cpu, opcode);
+    gbc_cpu_timer_run(cpu);
     //debug_dmg_bootrom(cpu, old_pc, opcode);
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
     cpu->clk.t += cpu->registers.clk.t;
 
-    gbc_cpu_timer_run(cpu);
     ppu_run(cpu->ppu, cpu->registers.clk.m);
 }
 
