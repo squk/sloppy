@@ -28,9 +28,10 @@ void set_flag_c(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f &
 
 
 void gbc_cpu_reset(gbc_cpu *cpu) {
-    gbc_counter counter;
-    cpu->counter = &counter;
-    cpu->mmu->counter = &counter;
+    cpu->counter.tima = 0;
+    cpu->counter.div = 0;
+    cpu->counter.serial = 0;
+    cpu->mmu->counter = &cpu->counter;
 
     cpu->registers.a = 0;
     cpu->registers.b = 0;
@@ -252,10 +253,10 @@ void gbc_interrupt_handler(gbc_cpu *cpu) {
 void gbc_cpu_timer_run(gbc_cpu *cpu) {
     // DIV register timing
     //The divider register increments at a fixed frequency (1 per 256 clock cycles = 1 per 64 machine cycles)
-    cpu->counter->div += cpu->registers.clk.m;
-    if (cpu->counter->div > DIV_CYCLES) {
-        cpu->counter->div -= DIV_CYCLES;
-        /*cpu->counter->div = cpu->counter->div >> 8; // TODO: see if this is more optimal*/
+    cpu->counter.div += cpu->registers.clk.m;
+    if (cpu->counter.div > DIV_CYCLES) {
+        cpu->counter.div -= DIV_CYCLES;
+        /*cpu->counter.div = cpu->counter.div >> 8; // TODO: see if this is more optimal*/
         write_io(cpu->mmu, IO_DIV, read_io(cpu->mmu, IO_DIV) + 1);
     }
 
@@ -263,11 +264,11 @@ void gbc_cpu_timer_run(gbc_cpu *cpu) {
     u8 TAC = read_u8(cpu->mmu, IO_TAC);
     if (TAC & MASK_TAC_ENABLE) {
         u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
-        cpu->counter->tima  += cpu->registers.clk.m * 4; // *4 since we clk.m is in machine cycles
+        cpu->counter.tima  += cpu->registers.clk.m * 4; // *4 since we clk.m is in machine cycles
 
         TAC &= MASK_TAC_CYCLES;
-        if(cpu->counter->tima >= TAC_CYCLES[TAC]) {
-            cpu->counter->tima -= TAC_CYCLES[TAC];
+        if(cpu->counter.tima >= TAC_CYCLES[TAC]) {
+            cpu->counter.tima -= TAC_CYCLES[TAC];
 
             u8 temp = read_u8(cpu->mmu, IO_TIMA) + 1;
             if(temp == 0x00) { // overflow

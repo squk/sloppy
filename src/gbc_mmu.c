@@ -104,13 +104,16 @@ void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {
 }
 
 void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
+
     char *buffer;
     long numbytes;
 
     FILE *infile = fopen(fname, "r");
-
-    if(infile == NULL)
-        return;
+    if(infile == NULL) {
+        printf("broken 1\n");
+        fflush(stdout);
+        exit(1);
+    }
 
     // Get the number of bytes
     fseek(infile, 0L, SEEK_END);
@@ -123,9 +126,12 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
     buffer = (char*)calloc(numbytes, sizeof(char));
 
     // memory error
-    if(buffer == NULL)
+    if(buffer == NULL) {
+        printf("broken\n");
+        fflush(stdout);
         fclose(infile);
         return;
+    }
 
     // copy all the text into the buffer
     fread(buffer, sizeof(char), numbytes, infile);

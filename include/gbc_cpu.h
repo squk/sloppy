@@ -43,7 +43,7 @@ typedef struct {
     gbc_clock clk;
     gbc_cpu_registers registers;
     gbc_cpu_rsv rsv;
-    gbc_counter *counter;
+    gbc_counter counter;
 
     u8 HALT;
     bool quit;
