@@ -3,6 +3,7 @@
 #include "types.h"
 #include "gbc_ppu.h"
 #include "gbc_mmu.h"
+#include "gbc_counter.h"
 
 #define FLAG_Z 0x80
 #define FLAG_N 0x40
@@ -39,17 +40,10 @@ typedef struct {
 } gbc_cpu_rsv;
 
 typedef struct {
-    u16 div;      // Divider Register Counter
-    u16 tima;     // Timer Counter
-    u16 serial;   // Serial Counter
-    bool enabled;
-} gbc_counter;
-
-typedef struct {
     gbc_clock clk;
     gbc_cpu_registers registers;
     gbc_cpu_rsv rsv;
-    gbc_counter counter;
+    gbc_counter *counter;
 
     u8 HALT;
     bool quit;
