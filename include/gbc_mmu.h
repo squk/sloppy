@@ -27,6 +27,7 @@ typedef struct {
     u8 zram[0xFFFF];
     u8 nullish;
 
+    bool oam_access, vram_access;
     gbc_counter *counter;
 
     bool in_bios;

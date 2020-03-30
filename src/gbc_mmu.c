@@ -54,6 +54,8 @@ void hex_dump(char *desc, void *addr, int len) {
 
 void gbc_mmu_init(gbc_mmu *mmu){
     mmu->in_bios = true;
+    mmu->oam_access = true;
+    mmu->vram_access = true;
 
     memset(mmu->bios, 0, sizeof mmu->bios);
     memset(mmu->rom, 0, sizeof mmu->rom);
@@ -107,7 +109,6 @@ void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {
 }
 
 void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
-
     char *buffer;
     long numbytes;
 
@@ -147,7 +148,17 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
 }
 
 u8 read_u8(gbc_mmu *mmu, u16 address) {
-    /*if (address == 0xff44) return 0x90;*/
+    u8 lcd_mode = mmu->io[IO_LCDSTAT & 0xFF] & MASK_LCDSTAT_MODE_FLAG;
+    if (!mmu->oam_access) {
+        if (address >= 0xFE00 && address < 0xFEA0) { // OAM
+            return 0xFF;
+        }
+    }
+    if (!mmu->vram_access) {
+        if (address >= 0x8000 && address < 0xA000) { // VRAM
+            return 0xFF;
+        }
+    }
     return *get_address_ptr(mmu, address);
 }
 
@@ -161,6 +172,18 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
     if (address == 0xFF02 && val & 0x81) {
         printf("%c", read_u8(mmu, 0xFF01));
         fflush(stdout);
+    }
+
+    u8 lcd_mode = mmu->io[IO_LCDSTAT & 0xFF] & MASK_LCDSTAT_MODE_FLAG;
+    // OAM is not accessible in Mode 2 or 3
+    if (!mmu->vram_access) {
+        if (address >= 0x8000 && address < 0xA000) { // VRAM
+            return;
+        }
+    }
+    if (!mmu->oam_access) {
+        if (address >= 0xFE00 && address < 0xFEA0) // OAM
+            return;
     }
 
     switch (address) {
@@ -295,11 +318,26 @@ bool read_bit(gbc_mmu *mmu, u16 address, u8 bit) {
 }
 
 void set_bit(gbc_mmu *mmu, u16 address, u8 bit) {
+    if (address == IO_LCDSTAT) {
+        if (bit & OPT_MODE_OAM) {
+            mmu->oam_access = false;
+            mmu->vram_access = true;
+        } else if (bit & OPT_MODE_OAM_VRAM) {
+            mmu->oam_access = false;
+            mmu->vram_access = false;
+        }
+    }
     u8 *ptr = get_address_ptr(mmu, address);
     *ptr |= bit;
 }
 
 void unset_bit(gbc_mmu *mmu, u16 address, u8 bit) {
+    if (address == IO_LCDSTAT) {
+        if (bit & MASK_LCDSTAT_MODE_FLAG) {
+            mmu->oam_access = true;
+            mmu->vram_access = true;
+        }
+    }
     u8 *ptr = get_address_ptr(mmu, address);
     *ptr &= ~bit;
 }

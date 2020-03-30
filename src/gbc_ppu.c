@@ -272,7 +272,7 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             break;
     }
 
-    u8 i, j, first;
+    u8 i, j;
     u16 addr, pos;
     // read sprites in reverse order so we don't have to sort
     for (i = NUM_SPRITES-1; i != 0xFF; i--) {
@@ -287,9 +287,9 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
 
         // Take the candidate objects to be drawn in the line
         if(!((obj.y != 0)
-           && (obj.y < SPRITE_END_Y)
-           && (obj.y <= line)
-           && ((obj.y + obj_height) > line))) {      // does the sprite intercept the scanline?
+             && (obj.y < SPRITE_END_Y)
+             && (obj.y <= line)
+             && ((obj.y + obj_height) > line))) {    // does the sprite intercept the scanline?
             continue;
         }
 
@@ -304,53 +304,6 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
         u8 t1 = read_u8(ppu->mmu, 0x8000 + obj.pat * 16 + py * 2);
         u8 t2 = read_u8(ppu->mmu, 0x8000 + obj.pat * 16 + py * 2 + 1);
 
-        u8 dir, start, end, shift;
-        if(x_flip) {
-            dir = 1;
-            start = (obj.x < 8 ? 0 : obj.x - 8);
-            end = MIN(obj.x, SIZE_X);
-            shift = 8 - obj.x + start;
-        } else {
-            dir = -1;
-            start = MIN(obj.x, SIZE_X) - 1;
-            end = (obj.x < 8 ? 0 : obj.x - 8) - 1;
-            shift = obj.x - (start + 1);
-        }
-
-        t1 >>= shift;
-        t2 >>= shift;
-        u8 priority = obj.flags & OPT_OBJ_Flag_priority;
-
-        /*for(u8 disp_x = start; disp_x != end; disp_x += dir) {*/
-            /*u8 c = (t1 & 0x1) | ((t2 & 0x1) << 1);*/
-            /*// check transparency / sprite overlap / background overlap*/
-            /*if(c && !(priority && ppu->fb[disp_x] & 0x3)) {*/
-            /*[>if(c && !(priority && ppu->obj_disp[disp_x] & 0x3)) { // check against FB not obj_disp here?<]*/
-                /*u8 color;*/
-                /*if (obj.flags & OPT_OBJ_Flag_palette) {*/
-                    /*color = ppu_get_palette_color(ppu, IO_OBJ1PAL, c);*/
-                /*} else {*/
-                    /*color = ppu_get_palette_color(ppu, IO_OBJ0PAL, c);*/
-                /*}*/
-                /*[>ppu->obj_disp[disp_x] = (OF & OBJ_PALETTE) ? gb->display.sp_palette[c + 4] : gb->display.sp_palette[c];<]*/
-                /*[>ppu->obj_disp[disp_x] |= (OF & OBJ_PALETTE);<]*/
-                /*[>ppu->obj_disp[disp_x] &= ~LCD_PALETTE_BG;<]*/
-                /*[>u8 behind;<]*/
-                /*[>if (obj.flags & OPT_OBJ_Flag_priority) {<]*/
-                    /*[>behind = 0;<]*/
-                /*[>} else {<]*/
-                    /*[>behind = 1;<]*/
-                /*[>}<]*/
-
-                /*color |= priority;*/
-                /*color &= ~LCD_PALETTE_BG;*/
-                /*ppu->obj_disp[disp_x] = color;*/
-            /*}*/
-
-            /*t1 = t1 >> 1;*/
-            /*t2 = t2 >> 1;*/
-        /*}*/
-
         for (j = 0; j < 8; j++) {
             pos = line * 256 + (obj.x + (x_flip ? 7 - j : j)) % 256;
 
@@ -364,7 +317,7 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             }
             if (color < TRANSPARENT) { // color is not transparent
                 ppu->obj_disp[pos] = color;
-                if (priority) {
+                if (!(obj.flags & OPT_OBJ_Flag_priority)) {
                     ppu->obj_disp[pos] |= 4;
                 }
             }
@@ -388,6 +341,110 @@ void ppu_draw_line(gbc_ppu *ppu, u8 line) {
     ppu_draw_line_fb(ppu, line);
 }
 
+void sdl_run(gbc_ppu *ppu) {
+#if defined(SLOPPY_RENDER)
+    SDL_Delay(16);         // hack for ~60FPS
+    SDL_RenderClear(ppu->renderer);
+    for (int y = 0; y < SIZE_Y; y++) {
+        for (int x = 0; x < SIZE_X; x++) {
+            int px_index = y * SIZE_X + x;
+            u8 color = ppu->fb[px_index];
+            u8 r,g,b;
+            switch(color) {
+                case 0:         // 332c50
+                    r = 0x33; g = 0x2c; b = 0x50;
+                    break;
+                case 1:         // 46878f
+                    r = 0x46; g = 0x87; b = 0x8f;
+                    break;
+                case 2:         // 94e344
+                    r = 0x94; g = 0xe3; b = 0x44;
+                    break;
+                case 3:         // e2f3e4
+                    r = 0xe2; g = 0xf3; b = 0xe4;
+                    break;
+            }
+
+            SDL_SetRenderDrawColor(ppu->renderer, r, g, b, 0xFF);
+            SDL_RenderDrawPoint(ppu->renderer, x, y);
+        }
+    }
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        if (e.type == SDL_QUIT) {
+            ppu->quit = true;
+        }
+
+        /*
+         * Bit 7 - Not used
+         * Bit 6 - Not used
+         * Bit 5 - P15 Select Button Keys      (0=Select)
+         * Bit 4 - P14 Select Direction Keys   (0=Select)
+         * Bit 3 - P13 Input Down  or Start    (0=Pressed) (Read Only)
+         * Bit 2 - P12 Input Up    or Select   (0=Pressed) (Read Only)
+         * Bit 1 - P11 Input Left  or Button B (0=Pressed) (Read Only)
+         * Bit 0 - P10 Input Right or Button A (0=Pressed) (Read Only)
+         */
+        if (e.type == SDL_KEYDOWN) {
+            if (e.key.keysym.sym == SDLK_ESCAPE) {
+                ppu->quit = true;
+            }
+            if (e.key.keysym.sym == SDLK_UP) {
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // direction
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<2);         // up
+            } else if (e.key.keysym.sym == SDLK_DOWN) {
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // direction
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<3);         // down
+            } else if (e.key.keysym.sym == SDLK_LEFT) {
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // direction
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<1);         // left
+            } else if (e.key.keysym.sym == SDLK_LEFT) {
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // direction
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<0);         // right
+            } else if (e.key.keysym.sym == SDLK_x) {
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<5);         // button
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<0);         // A
+            } else if (e.key.keysym.sym == SDLK_z) {
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<5);         // button
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<1);         // B
+            } else if (e.key.keysym.sym == SDLK_RETURN) {
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<5);         // button
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<3);         // start
+            } else if (e.key.keysym.sym == SDLK_TAB) {
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<5);         // button
+                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // select
+            }
+        } else if (e.type == SDL_KEYUP) {
+            if (e.key.keysym.sym == SDLK_UP) {
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // direction
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<2);         // up
+            } else if (e.key.keysym.sym == SDLK_DOWN) {
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // direction
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<3);         // down
+            } else if (e.key.keysym.sym == SDLK_LEFT) {
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // direction
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<1);         // left
+            } else if (e.key.keysym.sym == SDLK_LEFT) {
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // direction
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<0);         // right
+            } else if (e.key.keysym.sym == SDLK_x) {
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<5);         // button
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<0);         // A
+            } else if (e.key.keysym.sym == SDLK_z) {
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<5);         // button
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<1);         // B
+            } else if (e.key.keysym.sym == SDLK_RETURN) {
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<5);         // button
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<3);         // start
+            } else if (e.key.keysym.sym == SDLK_TAB) {
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<5);         // button
+                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);         // select
+            }
+        }
+    }
+    SDL_RenderPresent(ppu->renderer);
+#endif
+}
 
 /**
    FF41 - STAT - LCDC Status (R/W)
@@ -456,109 +513,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
             if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
                 set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
-
-#if defined(SLOPPY_RENDER)
-            SDL_Delay(16); // hack for ~60FPS
-            SDL_RenderClear(ppu->renderer);
-            for (int y = 0; y < SIZE_Y; y++) {
-                for (int x = 0; x < SIZE_X; x++) {
-                    int px_index = y * SIZE_X + x;
-                    u8 color = ppu->fb[px_index];
-                    u8 r,g,b;
-                    switch(color) {
-                        case 0: // 332c50
-                            r = 0x33; g = 0x2c; b = 0x50;
-                            break;
-                        case 1: // 46878f
-                            r = 0x46; g = 0x87; b = 0x8f;
-                            break;
-                        case 2: // 94e344
-                            r = 0x94; g = 0xe3; b = 0x44;
-                            break;
-                        case 3: // e2f3e4
-                            r = 0xe2; g = 0xf3; b = 0xe4;
-                            break;
-                    }
-
-                    SDL_SetRenderDrawColor(ppu->renderer, r, g, b, 0xFF);
-                    SDL_RenderDrawPoint(ppu->renderer, x, y);
-                }
-            }
-            SDL_Event e;
-            while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) {
-                    ppu->quit = true;
-                }
-
-                /*
-                 * Bit 7 - Not used
-                 * Bit 6 - Not used
-                 * Bit 5 - P15 Select Button Keys      (0=Select)
-                 * Bit 4 - P14 Select Direction Keys   (0=Select)
-                 * Bit 3 - P13 Input Down  or Start    (0=Pressed) (Read Only)
-                 * Bit 2 - P12 Input Up    or Select   (0=Pressed) (Read Only)
-                 * Bit 1 - P11 Input Left  or Button B (0=Pressed) (Read Only)
-                 * Bit 0 - P10 Input Right or Button A (0=Pressed) (Read Only)
-                 */
-                if (e.type == SDL_KEYDOWN) {
-                    if (e.key.keysym.sym == SDLK_ESCAPE) {
-                        ppu->quit = true;
-                    }
-                    if (e.key.keysym.sym == SDLK_UP) {
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<2); // up
-                    } else if (e.key.keysym.sym == SDLK_DOWN) {
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<3); // down
-                    } else if (e.key.keysym.sym == SDLK_LEFT) {
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<1); // left
-                    } else if (e.key.keysym.sym == SDLK_LEFT) {
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<0); // right
-                    } else if (e.key.keysym.sym == SDLK_x) {
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<0); // A
-                    } else if (e.key.keysym.sym == SDLK_z) {
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<1); // B
-                    } else if (e.key.keysym.sym == SDLK_RETURN) {
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<3); // start
-                    } else if (e.key.keysym.sym == SDLK_TAB) {
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
-                        set_bit(ppu->mmu, IO_JOYPAD, 1<<4); // select
-                    }
-                } else if (e.type == SDL_KEYUP) {
-                    if (e.key.keysym.sym == SDLK_UP) {
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<2); // up
-                    } else if (e.key.keysym.sym == SDLK_DOWN) {
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<3); // down
-                    } else if (e.key.keysym.sym == SDLK_LEFT) {
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<1); // left
-                    } else if (e.key.keysym.sym == SDLK_LEFT) {
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // direction
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<0); // right
-                    } else if (e.key.keysym.sym == SDLK_x) {
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<0); // A
-                    } else if (e.key.keysym.sym == SDLK_z) {
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<1); // B
-                    } else if (e.key.keysym.sym == SDLK_RETURN) {
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<3); // start
-                    } else if (e.key.keysym.sym == SDLK_TAB) {
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<5); // button
-                        unset_bit(ppu->mmu, IO_JOYPAD, 1<<4); // select
-                    }
-                }
-            }
-            SDL_RenderPresent(ppu->renderer);
-#endif
+            sdl_run(ppu);
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {

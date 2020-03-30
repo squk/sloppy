@@ -142,6 +142,37 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tma_write_reloading.gb");
 
     // ppu tests
+    //gbc_load_rom_file(&mmu, "data/m2_win_en_toggle.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_bgp_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_bgp_change_sprites.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_bg_en_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_bg_en_change2.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_bg_map_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_bg_map_change2.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_obj_en_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_obj_en_change_variant.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_obj_size_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_obj_size_change_scx.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_tile_sel_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_tile_sel_change2.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_tile_sel_win_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_tile_sel_win_change2.gb");
+    gbc_load_rom_file(&mmu, "data/m3_lcdc_win_en_change_multiple.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_win_en_change_multiple_wx.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_win_map_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_lcdc_win_map_change2.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_obp0_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_scx_high_5_bits.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_scx_high_5_bits_change2.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_scx_low_3_bits.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_scy_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_scy_change2.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_window_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_window_timing_wx_0.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_wx_4_change.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_wx_4_change_sprites.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_wx_5_change.gb");
+
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode4_timing.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_oam_ok_timing.gb");
@@ -150,7 +181,8 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing_sprites.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode3_timing.gb");
 
-    gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
+    //gbc_load_rom_file(&mmu, "DK.gb");
+    //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
     //gbc_load_rom_file(&mmu, "data/tests/instr_timing/instr_timing.gb");
     //gbc_load_rom_file(&mmu, "./Tetris.gb");
     //gbc_load_rom_file(&mmu, "./vblank_stat_intr-C.gb");
