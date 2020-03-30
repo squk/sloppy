@@ -15,3 +15,5 @@ typedef	volatile u32	vu32;	/**< volatile Unsigned 32 bit value	*/
 typedef	volatile s8	vs8;	/**< volatile Signed 8 bit value	*/
 typedef	volatile s16	vs16;	/**< volatile Signed 8 bit value	*/
 typedef	volatile s32	vs32;	/**< volatile Signed 8 bit value	*/
+
+#define MIN(a, b)   ((a) < (b) ? (a) : (b))

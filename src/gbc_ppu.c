@@ -124,7 +124,7 @@ void ppu_draw_line_fb(gbc_ppu *ppu, u8 line) {
         }
 
         // check transparency
-        if (ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] < 8) {
+        if (ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] < TRANSPARENT) {
             if (ppu->fb[px_index] != 0 && ppu->obj_disp[(line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X] >= 4) {
                 continue;
             }
@@ -136,8 +136,8 @@ void ppu_draw_line_fb(gbc_ppu *ppu, u8 line) {
 
 void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
     u16 bg_tile_map, tile_data;
-    u8 oam_row, obj_line;
-    u8 obj_line_a, obj_line_b;
+    u8 oam_row, py;
+    u8 py_a, py_b;
     s16 obj;
 
     if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
@@ -154,9 +154,9 @@ void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
 
     // optimization for GBA. it's ARM CPU struggled with div and mod operators
     /*oam_row = (u8)Div(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
-    /*obj_line = (u8)DivMod(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
+    /*py = (u8)DivMod(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
     oam_row = (u8)((line + read_u8(ppu->mmu, IO_SCROLLY)) / 8);
-    obj_line = (u8)((line + read_u8(ppu->mmu, IO_SCROLLY)) % 8);
+    py = (u8)((line + read_u8(ppu->mmu, IO_SCROLLY)) % 8);
 
     u8 i, j;
     for (i = 0; i < 32; i++) {
@@ -165,13 +165,13 @@ void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
         } else {
             obj = (u8)read_u8(ppu->mmu, bg_tile_map + oam_row * 32 + i);
         }
-        obj_line_a = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2);
-        obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
+        py_a = read_u8(ppu->mmu, tile_data + obj * 16 + py * 2);
+        py_b = read_u8(ppu->mmu, tile_data + obj * 16 + py * 2 + 1);
         for (j = 0; j < 8; j++) {
             ppu->bg_disp[line * 256 + (u8)(i * 8 - read_u8(ppu->mmu, IO_SCROLLX) + j)] =
                 ppu_get_palette_color(ppu, IO_BGRDPAL,
-                                      ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-                                      ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
+                                      ((py_a & (1 << (7 - j))) ? 1 : 0) +
+                                      ((py_b & (1 << (7 - j))) ? 2 : 0)
                                       );
         }
     }
@@ -179,8 +179,8 @@ void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
 
 void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
     u16 win_tile_map, tile_data;
-    u8 oam_row, obj_line;
-    u8 obj_line_a, obj_line_b;
+    u8 oam_row, py;
+    u8 py_a, py_b;
     s16 obj;
 
     if (read_u8(ppu->mmu, IO_WNDPOSY)  > line || read_u8(ppu->mmu, IO_WNDPOSX) > SIZE_X) {
@@ -201,9 +201,9 @@ void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
 
     // optimization for GBA. it's ARM CPU struggled with div and mod operators
     /*oam_row = Div((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
-    /*obj_line = DivMod((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
+    /*py = DivMod((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
     oam_row = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) / 8);
-    obj_line = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) % 8);
+    py = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) % 8);
     u8 i, j;
     for (i = 0; i < (SIZE_X - (read_u8(ppu->mmu, IO_WNDPOSX) - 8)) / 8 + 1; i++) {
         if (tile_data == 0x9000) {
@@ -211,33 +211,33 @@ void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
         } else {
             obj = (u8)read_u8(ppu->mmu, win_tile_map + oam_row * 32 + i);
         }
-        obj_line_a = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2);
-        obj_line_b = read_u8(ppu->mmu, tile_data + obj * 16 + obj_line * 2 + 1);
+        py_a = read_u8(ppu->mmu, tile_data + obj * 16 + py * 2);
+        py_b = read_u8(ppu->mmu, tile_data + obj * 16 + py * 2 + 1);
         for (j = 0; j < 8; j++) {
             ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
                 ppu_get_palette_color(ppu, IO_BGRDPAL,
-                                      ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-                                      ((obj_line_b & (1 << (7 - j))) ? 2 : 0)
+                                      ((py_a & (1 << (7 - j))) ? 1 : 0) +
+                                      ((py_b & (1 << (7 - j))) ? 2 : 0)
                                       );
         }
     }
 }
 
 int obj_comp(void *array, int i, int j) {
-    ppu_obj *a = ((ppu_obj**)array)[i];
-    ppu_obj *b = ((ppu_obj**)array)[j];
+    ppu_obj a = ((ppu_obj*)array)[i];
+    ppu_obj b = ((ppu_obj*)array)[j];
 
-    if (a->x < b->x) {
+    if (a.x < b.x) {
         return 0;
     }
-    if (a->x > b->x) {
+    if (a.x > b.x) {
         return 1;
     }
 
-    if (a->id < b->id) {
+    if (a.id < b.id) {
         return 0;
     }
-    if (a->id > b->id) {
+    if (a.id > b.id) {
         return 1;
     }
     // this should never be reached
@@ -245,11 +245,11 @@ int obj_comp(void *array, int i, int j) {
 }
 
 void obj_swap(void *array, int i, int j) {
-    ppu_obj *a = ((ppu_obj**)array)[i];
-    ppu_obj *b = ((ppu_obj**)array)[j];
+    ppu_obj a = ((ppu_obj*)array)[i];
+    ppu_obj b = ((ppu_obj*)array)[j];
 
-    ((ppu_obj**)array)[i] = b;
-    ((ppu_obj**)array)[j] = a;
+    ((ppu_obj*)array)[i] = b;
+    ((ppu_obj*)array)[j] = a;
 }
 
 // 8x8 or 8x16
@@ -260,14 +260,7 @@ void obj_swap(void *array, int i, int j) {
 // same X -> FE00 highest, FE04 next highest
 // Y = 0 or Y => 144+16, discard sprite
 void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
-    int i, j, first;
-    uint16_t addr, pos;
-    u8 obj_height, objs_line_len, obj_line;
-    u8 obj_line_a, obj_line_b, color;
-    u8 x_flip, y_flip, behind;
-    ppu_obj objs[40];
-    ppu_obj *objs_line[40];
-
+    u8 obj_height, py;
     line += SPRITE_INI_Y;
 
     switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Size)) {
@@ -278,72 +271,105 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             obj_height = 16;
             break;
     }
-    // Read all the obj attributes
-    for (i = 0; i < 40; i++) {
+
+    u8 i, j, first;
+    u16 addr, pos;
+    // read sprites in reverse order so we don't have to sort
+    for (i = NUM_SPRITES-1; i != 0xFF; i--) {
         addr = MEM_OAM + i * 4;
 
-        objs[i].id = i;
-        objs[i].y = read_u8(ppu->mmu, addr++);
-        objs[i].x = read_u8(ppu->mmu, addr++);
-        objs[i].pat = read_u8(ppu->mmu, addr++);
-        objs[i].flags = read_u8(ppu->mmu, addr);
-        //printf("id:%d  x:%d  y:%d  pat:%d  f:%x\n", objs[i].id, objs[i].y, objs[i].x, objs[i].pat, objs[i].flags);
-    }
+        ppu_obj obj;
+        obj.id = i;
+        obj.y = read_u8(ppu->mmu, addr++);
+        obj.x = read_u8(ppu->mmu, addr++);
+        obj.pat = read_u8(ppu->mmu, addr++);
+        obj.flags = read_u8(ppu->mmu, addr);
 
-    // Take the candidate objects to be drawn in the line
-    objs_line_len = 0;
-    for (i = 0; i < 40; i++) {
-        if((objs[i].y != 0)
-           && (objs[i].y < SPRITE_END_Y)
-           && (objs[i].y <= line)
-           && ((objs[i].y + obj_height) > line)) {      // does the sprite intercept the scanline?
-            objs_line[objs_line_len++] = &objs[i];
+        // Take the candidate objects to be drawn in the line
+        if(!((obj.y != 0)
+           && (obj.y < SPRITE_END_Y)
+           && (obj.y <= line)
+           && ((obj.y + obj_height) > line))) {      // does the sprite intercept the scanline?
+            continue;
         }
-    }
 
-    // Sort the candidate objects by priority
-    insertion_sort(objs_line, objs_line_len, obj_comp, obj_swap);
-
-    // Draw objects by order of priority
-    if (objs_line_len > 10) {
-        first = objs_line_len - 10;
-    } else {
-        first = 0;
-    }
-
-    for (i = first; i < objs_line_len; i++) {
-        x_flip = (objs_line[i]->flags & OPT_OBJ_Flag_xflip) ? 1 : 0;
-        y_flip = (objs_line[i]->flags & OPT_OBJ_Flag_yflip) ? 1 : 0;
-        obj_line = (line - objs_line[i]->y) % obj_height;
+        u8 x_flip = (obj.flags & OPT_OBJ_Flag_xflip) ? 1 : 0;
+        u8 y_flip = (obj.flags & OPT_OBJ_Flag_yflip) ? 1 : 0;
+        py = (line - obj.y) % obj_height;
         if (y_flip) {
-            obj_line = obj_height - 1 - obj_line;
+            py = obj_height - 1 - py;
         }
-        obj_line_a = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 + obj_line * 2);
-        obj_line_b = read_u8(ppu->mmu, 0x8000 + objs_line[i]->pat * 16 + obj_line * 2 + 1);
-        if (objs_line[i]->flags & OPT_OBJ_Flag_priority) {
-            behind = 1;
-        } else {
-            behind = 0;
-        }
-        for (j = 0; j < 8; j++) {
-            pos = line * 256 + (objs_line[i]->x + (x_flip ? 7 - j : j)) % 256;
 
-            u8 color_index = ((obj_line_a & (1 << (7 - j))) ? 1 : 0) +
-                             ((obj_line_b & (1 << (7 - j))) ? 2 : 0);
-            if (objs_line[i]->flags & OPT_OBJ_Flag_palette) {
+        // fetch the tile
+        u8 t1 = read_u8(ppu->mmu, 0x8000 + obj.pat * 16 + py * 2);
+        u8 t2 = read_u8(ppu->mmu, 0x8000 + obj.pat * 16 + py * 2 + 1);
+
+        u8 dir, start, end, shift;
+        if(x_flip) {
+            dir = 1;
+            start = (obj.x < 8 ? 0 : obj.x - 8);
+            end = MIN(obj.x, SIZE_X);
+            shift = 8 - obj.x + start;
+        } else {
+            dir = -1;
+            start = MIN(obj.x, SIZE_X) - 1;
+            end = (obj.x < 8 ? 0 : obj.x - 8) - 1;
+            shift = obj.x - (start + 1);
+        }
+
+        t1 >>= shift;
+        t2 >>= shift;
+        u8 priority = obj.flags & OPT_OBJ_Flag_priority;
+
+        /*for(u8 disp_x = start; disp_x != end; disp_x += dir) {*/
+            /*u8 c = (t1 & 0x1) | ((t2 & 0x1) << 1);*/
+            /*// check transparency / sprite overlap / background overlap*/
+            /*if(c && !(priority && ppu->fb[disp_x] & 0x3)) {*/
+            /*[>if(c && !(priority && ppu->obj_disp[disp_x] & 0x3)) { // check against FB not obj_disp here?<]*/
+                /*u8 color;*/
+                /*if (obj.flags & OPT_OBJ_Flag_palette) {*/
+                    /*color = ppu_get_palette_color(ppu, IO_OBJ1PAL, c);*/
+                /*} else {*/
+                    /*color = ppu_get_palette_color(ppu, IO_OBJ0PAL, c);*/
+                /*}*/
+                /*[>ppu->obj_disp[disp_x] = (OF & OBJ_PALETTE) ? gb->display.sp_palette[c + 4] : gb->display.sp_palette[c];<]*/
+                /*[>ppu->obj_disp[disp_x] |= (OF & OBJ_PALETTE);<]*/
+                /*[>ppu->obj_disp[disp_x] &= ~LCD_PALETTE_BG;<]*/
+                /*[>u8 behind;<]*/
+                /*[>if (obj.flags & OPT_OBJ_Flag_priority) {<]*/
+                    /*[>behind = 0;<]*/
+                /*[>} else {<]*/
+                    /*[>behind = 1;<]*/
+                /*[>}<]*/
+
+                /*color |= priority;*/
+                /*color &= ~LCD_PALETTE_BG;*/
+                /*ppu->obj_disp[disp_x] = color;*/
+            /*}*/
+
+            /*t1 = t1 >> 1;*/
+            /*t2 = t2 >> 1;*/
+        /*}*/
+
+        for (j = 0; j < 8; j++) {
+            pos = line * 256 + (obj.x + (x_flip ? 7 - j : j)) % 256;
+
+            u8 color;
+            u8 color_index = ((t1 & (1 << (7 - j))) ? 1 : 0) +
+                             ((t2 & (1 << (7 - j))) ? 2 : 0);
+            if (obj.flags & OPT_OBJ_Flag_palette) {
                 color = ppu_get_palette_color(ppu, IO_OBJ1PAL, color_index);
             } else {
                 color = ppu_get_palette_color(ppu, IO_OBJ0PAL, color_index);
             }
-            if (color < 8) { /// WTF is this?
+            if (color < TRANSPARENT) { // color is not transparent
                 ppu->obj_disp[pos] = color;
-                if (behind) {
+                if (priority) {
                     ppu->obj_disp[pos] |= 4;
                 }
             }
         }
     }
-    //while(1) {}
 }
 
 void ppu_draw_line(gbc_ppu *ppu, u8 line) {

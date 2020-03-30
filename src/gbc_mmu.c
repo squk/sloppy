@@ -65,6 +65,7 @@ void gbc_mmu_init(gbc_mmu *mmu){
     memset(mmu->zram, 0, sizeof mmu->zram);
 }
 
+u8 z = 0;// hacky
 u8* get_address_ptr(gbc_mmu *mmu, u16 address) {
     if (address < 0x100 && mmu->in_bios) {
         return &mmu->bios[address];
@@ -88,7 +89,8 @@ u8* get_address_ptr(gbc_mmu *mmu, u16 address) {
         return &mmu->oam[address & 0xFF];
     }
     if (address < 0xFF00) { // Not Usable
-        return &mmu->zram[address & 0xFF];
+        z = 0;
+        return &z;
     }
     if (address < 0xFF80) {
         return &mmu->io[address & 0xFF];
@@ -96,7 +98,8 @@ u8* get_address_ptr(gbc_mmu *mmu, u16 address) {
     if (address < 0xFFFF) {
         return &mmu->hram[address & 0xFF];
     }
-    return &mmu->nullish; // zero page
+    z = 0;
+    return &z;
 }
 
 void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {

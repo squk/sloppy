@@ -9,6 +9,7 @@
 // to display a sprite in the upper left corner of the screen set sprite X=8, Y=16.
 #define SPRITE_INI_X 8
 #define SPRITE_INI_Y 16
+#define NUM_SPRITES         0x28
 
 // pixels
 #define SIZE_X 160
@@ -17,8 +18,24 @@
 // sprite border
 #define SPRITE_END_X SPRITE_INI_X + SIZE_X
 #define SPRITE_END_Y SPRITE_INI_Y + SIZE_Y
-
 #define LCD_VERT_LINES 154
+
+/* Bit mask for the shade of pixel to display */
+#define LCD_COLOUR      0x03
+/**
+ * Bit mask for whether a pixel is OBJ0, OBJ1, or BG. Each may have a different
+ * palette when playing a DMG game on CGB.
+ */
+#define LCD_PALETTE_OBJ 0x10
+#define LCD_PALETTE_BG  0x20
+/**
+ * Bit mask for the two bits listed above.
+ * LCD_PALETTE_ALL == 0b00 --> OBJ0
+ * LCD_PALETTE_ALL == 0b01 --> OBJ1
+ * LCD_PALETTE_ALL == 0b10 --> BG
+ * LCD_PALETTE_ALL == 0b11 --> NOT POSSIBLE
+ */
+#define LCD_PALETTE_ALL 0x30
 
 // duration of each screen state
 #define LCD_MODE_0_CYCLES   0
@@ -57,10 +74,10 @@ typedef struct {
 
     /*
      * Specifies the sprites Tile Number (00-FF). This (unsigned) value selects
-       a tile *from memory at 8000h-8FFFh. In CGB Mode this could be either in
-       VRAM Bank 0 *or 1, depending on Bit 3 of the following byte. In 8x16 mode,
-       the lower bit *of the tile number is ignored. IE: the upper 8x8 tile is
-       "NN AND FEh", and *the lower 8x8 tile is "NN OR 01h".
+     a tile *from memory at 8000h-8FFFh. In CGB Mode this could be either in
+     VRAM Bank 0 *or 1, depending on Bit 3 of the following byte. In 8x16 mode,
+     the lower bit *of the tile number is ignored. IE: the upper 8x8 tile is
+     "NN AND FEh", and *the lower 8x8 tile is "NN OR 01h".
      */
     u8 pat;
 
