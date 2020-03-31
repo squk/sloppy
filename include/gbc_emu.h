@@ -74,7 +74,7 @@ void emu_test() {
     gbc_cpu_reset(&cpu);
 
     //memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len); mmu.in_bios = true;
-    //gbc_cpu_set_boot_state(&cpu);
+    gbc_cpu_set_boot_state(&cpu);
     cpu.mmu->io[0x00] = 0xFF;
 
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ei_timing.gb");
@@ -170,7 +170,7 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/m3_window_timing.gb");
     //gbc_load_rom_file(&mmu, "data/m3_window_timing_wx_0.gb");
     //gbc_load_rom_file(&mmu, "data/m3_wx_4_change.gb");
-    //gbc_load_rom_file(&mmu, "data/m3_wx_4_change_sprites.gb");
+    gbc_load_rom_file(&mmu, "data/m3_wx_4_change_sprites.gb");
     //gbc_load_rom_file(&mmu, "data/m3_wx_5_change.gb");
 
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing.gb");
@@ -181,12 +181,12 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing_sprites.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode3_timing.gb");
 
-    //gbc_load_rom_file(&mmu, "DK.gb");
-    gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
+    //gbc_load_rom_file(&mmu, "./DrMario.gb");
+    //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
     //gbc_load_rom_file(&mmu, "data/tests/instr_timing/instr_timing.gb");
     //gbc_load_rom_file(&mmu, "./Tetris.gb");
+    //gbc_load_rom_file(&mmu, "DK.gb");
     //gbc_load_rom_file(&mmu, "./vblank_stat_intr-C.gb");
-    //gbc_load_rom_file(&mmu, "./DrMario.gb");
     //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 

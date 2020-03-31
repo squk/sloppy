@@ -205,10 +205,9 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
             }
             break;
         case IO_DMACONT:
-            *ptr = (val % 0xF1);
-
+            *ptr = (val << 8);
             for(u8 i = 0; i < sizeof mmu->oam; i++) {
-                mmu->oam[i] = read_u8(mmu, (*ptr << 8) + i);
+                mmu->oam[i] = read_u8(mmu, *ptr + i);
             }
             break;
         case IO_DIV:

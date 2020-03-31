@@ -114,6 +114,10 @@ typedef struct {
  * FF49 - OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
  */
 
+#define WHITE 0
+#define LIGHT_GREY 1
+#define DARK_GREY 2
+#define BLACK 3
 /*
  * Bit 7-6 - Shade for Color Number 3
  * Bit 5-4 - Shade for Color Number 2
@@ -126,12 +130,10 @@ typedef struct {
  *  2  Dark gray
  *  3  Black
  */
-void set_palette(u8* p, u8 v);
-
+u8 ppu_get_palette_color(gbc_ppu *ppu, u16 palette_addr, u8 color);
 void ppu_write_u8(gbc_ppu *ppu, u16 address, u8 v);
 
 void ppu_init(gbc_ppu *ppu);
-u8 ppu_get_palette_color(gbc_ppu *ppu, u16 palette_addr, u8 color);
 void ppu_start_frame(gbc_ppu *ppu);
 void ppu_draw_line_fb(gbc_ppu *ppu, u8 line);
 void ppu_draw_line_bg(gbc_ppu *ppu, u8 line);
