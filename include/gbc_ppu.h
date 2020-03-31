@@ -1,11 +1,6 @@
 #pragma once
 #include "gbc_mmu.h"
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_keyboard.h>
-
 // to display a sprite in the upper left corner of the screen set sprite X=8, Y=16.
 #define SPRITE_INI_X 8
 #define SPRITE_INI_Y 16
@@ -95,8 +90,6 @@ typedef struct {
 
 typedef struct {
     gbc_mmu *mmu;
-    SDL_Renderer *renderer;
-    SDL_Window *window;
 
     u8 fb[SIZE_X * SIZE_Y];
     u8 bg_disp[512*512];

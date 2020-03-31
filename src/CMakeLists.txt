@@ -4,6 +4,7 @@ list(APPEND MAIN_APP_SOURCES
     gbc_mmu.c
     gbc_ops.c
     gbc_ppu.c
+    gui.c
     )
 
 set(ENV{PATH} ${CMAKE_SOURCE_DIR}:$ENV{PATH})
@@ -13,12 +14,7 @@ set(CMAKE_C_COMPILER g++)
 #file(GLOB GLOB_RESULT  src/*.c)
 #list(APPEND MAIN_APP_SOURCES ${GLOB_RESULT})
 
-set(MAIN_APP_LIBRARIES
-        #glfw
-        #GLEW
-        #GLU
-        #GL
-        )
+set(MAIN_APP_LIBRARIES glfw GLEW)
 
 list(APPEND MAIN_APP_INCLUDE_DIRS
         "/usr/local/include"
@@ -38,4 +34,4 @@ target_link_libraries(${NAME}
     ${SDL2_TTF_LIBRARIES})
 
 target_include_directories(${NAME} PUBLIC ${MAIN_APP_INCLUDE_DIRS})
-target_link_libraries(${NAME} ${MAIN_APP_LIBRARIES})
+target_link_libraries(${NAME} ${MAIN_APP_LIBRARIES} "-framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo -lm -lGLEW -L/usr/local/lib")

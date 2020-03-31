@@ -1,10 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_events.h>
-
+#include "gui.h"
 #include "gbc_cpu.h"
 #include "gbc_ops.h"
 #include "gbc_io.h"
@@ -339,12 +336,12 @@ void gbc_cpu_loop(gbc_cpu *cpu) {
     /*validate_memory(cpu);*/
     while(!cpu->quit) {
         gbc_cpu_step(cpu);
+#if defined(SLOPPY_RENDER)
+        gui_step(cpu);
+#endif
         if (cpu->ppu->quit) {
             cpu->quit = true;
         }
     }
-#if defined(SLOPPY_RENDER)
-    atexit(SDL_Quit);
-    SDL_Quit();
-#endif
+    gui_end();
 }

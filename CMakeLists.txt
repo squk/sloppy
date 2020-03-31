@@ -25,9 +25,3 @@ find_package(SDL2_ttf REQUIRED)
 add_definitions("-DCPP_SRC_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\"")
 
 add_subdirectory(src)
-
-#find_file(SDL2_INCLUDE_DIR NAME SDL.h HINTS SDL2)
-#find_library(SDL2_LIBRARY NAME SDL2)
-#add_executable(ChickenShooter main.cpp)
-#target_include_directories(ChickenShooter ${SDL2_INCLUDE_DIR})
-#target_link_libraries(ChickenShooter ${SDL2_LIBRARY})    

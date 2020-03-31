@@ -55,6 +55,7 @@ typedef struct {
 
     gbc_mmu *mmu;
     gbc_ppu *ppu;
+
 } gbc_cpu;
 
 u16 get_hl(gbc_cpu *cpu);

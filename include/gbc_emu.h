@@ -2,14 +2,11 @@
 
 #include <stdio.h>
 #include <string.h>
-
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_render.h>
-
 #include "types.h"
 #include "gbc_cpu.h"
 #include "gbc_ppu.h"
 #include "gbc_mmu.h"
+#include "gui.h"
 #include "dmg_rom.h"
 
 #include "01_special.h"
@@ -44,19 +41,7 @@ void emu_run() {
 
 void emu_test() {
 #if defined(SLOPPY_RENDER)
-    SDL_Init(SDL_INIT_EVERYTHING);
-    SDL_Renderer *renderer;
-    SDL_Window *window;
-    float scale = 2.0f;
-    SDL_CreateWindowAndRenderer(SIZE_X*scale, SIZE_Y*scale, 0, &window, &renderer);
-    SDL_RenderSetScale(renderer, scale, scale);
-    SDL_SetWindowTitle(window, "sloppy emu");
-    // Check that the window was successfully created
-    if (window == NULL) {
-        // In the case that the window could not be made...
-        printf("Could not create window: %s\n", SDL_GetError());
-        return;
-    }
+    gui_init();
 #endif
 
     gbc_cpu cpu;
@@ -64,10 +49,6 @@ void emu_test() {
     gbc_mmu mmu;
     cpu.mmu = &mmu;
     ppu.mmu = &mmu;
-#if defined(SLOPPY_RENDER)
-    ppu.renderer = renderer;
-#endif
-
     cpu.ppu = &ppu;
 
     gbc_mmu_init(&mmu);
@@ -203,10 +184,4 @@ void emu_test() {
 
     //printf("emulator initialized\n");
     gbc_cpu_loop(&cpu);
-
-#if defined(SLOPPY_RENDER)
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-#endif
 }
