@@ -69,6 +69,9 @@ u8 ppu_get_palette_color(gbc_ppu *ppu, u16 palette_addr, u8 color) {
     switch (color) {
         case 0:
             bits = p & 0x03;
+            if (palette_addr == IO_OBJ0PAL || palette_addr == IO_OBJ1PAL) {
+                return 0;
+            }
             break;
         case 1:
             bits = (p & 0x0C) >> 2;
@@ -143,7 +146,12 @@ void ppu_draw_line_fb(gbc_ppu *ppu, u8 line) {
 
         int obj_index = (line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X;
 
-        if (ppu->fb[px_index] != 0 && ppu->obj_disp[obj_index] >= 4) {
+        //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
+        //(Used for both BG and Window. BG color 0 is always behind OBJ)
+        if ((ppu->fb[px_index] != 0 && ppu->obj_disp[obj_index] >= 4)) {
+            continue;
+        }
+        if (ppu->obj_disp[obj_index] == 0) {
             continue;
         }
         ppu->fb[px_index] = ppu->obj_disp[obj_index] & 0x03;
@@ -275,6 +283,30 @@ void obj_swap(void *array, int i, int j) {
 // higher X -> draw first (lower X -> draw above others)
 // same X -> FE00 highest, FE04 next highest
 // Y = 0 or Y => 144+16, discard sprite
+//
+// During each scanline's OAM scan, the LCD controller compares LY to each
+// sprite's Y position to find the 10 sprites on that line that appear first in
+// OAM ($FE00-$FE03 being the first). It discards the rest, allowing only 10
+// sprites to be displayed on any one line. When this limit is exceeded,
+// sprites appearing later in OAM won't be displayed. To keep unused sprites
+// from affecting onscreen sprites, set their Y coordinate to Y = 0 or Y >= 160
+// (144 + 16) (Note : Y <= 8 also works if sprite size is set to 8x8). Just
+// setting the X coordinate to X = 0 or X >= 168 (160 + 8) on a sprite will
+// hide it, but it will still affect other sprites sharing the same lines.
+//
+// When these 10 sprites overlap, the highest priority one will appear above
+// all others, etc. (Thus, no Z-fighting.) In CGB mode, the first sprite in OAM
+// ($FE00-$FE03) has the highest priority, and so on. In Non-CGB mode, the
+// smaller the X coordinate, the higher the priority. The tie breaker (same X
+// coordinates) is the same priority as in CGB mode.
+//
+// The priority calculation between sprites disregards OBJ-to-BG Priority
+// (attribute bit 7). Only the highest-priority nonzero sprite pixel at any
+// given point is compared against the background. Thus if a sprite with a
+// higher priority (based on OAM index) but with OBJ-to-BG Priority turned on
+// overlaps a sprite with a lower priority and a nonzero background pixel, the
+// background pixel is displayed regardless of the lower-priority sprite's
+// OBJ-to-BG Priority.
 void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
     u8 obj_height, py;
     line += SPRITE_INI_Y;
@@ -326,15 +358,17 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             u8 color;
             u8 color_index = ((t1 & (1 << (7 - j))) ? 1 : 0) +
                              ((t2 & (1 << (7 - j))) ? 2 : 0);
+
             if (obj.flags & OPT_OBJ_Flag_palette) {
-                color = read_u8(ppu->mmu, IO_OBJ1PAL+color_index);
-                /*color = ppu_get_palette_color(ppu, IO_OBJ1PAL, color_index);*/
+                color = ppu_get_palette_color(ppu, IO_OBJ1PAL, color_index);
             } else {
-                color = read_u8(ppu->mmu, IO_OBJ0PAL+color_index);
-                /*color = ppu_get_palette_color(ppu, IO_OBJ0PAL, color_index);*/
+                color = ppu_get_palette_color(ppu, IO_OBJ0PAL, color_index);
             }
 
             ppu->obj_disp[pos] = color;
+
+            //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
+            //(Used for both BG and Window. BG color 0 is always behind OBJ)
             if (!(obj.flags & OPT_OBJ_Flag_priority)) {
                 ppu->obj_disp[pos] |= 4;
             }
