@@ -1634,7 +1634,7 @@ void LD_mDE_A(gbc_cpu *cpu) {
     cpu->registers.clk.m = 2;
 }
 void LDH_mC_A(gbc_cpu *cpu) {
-    write_u8(cpu->mmu,0xFF00+cpu->registers.c,cpu->registers.a);
+    write_u8(cpu->mmu, 0xFF00+cpu->registers.c,cpu->registers.a);
     cpu->registers.clk.m = 2;
 }
 
