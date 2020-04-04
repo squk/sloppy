@@ -58,11 +58,11 @@ void gbc_mmu_init(gbc_mmu *mmu){
     mmu->vram_access = true;
 
     memset(mmu->bios, 0xFF, sizeof mmu->bios);
-    memset(mmu->rom, 0xFF, sizeof mmu->rom);
+    memset(mmu->rom,  0xFF, sizeof mmu->rom);
     memset(mmu->vram, 0xFF, sizeof mmu->vram);
     memset(mmu->wram, 0xFF, sizeof mmu->wram);
-    memset(mmu->oam, 0xFF, sizeof mmu->oam);
-    memset(mmu->io, 0xFF, sizeof mmu->io);
+    memset(mmu->oam,  0xFF, sizeof mmu->oam);
+    memset(mmu->io,   0x00, sizeof mmu->io);
     memset(mmu->hram, 0xFF, sizeof mmu->hram);
     memset(mmu->zram, 0xFF, sizeof mmu->zram);
 }
@@ -159,6 +159,9 @@ u8 read_u8(gbc_mmu *mmu, u16 address) {
             /*return 0xFF;*/
         /*}*/
     /*}*/
+    if (address == IO_DIV) {
+        return mmu->counter->div >> 8;
+    }
     return *get_address_ptr(mmu, address);
 }
 
@@ -214,7 +217,7 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
             /* - When writing to DIV, the whole counter is reseted, so the timer
              *    is also affected. */
             mmu->counter->tima = 0;
-            /*mmu->counter->div = 0;*/
+            //mmu->counter->div = 0;
 
             /* - When writing to DIV, if the current output is '1' and timer is
              *    enabled, as the new value after reseting DIV will be '0', the
@@ -235,35 +238,35 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
             u8 old_TAC = *ptr;
             u8 new_TAC = val;
             *ptr = val;
-            /*bool glitch = false;*/
 
-            /*u16 old_clocks = TAC_CYCLES[old_TAC & MASK_TAC_CYCLES];*/
-            /*u16 new_clocks = TAC_CYCLES[new_TAC & MASK_TAC_CYCLES];*/
-            /*u8 old_enable = old_TAC & MASK_TAC_ENABLE;*/
-            /*u8 new_enable = new_TAC & MASK_TAC_ENABLE;*/
+            bool glitch = false;
+            u16 old_clocks = TAC_CYCLES[old_TAC & MASK_TAC_CYCLES];
+            u16 new_clocks = TAC_CYCLES[new_TAC & MASK_TAC_CYCLES];
+            u8 old_enable = old_TAC & MASK_TAC_ENABLE;
+            u8 new_enable = new_TAC & MASK_TAC_ENABLE;
 
-            /*if (old_enable == 0) {*/
-                /* TODO:
-                 * has a different behaviour in GBC (AGB and AGS seem to have
-                 * strange behaviour even in the other statements). When
-                 * enabling the timer and maintaining the same frequency it
-                 * doesn't glitch. When disabling the timer it doesn't glitch
-                 * either. When another change of value happens (so timer is
-                 * enabled after the write), the behaviour depends on a race
-                 * condition, so it cannot be predicted for every device. */
-                /*glitch = 0;*/
-            /*} else {*/
-                /*if (new_enable == 0) {*/
-                    /*glitch = (mmu->counter->div & (old_clocks/2)) != 0;*/
-                /*} else {*/
-                    /*glitch = ((mmu->counter->div & (old_clocks/2)) != 0) && ((mmu->counter->div & (new_clocks/2)) == 0);*/
-                /*}*/
-            /*}*/
+            if (old_enable == 0) {
+                 //TODO:
+                 //has a different behaviour in GBC (AGB and AGS seem to have
+                 //strange behaviour even in the other statements). When
+                 //enabling the timer and maintaining the same frequency it
+                 //doesn't glitch. When disabling the timer it doesn't glitch
+                 //either. When another change of value happens (so timer is
+                 //enabled after the write), the behaviour depends on a race
+                 //condition, so it cannot be predicted for every device. 
+                glitch = 0;
+            } else {
+                if (new_enable == 0) {
+                    glitch = (mmu->counter->div & (old_clocks/2)) != 0;
+                } else {
+                    glitch = ((mmu->counter->div & (old_clocks/2)) != 0) && ((mmu->counter->div & (new_clocks/2)) == 0);
+                }
+            }
 
-            /*if (glitch) {*/
-                /*printf("glitch: %d\n", glitch);*/
-                /*write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);*/
-            /*}*/
+            if (glitch) {
+                printf("glitch: %d\n", glitch);
+                write_u8(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);
+            }
         }
         break;
         case IO_TIMA:
@@ -290,26 +293,6 @@ void write_u16(gbc_mmu *mmu, u16 address, u16 val) {
     // swap bits for little-endian
     write_u8(mmu, address, val & 0xFF);
     write_u8(mmu, address+1, (u8)(val >> 8));
-}
-
-u8 read_io(gbc_mmu *mmu, u16 address) {
-    if (address >= 0xFF00  && address < 0xFF80) {
-        if (address == IO_DIV) {
-            return mmu->counter->div >> 8;
-        }
-        return mmu->io[address & 0xFF];
-    } else {
-        printf("invalid IO read: %x\n", address);
-        return 0;
-    }
-}
-
-void write_io(gbc_mmu *mmu, u16 address, u8 val) {
-    if (address >= 0xFF00  && address < 0xFF80) {
-        mmu->io[address & 0xFF] = val;
-    } else {
-        printf("invalid IO write: %x\n", address);
-    }
 }
 
 bool read_bit(gbc_mmu *mmu, u16 address, u8 bit) {
