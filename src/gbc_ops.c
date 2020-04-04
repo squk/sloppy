@@ -1651,14 +1651,14 @@ void LD_mHLD_A(gbc_cpu *cpu) {
     cpu->registers.clk.m = 2;
 }
 void LD_A_mHLI(gbc_cpu *cpu) {
-    cpu->registers.a = read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
+    cpu->registers.a = read_u8(cpu->mmu, get_hl(cpu));
     cpu->registers.l=(cpu->registers.l+1)&255;
     if(!cpu->registers.l) cpu->registers.h=(cpu->registers.h+1)&255;
     cpu->registers.clk.m = 2;
 }
 
 void LD_A_mHLD(gbc_cpu *cpu) {
-    cpu->registers.a = read_u8(cpu->mmu,(cpu->registers.h<<8)+cpu->registers.l);
+    cpu->registers.a = read_u8(cpu->mmu, get_hl(cpu));
     cpu->registers.l=(cpu->registers.l-1)&255;
     if(cpu->registers.l==255) cpu->registers.h=(cpu->registers.h-1)&255;
     cpu->registers.clk.m = 2;
