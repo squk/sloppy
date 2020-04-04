@@ -52,8 +52,6 @@ void gbc_cpu_reset(gbc_cpu *cpu) {
 
     cpu->HALT = 0;
     cpu->IME = 0;
-    cpu->IE = 0;
-    cpu->IF = 0;
 }
 
 void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
@@ -197,6 +195,7 @@ void gbc_cpu_trace(gbc_cpu *cpu, u8 opcode) {
     gbc_registers_debug(cpu, opcode);
     cpu->registers.pc++;
 }
+
 void gbc_interrupt_handler(gbc_cpu *cpu) {
     u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
     u8 IE = read_u8(cpu->mmu, IO_IENABLE);

@@ -50,8 +50,6 @@ typedef struct {
 
     // interrupts
     u8 IME; // IME - Interrupt Master Enable Flag (Write Only)
-    u8 IE;  // IE - Interrupt Enable (R/W)
-    u8 IF;  // IF - Interrupt Flag (R/W)
 
     gbc_mmu *mmu;
     gbc_ppu *ppu;

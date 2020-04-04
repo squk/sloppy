@@ -57,14 +57,14 @@ void gbc_mmu_init(gbc_mmu *mmu){
     mmu->oam_access = true;
     mmu->vram_access = true;
 
-    memset(mmu->bios, 0, sizeof mmu->bios);
-    memset(mmu->rom, 0, sizeof mmu->rom);
-    memset(mmu->vram, 0, sizeof mmu->vram);
-    memset(mmu->wram, 0, sizeof mmu->wram);
-    memset(mmu->oam, 0, sizeof mmu->oam);
-    memset(mmu->io, 0, sizeof mmu->io);
-    memset(mmu->hram, 0, sizeof mmu->hram);
-    memset(mmu->zram, 0, sizeof mmu->zram);
+    memset(mmu->bios, 0xFF, sizeof mmu->bios);
+    memset(mmu->rom, 0xFF, sizeof mmu->rom);
+    memset(mmu->vram, 0xFF, sizeof mmu->vram);
+    memset(mmu->wram, 0xFF, sizeof mmu->wram);
+    memset(mmu->oam, 0xFF, sizeof mmu->oam);
+    memset(mmu->io, 0xFF, sizeof mmu->io);
+    memset(mmu->hram, 0xFF, sizeof mmu->hram);
+    memset(mmu->zram, 0xFF, sizeof mmu->zram);
 }
 
 u8 z = 0;// hacky

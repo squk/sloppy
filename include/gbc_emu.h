@@ -125,7 +125,6 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/rst_timing.gb");
 
     // timer tests
-    //gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len); // PASSED
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/div_timing.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/div_write.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/rapid_toggle.gb");
@@ -170,7 +169,7 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/m3_window_timing.gb");
     //gbc_load_rom_file(&mmu, "data/m3_window_timing_wx_0.gb");
     //gbc_load_rom_file(&mmu, "data/m3_wx_4_change.gb");
-    gbc_load_rom_file(&mmu, "data/m3_wx_4_change_sprites.gb");
+    //gbc_load_rom_file(&mmu, "data/m3_wx_4_change_sprites.gb");
     //gbc_load_rom_file(&mmu, "data/m3_wx_5_change.gb");
 
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing.gb");
@@ -186,11 +185,11 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/tests/instr_timing/instr_timing.gb");
     //gbc_load_rom_file(&mmu, "./Tetris.gb");
     //gbc_load_rom_file(&mmu, "DK.gb");
-    //gbc_load_rom_file(&mmu, "./vblank_stat_intr-C.gb");
     //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     //gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len); // PASSED
+    gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len); // PASSED
     //gbc_load_rom(&mmu, __03_op_sp_hl_gb, __03_op_sp_hl_gb_len); // PASSED
     //gbc_load_rom(&mmu, __04_op_r_imm_gb, __04_op_r_imm_gb_len); // PASSED
     //gbc_load_rom(&mmu, __05_op_rp_gb, __05_op_rp_gb_len); // PASSED

@@ -327,9 +327,11 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
             u8 color_index = ((t1 & (1 << (7 - j))) ? 1 : 0) +
                              ((t2 & (1 << (7 - j))) ? 2 : 0);
             if (obj.flags & OPT_OBJ_Flag_palette) {
-                color = ppu_get_palette_color(ppu, IO_OBJ1PAL, color_index);
+                color = read_u8(ppu->mmu, IO_OBJ1PAL+color_index);
+                /*color = ppu_get_palette_color(ppu, IO_OBJ1PAL, color_index);*/
             } else {
-                color = ppu_get_palette_color(ppu, IO_OBJ0PAL, color_index);
+                color = read_u8(ppu->mmu, IO_OBJ0PAL+color_index);
+                /*color = ppu_get_palette_color(ppu, IO_OBJ0PAL, color_index);*/
             }
 
             ppu->obj_disp[pos] = color;
@@ -529,7 +531,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                 set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
             sdl_run(ppu);
-            ppu_dump(ppu);
+            /*ppu_dump(ppu);*/
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
