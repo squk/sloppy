@@ -308,8 +308,8 @@ void set_bit(gbc_mmu *mmu, u16 address, u8 bit) {
             mmu->vram_access = false;
         }
     }
-    u8 *ptr = get_address_ptr(mmu, address);
-    *ptr |= bit;
+    u8 v = read_u8(mmu, address);
+    write_u8(mmu, address, v | bit);
 }
 
 void unset_bit(gbc_mmu *mmu, u16 address, u8 bit) {
@@ -319,6 +319,6 @@ void unset_bit(gbc_mmu *mmu, u16 address, u8 bit) {
             mmu->vram_access = true;
         }
     }
-    u8 *ptr = get_address_ptr(mmu, address);
-    *ptr &= ~bit;
+    u8 v = read_u8(mmu, address);
+    write_u8(mmu, address, v & ~bit);
 }
