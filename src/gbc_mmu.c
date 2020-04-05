@@ -97,7 +97,7 @@ u8* get_address_ptr(gbc_mmu *mmu, u16 address) {
     if (address < 0xFF80) {
         return &mmu->io[address & 0xFF];
     }
-    if (address < 0xFFFF) {
+    if (address <= 0xFFFF) {
         return &mmu->hram[address & 0xFF];
     }
     z = 0;
