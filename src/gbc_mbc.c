@@ -25,10 +25,12 @@ void gbc_mbc_init(gbc_mbc *mbc) {
     printf("MBC TYPE: 0x%x\n", mbc->type);
     // 0148 - ROM Size
     mbc->rom_size = mbc->rom[0x148];
-    printf("ROM SIZE: 0x%x\n", mbc->rom_size);
+    mbc->num_rom_banks = mbc->rom_numbytes / CART_ROM_BANK_SIZE;
+    printf("ROM SIZE: 0x%x  BANKS: %d\n", mbc->rom_size, mbc->num_rom_banks);
     // 0149 - RAM Size
-    mbc->rom_size = mbc->rom[0x148];
-    printf("RAM SIZE: 0x%x\n", mbc->ram_size);
+    mbc->ram_size = mbc->rom[0x149];
+    mbc->num_ram_banks = mbc->rom_numbytes / CART_ROM_BANK_SIZE;
+    printf("RAM SIZE: 0x%x  BANKS: %d\n", mbc->ram_size, mbc->num_ram_banks);
 }
 
 u8 gbc_mbc_read_u8(gbc_mbc *mbc, u16 address) {
@@ -80,13 +82,23 @@ void gbc_mbc_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
 
 // MBC1 (max 2MByte ROM and/or 32KByte RAM)
 u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
-    printf("read mbc1 : %x\n", address);;
+    if (address < 0x4000) { // ROM Bank 00
+        // When the 0x0000-0x3FFF address range is accessed, the effective bank
+        // number depends on the MODE register. In MODE 0b0 the bank number is
+        // always 0, but in MODE 0b1 it’s formed by shifting the BANK2 register
+        // value left by 5 bits
+        //u8 bank = mbc->mode_select ? (mbc->rom_bank & 0x1F) : 1;
+        //return mbc->rom[address + CART_ROM_BANK_SIZE * (bank - 1)];
+        return mbc->rom[address];
+    }
     if (address < 0x8000) { // ROM Bank 01-7F (Read Only)
         /*This area may contain any of the further 16KByte banks of the ROM,
          * allowing to *address up to 125 ROM Banks (almost 2MByte).  Bank
          * numbers 20h, 40h, and 60h cannot be used, resulting in the odd
          * amount of *125 banks. */
-        printf("read mbc1 lower : %x\n", (u16)(address + CART_ROM_BANK_SIZE * (mbc->rom_bank - 1)));
+        if (mbc->rom_bank > 1) {
+            printf("bank:0x%x addy:0x%x/0x%x\n", mbc->rom_bank, (int)(address + CART_ROM_BANK_SIZE * (mbc->rom_bank - 1)), mbc->rom_numbytes);
+        }
         return mbc->rom[address + CART_ROM_BANK_SIZE * (mbc->rom_bank - 1)];
     }
     if (address < 0xC000) { // RAM Bank 00-03, if any (Read/Write)
@@ -95,7 +107,7 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
          * score tables, even if the gameboy is turned off, or if the cartridge is
          * removed from the gameboy. Available RAM sizes are: 2KByte (at A000-A7FF),
          * 8KByte (at A000-BFFF), and 32KByte (in form of four 8K banks at *A000-BFFF). */
-        printf("read mbc1 upper : %x\n", (u16)(address - 0xA000 + CART_RAM_BANK_SIZE * mbc->ram_bank));
+        printf("read mbc1 ram upper : %x\n", (int)(address - 0xA000 + CART_RAM_BANK_SIZE * mbc->ram_bank));
 		return mbc->ram[(u16)(address - 0xA000 + CART_RAM_BANK_SIZE * mbc->ram_bank)];
     }
     return 0x00;
@@ -103,42 +115,70 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
 
 void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
     if (address < 0x2000) { // RAM Enable (Write Only)
-        mbc->ram_enable = val;
+        // RAMG - gbctr.pdf
+        // bit 7-4 Unimplemented: Ignored during writes
+        // bit 3-0 RAMG<3:0>: RAM gate register
+        // 0b1010= enable access to cartridge RAM
+        // All other values disable access to cartridge RAM
+        if (val == 0xA) {
+            mbc->ram_enable = 0xA;
+        } else {
+            mbc->ram_enable = 0;
+        }
     }
     else if (address < 0x4000) { // ROM Bank Number (Write Only)
-        /* Writing to this address space selects the lower 5 bits of the ROM
-         * Bank Number (in range 01-1Fh). When 00h is written, the MBC
-         * translates that to bank 01h also. That doesn't harm so far, because
-         * ROM Bank 00h can be always directly accessed by reading from
-         * 0000-3FFF. But (when using the register below to specify the upper
-         * ROM Bank bits), the same happens for Bank 20h, 40h, and 60h. Any
-         * attempt to address these ROM Banks will select Bank 21h, 41h, and
-         * 61h instead.  */
+        // BANK1 - gbctr.pdf
+        // The 5-bit BANK1 register is used as the lower 5 bits of the ROM bank number
+        // when the CPU accesses the 0x4000-0x7FFF memory area.
+        //
+        // MBC1 doesn’t allow the BANK1 register to contain zero (bit pattern 0b00000),
+        // so the initial value at reset is 0b00001 and attempting to write 0b00000
+        // will write 0b00001 instead. This makes it impossible to read banks 0x00,
+        // 0x20, 0x40 and 0x60 from the 0x4000-0x7FFF memory area, because those bank
+        // numbers have 0b00000 in the lower bits. Due to the zero value adjustment,
+        // requesting any of these banks actually requests the next bank (e.g. 0x21
+        // instead of 0x20).
 
-        mbc->rom_bank = (val & 0x1F) | (mbc->rom_bank & 0xE0);
-		if(mbc->rom_bank == 0x00) {
-			mbc->rom_bank |= 1;
-			//mbc->rom_bank = 1;
+        // bit 7-5 Unimplemented: Ignored during writes
+        // bit 4-0 BANK1<4:0>: Bank register 1
+        // Never contains the value 0b00000.
+        // If 0b00000 is written, the resulting value will be 0b00001 instead.
+
+        mbc->rom_bank = (val & 0x1F) | (mbc->rom_bank & 0x60);
+		if(mbc->rom_bank & 0x1F == 0) {
+            mbc->rom_bank |= 1;
 		}
+        mbc->rom_bank %= mbc->num_rom_banks;
     }
     else if (address < 0x6000) { // RAM Bank Number - or - Upper Bits of ROM Bank Number (Write Only)
-        /*This 2bit register can be used to select a RAM Bank in range from
-         *00-03h, or to *specify the upper two bits (Bit 5-6) of the ROM Bank
-         *number, depending on *the current ROM/RAM Mode. (See below.) */
-        /*val &= 0x03;*/
+        // BANK2 - gbctr.pdf
+        // bit 7-2 Unimplemented: Ignored during writes
+        // bit 1-0 BANK2<1:0>: Bank register 2
+        //
+        // The 2-bit BANK2 register can be used as the upper bits of the ROM
+        // bank number, or as the 2-bit RAM bank number. Unlike BANK1, BANK2
+        // doesn’t disallow zero, so all 2-bit values are possible.
+
+        val &= 0x3;
 		if (mbc->mode_select) {
             mbc->rom_bank = (mbc->rom_bank & 0x1F) | (val << 5);
-			//mbc->rom_bank = mbc->rom_bank % mbc->num_rom_banks;
-            //mbc->rom_bank = ((val & 3) << 5);
+
+			//if(mbc->rom_bank & 0x1F == 0) {
+                //mbc->rom_bank |= 1;
+			//}
+            mbc->rom_bank %= mbc->num_rom_banks;
 		} else {
             mbc->ram_bank = (val & 3);
 		}
-
     }
     else if (address < 0x8000) { // ROM/RAM Mode Select (Write Only)
-        // 00h = ROM Banking Mode (up to 8KByte RAM, 2MByte ROM) (default)
-        // 01h = RAM Banking Mode (up to 32KByte RAM, 512KByte ROM)
-        mbc->mode_select = val;
+        // MODE - gbctr.pdf
+        // bit 7-1 Unimplemented: Ignored during writes
+        // bit 0 MODE: Mode register
+        // 0b1 = BANK2 affects accesses to 0x0000-0x3FFF, 0x4000-0x7FFF, 0xA000-0xBFFF
+        // 0b0 = BANK2 affects only accesses to 0x4000-0x7FFF
+        // The MODE register determines how the BANK2 register value is used during memory accesses
+        mbc->mode_select = val & 0x1;
     }
     else if (address >= 0xA000 && address < 0xC000) { // RAM Bank 00-03, if any (Read/Write)
         /* This area is used to address external RAM in the cartridge (if any).

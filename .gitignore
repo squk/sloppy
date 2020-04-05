@@ -4,3 +4,4 @@
 *.vim
 build/**
 */CMakeFiles
+src/Makefile

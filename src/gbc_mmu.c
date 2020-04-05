@@ -104,9 +104,7 @@ u8* get_address_ptr(gbc_mmu *mmu, u16 address) {
 //}
 
 void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
-    long numbytes;
-
-    FILE *infile = fopen(fname, "r");
+    FILE *infile = fopen(fname, "rb");
     if(infile == NULL) {
         printf("broken 1\n");
         fflush(stdout);
@@ -115,13 +113,13 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
 
     // Get the number of bytes
     fseek(infile, 0L, SEEK_END);
-    numbytes = ftell(infile);
+    mmu->mbc->rom_numbytes = ftell(infile);
 
     // reset the file position indicator to the beginning of the file
     fseek(infile, 0L, SEEK_SET);
 
     // grab sufficient memory for the buffer to hold the text
-    mmu->mbc->rom = (u8*)calloc(numbytes, sizeof(u8));
+    mmu->mbc->rom = (u8*)malloc(mmu->mbc->rom_numbytes);
 
     // memory error
     if(mmu->mbc->rom == NULL) {
@@ -132,7 +130,7 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
     }
 
     // copy all the text into the buffer
-    fread(mmu->mbc->rom, sizeof(char), numbytes, infile);
+    fread(mmu->mbc->rom, sizeof(char), mmu->mbc->rom_numbytes, infile);
     gbc_mbc_init(mmu->mbc);
     fclose(infile);
 }
@@ -266,7 +264,6 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
             }
 
             if (glitch) {
-                printf("glitch: %d\n", glitch);
                 write_u8(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);
             }
         }

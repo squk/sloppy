@@ -2,6 +2,7 @@ list(APPEND MAIN_APP_SOURCES
     main.c
     gbc_cpu.c
     gbc_mmu.c
+    gbc_mbc.c
     gbc_ops.c
     gbc_ppu.c
     )

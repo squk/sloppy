@@ -96,6 +96,7 @@ typedef struct {
     u8 ram_enable;
     u8 *ram;
     u8 *rom;
+    long rom_numbytes;
 
     gbc_cartridge cart;
 
