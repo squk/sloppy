@@ -2,7 +2,7 @@
 #include "gbc_emu.h"
 
 int main(int argc, char *argv[]) {
-    /*SDL_Init(SDL_INIT_VIDEO);*/
+    /*gui_init();*/
     emu_test();
    return 0;
 }

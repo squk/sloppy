@@ -12,9 +12,6 @@
 #include "gbc_mmu.h"
 #include "dmg_rom.h"
 
-#include "tetris_gb.h"
-#include "cpu_instrs_gb.h"
-
 #include "01_special.h"
 #include "02_interrupts.h"
 #include "03_op_sp_hl.h"
@@ -27,12 +24,11 @@
 #include "10_bit_ops.h"
 #include "11_op_a_mhl.h"
 
-#include "mario.h"
-
 void emu_run() {
     gbc_cpu cpu;
     gbc_ppu ppu;
     gbc_mmu mmu;
+
     cpu.mmu = &mmu;
     ppu.mmu = &mmu;
 
@@ -40,16 +36,13 @@ void emu_run() {
 
     gbc_mmu_init(&mmu);
     gbc_cpu_reset(&cpu);
+    ppu_init(&ppu);
     gbc_cpu_set_boot_state(&cpu);
-    //CpuFastSet(tetris_gb_bin, (u8*)mmu.rom, (tetris_gb_bin_size / 4) | COPY32);
-    //CpuFastSet(cpu_instrs_gb_bin, (u8*)mmu.rom, (cpu_instrs_gb_bin_size / 4) | COPY32);
 
     gbc_cpu_loop(&cpu);
 }
 
 void emu_test() {
-    int i;
-
 #if defined(SLOPPY_RENDER)
     SDL_Init(SDL_INIT_EVERYTHING);
     SDL_Renderer *renderer;
@@ -58,7 +51,6 @@ void emu_test() {
     SDL_CreateWindowAndRenderer(SIZE_X*scale, SIZE_Y*scale, 0, &window, &renderer);
     SDL_RenderSetScale(renderer, scale, scale);
     SDL_SetWindowTitle(window, "sloppy emu");
-    SDL_GL_SetSwapInterval(1);
     // Check that the window was successfully created
     if (window == NULL) {
         // In the case that the window could not be made...
@@ -85,15 +77,99 @@ void emu_test() {
     gbc_cpu_set_boot_state(&cpu);
     cpu.mmu->io[0x00] = 0xFF;
 
-    //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
-    //gbc_load_rom_file(&mmu, "./Tetris.gb");
-    //gbc_load_rom_file(&mmu, "./vblank_stat_intr-C.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ei_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/instr/daa.gb"); // PASSED
+
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/oam_dma/basic.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/oam_dma/reg_read.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/oam_dma/sources-GS.gb");
+
+    // instr timing tests
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/add_sp_e_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_div-dmgABCmgb.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_div2-S.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_hwio-S.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_hwio-dmg0.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_hwio-dmgABCmgb.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_regs-dmg0.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_regs-dmgABC.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_regs-mgb.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_regs-sgb.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/boot_regs-sgb2.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/call_cc_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/call_cc_timing2.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/call_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/call_timing2.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/di_timing-GS.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ei_sequence.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ei_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/halt_ime0_ei.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/halt_ime0_nointr_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/halt_ime1_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/halt_ime1_timing2-GS.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/if_ie_registers.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/intr_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/jp_cc_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/jp_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ld_hl_sp_e_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/oam_dma_restart.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/oam_dma_start.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/oam_dma_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/pop_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/push_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/rapid_di_ei.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ret_cc_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ret_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/reti_intr_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/reti_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/rst_timing.gb");
+
+    // timer tests
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/div_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/div_write.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/rapid_toggle.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim00.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim01.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim10.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim11.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim00_div_trigger.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim01_div_trigger.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim10_div_trigger.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim11_div_trigger.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tima_reload.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tima_write_reloading.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tma_write_reloading.gb");
+
+    // ppu tests
+    //gbc_load_rom_file(&mmu, "data/m2_win_en_toggle.gb");
+    //
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode4_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_oam_ok_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_0_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing_sprites.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode3_timing.gb");
+    //
+    // interrupts
+    //gbc_load_rom_file(&mmu, "./data/mooneye-gb_hwtests/acceptance/interrupts/ie_push.gb");
+    //gbc_load_rom_file(&mmu, "./data/tests/interrupt_time/interrupt_time.gb");
+
+    // mem-timing  - do this before interrupt timing?
+    gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/01-read_timing.gb");
+    //gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/02-write_timing.gb");
+    //gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/03-modify_timing.gb");
+
     //gbc_load_rom_file(&mmu, "./DrMario.gb");
+    //gbc_load_rom_file(&mmu, "./Tetris.gb");
+    //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
+    //gbc_load_rom_file(&mmu, "data/tests/instr_timing/instr_timing.gb");
     //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
+    //gbc_load_rom_file(&mmu, "DK.gb");
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     //gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len); // PASSED
-    gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len); // PASSED
+    //gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len); // PASSED
     //gbc_load_rom(&mmu, __03_op_sp_hl_gb, __03_op_sp_hl_gb_len); // PASSED
     //gbc_load_rom(&mmu, __04_op_r_imm_gb, __04_op_r_imm_gb_len); // PASSED
     //gbc_load_rom(&mmu, __05_op_rp_gb, __05_op_rp_gb_len); // PASSED

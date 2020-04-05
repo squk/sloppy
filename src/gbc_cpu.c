@@ -28,6 +28,11 @@ void set_flag_c(gbc_cpu *cpu, bool val) { cpu->registers.f = (cpu->registers.f &
 
 
 void gbc_cpu_reset(gbc_cpu *cpu) {
+    cpu->counter.tima = 0;
+    cpu->counter.div = 0;
+    cpu->counter.serial = 0;
+    cpu->mmu->counter = &cpu->counter;
+
     cpu->registers.a = 0;
     cpu->registers.b = 0;
     cpu->registers.c = 0;
@@ -47,13 +52,6 @@ void gbc_cpu_reset(gbc_cpu *cpu) {
 
     cpu->HALT = 0;
     cpu->IME = 0;
-    cpu->IE = 0;
-    cpu->IF = 0;
-
-    cpu->timer.lcd_count = 0;
-    cpu->timer.div_count = 0;
-    cpu->timer.tima_count = 0;
-    cpu->timer.serial_count = 0;
 }
 
 void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
@@ -69,36 +67,37 @@ void gbc_cpu_set_boot_state(gbc_cpu *cpu) {
     cpu->registers.sp = 0xFFFE;
     cpu->IME = 1;
 
-    write_u8(cpu->mmu, 0xFF05, 0x00);
-    write_u8(cpu->mmu, 0xFF06, 0x00);
-    write_u8(cpu->mmu, 0xFF07, 0x00);
-    write_u8(cpu->mmu, 0xFF10, 0x80);
-    write_u8(cpu->mmu, 0xFF11, 0xBF);
-    write_u8(cpu->mmu, 0xFF12, 0xF3);
-    write_u8(cpu->mmu, 0xFF14, 0xBF);
-    write_u8(cpu->mmu, 0xFF16, 0x3F);
-    write_u8(cpu->mmu, 0xFF17, 0x00);
-    write_u8(cpu->mmu, 0xFF19, 0xBF);
-    write_u8(cpu->mmu, 0xFF1A, 0x7F);
-    write_u8(cpu->mmu, 0xFF1B, 0xFF);
-    write_u8(cpu->mmu, 0xFF1C, 0x9F);
-    write_u8(cpu->mmu, 0xFF1E, 0xBF);
-    write_u8(cpu->mmu, 0xFF20, 0xFF);
-    write_u8(cpu->mmu, 0xFF21, 0x00);
-    write_u8(cpu->mmu, 0xFF22, 0x00);
-    write_u8(cpu->mmu, 0xFF23, 0xBF);
-    write_u8(cpu->mmu, 0xFF24, 0x77);
-    write_u8(cpu->mmu, 0xFF25, 0xF3);
-    write_u8(cpu->mmu, 0xFF26, 0xF1);
-    write_u8(cpu->mmu, 0xFF40, 0x91);
-    write_u8(cpu->mmu, 0xFF42, 0x00);
-    write_u8(cpu->mmu, 0xFF43, 0x00);
-    write_u8(cpu->mmu, 0xFF45, 0x00);
-    write_u8(cpu->mmu, 0xFF47, 0xFC);
-    write_u8(cpu->mmu, 0xFF48, 0xFF);
-    write_u8(cpu->mmu, 0xFF49, 0xFF);
-    write_u8(cpu->mmu, 0xFF4A, 0x00);
-    write_u8(cpu->mmu, 0xFF4B, 0x00);
+    cpu->mmu->io[0x05] = 0x00;
+    cpu->mmu->io[0x06] = 0x00;
+    cpu->mmu->io[0x07] = 0x00;
+    cpu->mmu->io[0x10] = 0x80;
+    cpu->mmu->io[0x11] = 0xBF;
+    cpu->mmu->io[0x12] = 0xF3;
+    cpu->mmu->io[0x14] = 0xBF;
+    cpu->mmu->io[0x16] = 0x3F;
+    cpu->mmu->io[0x17] = 0x00;
+    cpu->mmu->io[0x19] = 0xBF;
+    cpu->mmu->io[0x1A] = 0x7F;
+    cpu->mmu->io[0x1B] = 0xFF;
+    cpu->mmu->io[0x1C] = 0x9F;
+    cpu->mmu->io[0x1E] = 0xBF;
+    cpu->mmu->io[0x20] = 0xFF;
+    cpu->mmu->io[0x21] = 0x00;
+    cpu->mmu->io[0x22] = 0x00;
+    cpu->mmu->io[0x23] = 0xBF;
+    cpu->mmu->io[0x24] = 0x77;
+    cpu->mmu->io[0x25] = 0xF3;
+    cpu->mmu->io[0x26] = 0xF1;
+    cpu->mmu->io[0x40] = 0x91;
+    cpu->mmu->io[0x42] = 0x00;
+    cpu->mmu->io[0x43] = 0x00;
+    cpu->mmu->io[0x45] = 0x00;
+    cpu->mmu->io[0x47] = 0xFC;
+    cpu->mmu->io[0x48] = 0xFF;
+    cpu->mmu->io[0x49] = 0xFF;
+    cpu->mmu->io[0x4A] = 0x00;
+    cpu->mmu->io[0x4B] = 0x00;
+
     write_u8(cpu->mmu, 0xFFFF, 0x00);
 
     cpu->mmu->in_bios = false;
@@ -113,7 +112,8 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
     if (r->f & FLAG_C) flags[3] = 'C';
 
     u8 temp = read_u8(cpu->mmu,cpu->registers.pc+1);
-    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx    %02hx %s, %x\n", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, opcode, op_string(opcode), temp);
+    printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx    %02hx %s, %x", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, opcode, op_string(opcode), temp);
+    printf("  M: %d  TIMA: %d  DIV: %d  TAC: %X\n", cpu->registers.clk.m, read_u8(cpu->mmu, IO_TIMA), read_u8(cpu->mmu, IO_DIV), read_u8(cpu->mmu, IO_DIV));
 }
 
 bool setup_stack = false;
@@ -176,10 +176,11 @@ void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode) {
     if (old_pc == 0x00e0) {
         printf("Nintendo logo comparison routine\n");
         FILE *fp;
-        fp = fopen("fb.bin" , "w" );
+        fp = fopen("fb.bin", "w" );
         fwrite(&cpu->ppu->fb, 1, sizeof cpu->ppu->fb, fp);
         fclose(fp);
         printf("dumped framebuffer to file\n");
+        //hex_dump("bg_disp", &cpu->ppu->bg_disp, 512*512);
     }
     if (old_pc == 0x00f9) {
         printf("\nlock up?\n");
@@ -194,6 +195,7 @@ void gbc_cpu_trace(gbc_cpu *cpu, u8 opcode) {
     gbc_registers_debug(cpu, opcode);
     cpu->registers.pc++;
 }
+
 void gbc_interrupt_handler(gbc_cpu *cpu) {
     u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
     u8 IE = read_u8(cpu->mmu, IO_IENABLE);
@@ -211,27 +213,67 @@ void gbc_interrupt_handler(gbc_cpu *cpu) {
             if(IF & IE & VBLANK_INTR) {
                 cpu->registers.pc = VBLANK_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ VBLANK_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
             }
             else if(IF & IE & LCDC_INTR) {
                 cpu->registers.pc = LCDC_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ LCDC_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
             }
             else if(IF & IE & TIMER_INTR) {
                 cpu->registers.pc = TIMER_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ TIMER_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
             }
             else if(IF & IE & SERIAL_INTR) {
                 cpu->registers.pc = SERIAL_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ SERIAL_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
             }
             else if(IF & IE & CONTROL_INTR) {
                 cpu->registers.pc = CONTROL_INTR_ADDR;
                 write_u8(cpu->mmu, IO_IFLAGS, IF ^ CONTROL_INTR);
-                cpu->registers.clk.m = 20;
+                cpu->registers.clk.m = 5;
+            }
+        }
+    }
+}
+
+/*
+ * Bit  2   - Timer Enable
+ * Bits 1-0 - Input Clock Select
+ *            00: CPU Clock / 1024 (DMG, CGB:   4096 Hz, SGB:   ~4194 Hz)
+ *            01: CPU Clock / 16   (DMG, CGB: 262144 Hz, SGB: ~268400 Hz)
+ *            10: CPU Clock / 64   (DMG, CGB:  65536 Hz, SGB:  ~67110 Hz)
+ *            11: CPU Clock / 256  (DMG, CGB:  16384 Hz, SGB:  ~16780 Hz)
+ *
+ * Note: The "Timer Enable" bit only affects the timer, the divider is ALWAYS counting
+ */
+void gbc_cpu_timer_run(gbc_cpu *cpu) {
+    // DIV register timing
+    //The divider register increments at a fixed frequency (1 per 256 clock cycles = 1 per 64 machine cycles)
+    cpu->counter.div += cpu->registers.clk.m;
+    if (cpu->counter.div > DIV_CYCLES) {
+        cpu->counter.div -= DIV_CYCLES;
+        write_u8(cpu->mmu, IO_DIV, read_u8(cpu->mmu, IO_DIV) + 1);
+    }
+
+    // TIMA register timing
+    u8 TAC = read_u8(cpu->mmu, IO_TAC);
+    if (TAC & MASK_TAC_ENABLE) {
+        u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
+        cpu->counter.tima  += cpu->registers.clk.m * 4; // *4 since we clk.m is in machine cycles
+
+        if(cpu->counter.tima >= TAC_CYCLES[TAC & MASK_TAC_CYCLES]) {
+            cpu->counter.tima -= TAC_CYCLES[TAC & MASK_TAC_CYCLES];
+            u8 temp = read_u8(cpu->mmu, IO_TIMA) + 1;
+
+            // For one cycle, after overflowing TIMA, the value in TIMA is 00h, not TMA
+            if(temp == 0x00) { // overflow
+                write_u8(cpu->mmu, IO_TIMA, read_u8(cpu->mmu, IO_TMA));
+                write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
+            } else {
+                write_u8(cpu->mmu, IO_TIMA, temp);
             }
         }
     }
@@ -242,31 +284,16 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     // fetch and execute instruction
     u8 opcode = (cpu->HALT ? 0x00 : read_u8(cpu->mmu, cpu->registers.pc++));
-    //gbc_cpu_trace(cpu, opcode);
+    /*gbc_cpu_trace(cpu, opcode);*/
 
     u16 old_pc = cpu->registers.pc;
     execute_op(cpu, opcode);
+    gbc_cpu_timer_run(cpu);
+    //debug_dmg_bootrom(cpu, old_pc, opcode);
 
     // Add execution time to the CPU clk
     cpu->clk.m += cpu->registers.clk.m;
     cpu->clk.t += cpu->registers.clk.t;
-
-    if (read_bit(cpu->mmu, IO_TIMCONT, 0x4)) {
-        u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
-        u8 TAC = read_u8(cpu->mmu, IO_TIMCONT);
-        cpu->timer.tima_count += cpu->registers.clk.m;
-
-        if(cpu->timer.tima_count >= TAC_CYCLES[TAC]) {
-            cpu->timer.tima_count -= TAC_CYCLES[TAC];
-
-            u8 temp = read_u8(cpu->mmu, IO_TIMECNT) + 1;
-            write_u8(cpu->mmu, IO_TIMECNT, temp);
-            if(temp == 0x00) { // overflow
-                write_u8(cpu->mmu, IO_TIMECNT, read_u8(cpu->mmu, IO_TIMEMOD)); // reset to value in TMA
-                write_u8(cpu->mmu, IO_IFLAGS, IF | TIMER_INTR); // request interrupt
-            }
-        }
-    }
 
     ppu_run(cpu->ppu, cpu->registers.clk.m);
 }
@@ -290,7 +317,6 @@ void validate_memory(gbc_cpu *cpu) {
     }
 
     // header checksum
-    size_t checksum_size = 0x19;
     u16 checksum_start = 0x0134;
     u16 checksum_end = 0x014C;
 

@@ -3,14 +3,12 @@
 #include "types.h"
 #include "gbc_ppu.h"
 #include "gbc_mmu.h"
+#include "gbc_counter.h"
 
 #define FLAG_Z 0x80
 #define FLAG_N 0x40
 #define FLAG_H 0x20
 #define FLAG_C 0x10
-
-// http://bgb.bircd.org/pandocs.htm#timeranddividerregisters
-static const u16 TAC_CYCLES[4] = {1024, 16, 64, 256};
 
 typedef struct {
     // two types of timeclocks in the Z80
@@ -41,28 +39,17 @@ typedef struct {
     u8 a, b, c, d, e, h, l, f;
 } gbc_cpu_rsv;
 
-typedef struct
-{
-	u16 lcd_count; // LCD Timing
-	u16 div_count; // Divider Register Counter
-	u16 tima_count;	// Timer Counter
-	u16 serial_count; // Serial Counter
-	bool enabled;
-} gbc_timer;
-
 typedef struct {
     gbc_clock clk;
     gbc_cpu_registers registers;
     gbc_cpu_rsv rsv;
-    gbc_timer timer;
+    gbc_counter counter;
 
     u8 HALT;
     bool quit;
 
     // interrupts
     u8 IME; // IME - Interrupt Master Enable Flag (Write Only)
-    u8 IE; // IE - Interrupt Enable (R/W)
-    u8 IF; // IF - Interrupt Flag (R/W)
 
     gbc_mmu *mmu;
     gbc_ppu *ppu;
@@ -97,5 +84,6 @@ void gbc_cpu_reset(gbc_cpu *cpu);
 void gbc_cpu_set_boot_state(gbc_cpu *cpu);
 
 void debug_dmg_bootrom(gbc_cpu *cpu, u16 old_pc, u8 opcode);
+void gbc_cpu_timer_run(gbc_cpu *cpu);
 void gbc_cpu_step(gbc_cpu *cpu);
 void gbc_cpu_loop(gbc_cpu *cpu);

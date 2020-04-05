@@ -3,3 +3,4 @@
 *.elf
 *.vim
 build/**
+*/CMakeFiles

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gbc_counter.h"
+
 #define MEM_OAM 0xFE00
 // 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 // 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -23,6 +25,10 @@ typedef struct {
     u8 io[0x80];
     u8 hram[0x80];
     u8 zram[0xFFFF];
+    u8 nullish;
+
+    bool oam_access, vram_access;
+    gbc_counter *counter;
 
     bool in_bios;
 } gbc_mmu;
@@ -30,16 +36,16 @@ typedef struct {
 void hex_dump(char *desc, void *addr, int len);
 
 void gbc_mmu_init(gbc_mmu *mmu);
-u8* get_address_ptr(gbc_mmu *mmu , u16 address);
+u8* get_address_ptr(gbc_mmu *mmu, u16 address);
 
 void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n);
 void gbc_load_rom_file(gbc_mmu *mmu, const char *fname);
 
-u8 read_u8(gbc_mmu *mmu , u16 address);
-void write_u8(gbc_mmu *mmu , u16 address, u8 val);
-u16 read_u16(gbc_mmu *mmu , u16 address);
-void write_u16(gbc_mmu *mmu , u16 address, u16 val);
+u8 read_u8(gbc_mmu *mmu, u16 address);
+void write_u8(gbc_mmu *mmu, u16 address, u8 val);
+u16 read_u16(gbc_mmu *mmu, u16 address);
+void write_u16(gbc_mmu *mmu, u16 address, u16 val);
 
-bool read_bit(gbc_mmu *mmu , u16 address, u8 bit);
+bool read_bit(gbc_mmu *mmu, u16 address, u8 bit);
 void set_bit(gbc_mmu *mmu, u16 address, u8 bit);
 void unset_bit(gbc_mmu *mmu, u16 address, u8 bit);
