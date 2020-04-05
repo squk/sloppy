@@ -149,16 +149,16 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
 
 u8 read_u8(gbc_mmu *mmu, u16 address) {
     u8 lcd_mode = mmu->io[IO_LCDSTAT & 0xFF] & MASK_LCDSTAT_MODE_FLAG;
-    /*if (!mmu->oam_access) {*/
-        /*if (address >= 0xFE00 && address < 0xFEA0) { // OAM*/
-            /*return 0xFF;*/
-        /*}*/
-    /*}*/
-    /*if (!mmu->vram_access) {*/
-        /*if (address >= 0x8000 && address < 0xA000) { // VRAM*/
-            /*return 0xFF;*/
-        /*}*/
-    /*}*/
+    if (!mmu->oam_access) {
+        if (address >= 0xFE00 && address < 0xFEA0) { // OAM
+            return 0xFF;
+        }
+    }
+    if (!mmu->vram_access) {
+        if (address >= 0x8000 && address < 0xA000) { // VRAM
+            return 0xFF;
+        }
+    }
     if (address == IO_DIV) {
         return mmu->counter->div >> 8;
     }
@@ -179,15 +179,15 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
 
     u8 lcd_mode = mmu->io[IO_LCDSTAT & 0xFF] & MASK_LCDSTAT_MODE_FLAG;
     // OAM is not accessible in Mode 2 or 3
-    /*if (!mmu->vram_access) {*/
-        /*if (address >= 0x8000 && address < 0xA000) { // VRAM*/
-            /*return;*/
-        /*}*/
-    /*}*/
-    /*if (!mmu->oam_access) {*/
-        /*if (address >= 0xFE00 && address < 0xFEA0) // OAM*/
-            /*return;*/
-    /*}*/
+    if (!mmu->vram_access) {
+        if (address >= 0x8000 && address < 0xA000) { // VRAM
+            return;
+        }
+    }
+    if (!mmu->oam_access) {
+        if (address >= 0xFE00 && address < 0xFEA0) // OAM
+            return;
+    }
 
     switch (address) {
         case IO_IFLAGS:
