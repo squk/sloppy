@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gbc_counter.h"
+#include "gbc_mbc.h"
 
 #define MEM_OAM 0xFE00
 // 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
@@ -17,7 +18,7 @@
 // FFFF        Interrupt Enable Register
 typedef struct {
     u8 bios[0x100];
-    u8 rom[0x8000]; // 16KB ROM Bank * 2
+    //u8 rom[0x8000]; // 16KB ROM Bank * 2
     u8 vram[0x2000]; // 8KB Video RAM (VRAM)	Only bank 0 in Non-CGB mode. Switchable bank 0/1 in CGB mode
     u8 eram[0x4000]; // 8KB External RAM	In cartridge, switchable bank if any
     u8 wram[0x4000]; // 4KB Work RAM * 2
@@ -25,10 +26,10 @@ typedef struct {
     u8 io[0x80];
     u8 hram[0x80];
     u8 zram[0xFFFF];
-    u8 nullish;
 
     bool oam_access, vram_access;
     gbc_counter *counter;
+    gbc_mbc *mbc;
 
     bool in_bios;
 } gbc_mmu;

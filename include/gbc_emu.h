@@ -62,8 +62,12 @@ void emu_test() {
     gbc_cpu cpu;
     gbc_ppu ppu;
     gbc_mmu mmu;
+    gbc_mbc mbc;
+
+    mmu.mbc = &mbc;
     cpu.mmu = &mmu;
     ppu.mmu = &mmu;
+
 #if defined(SLOPPY_RENDER)
     ppu.renderer = renderer;
 #endif
@@ -156,7 +160,7 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "./data/tests/interrupt_time/interrupt_time.gb");
 
     // mem-timing  - do this before interrupt timing?
-    gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/01-read_timing.gb");
+    //gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/01-read_timing.gb");
     //gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/02-write_timing.gb");
     //gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/03-modify_timing.gb");
 
@@ -164,7 +168,7 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "./Tetris.gb");
     //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
     //gbc_load_rom_file(&mmu, "data/tests/instr_timing/instr_timing.gb");
-    //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
+    gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
     //gbc_load_rom_file(&mmu, "DK.gb");
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 

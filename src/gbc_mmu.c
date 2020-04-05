@@ -4,6 +4,7 @@
 
 #include "types.h"
 #include "gbc_mmu.h"
+#include "gbc_mbc.h"
 #include "gbc_io.h"
 
 // from https://gist.github.com/domnikl/af00cc154e3da1c5d965k
@@ -58,7 +59,7 @@ void gbc_mmu_init(gbc_mmu *mmu){
     mmu->vram_access = true;
 
     memset(mmu->bios, 0xFF, sizeof mmu->bios);
-    memset(mmu->rom,  0xFF, sizeof mmu->rom);
+    //memset(mmu->rom,  0xFF, sizeof mmu->rom);
     memset(mmu->vram, 0xFF, sizeof mmu->vram);
     memset(mmu->wram, 0xFF, sizeof mmu->wram);
     memset(mmu->oam,  0xFF, sizeof mmu->oam);
@@ -69,12 +70,6 @@ void gbc_mmu_init(gbc_mmu *mmu){
 
 u8 z = 0;// hacky
 u8* get_address_ptr(gbc_mmu *mmu, u16 address) {
-    if (address < 0x100 && mmu->in_bios) {
-        return &mmu->bios[address];
-    }
-    if (address < 0x8000) {
-        return &mmu->rom[address];
-    }
     if (address < 0xA000) {
         return &mmu->vram[address & 0x1FFF];
     }
@@ -104,12 +99,11 @@ u8* get_address_ptr(gbc_mmu *mmu, u16 address) {
     return &z;
 }
 
-void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {
-    memcpy(mmu->rom, src, n);
-}
+//void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {
+    //memcpy(mmu->rom, src, n);
+//}
 
 void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
-    char *buffer;
     long numbytes;
 
     FILE *infile = fopen(fname, "r");
@@ -127,10 +121,10 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
     fseek(infile, 0L, SEEK_SET);
 
     // grab sufficient memory for the buffer to hold the text
-    buffer = (char*)calloc(numbytes, sizeof(char));
+    mmu->mbc->rom = (u8*)calloc(numbytes, sizeof(u8));
 
     // memory error
-    if(buffer == NULL) {
+    if(mmu->mbc->rom == NULL) {
         printf("broken\n");
         fflush(stdout);
         fclose(infile);
@@ -138,16 +132,19 @@ void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
     }
 
     // copy all the text into the buffer
-    fread(buffer, sizeof(char), numbytes, infile);
+    fread(mmu->mbc->rom, sizeof(char), numbytes, infile);
+    gbc_mbc_init(mmu->mbc);
     fclose(infile);
-
-    memcpy(mmu->rom, buffer, numbytes);
-
-    //free the memory we used for the buffer
-    free(buffer);
 }
 
 u8 read_u8(gbc_mmu *mmu, u16 address) {
+    if (address < 0x100 && mmu->in_bios) {
+        return mmu->bios[address];
+    }
+    if (address < 0x8000) {
+        return gbc_mbc_read_u8(mmu->mbc, address);
+    }
+
     u8 lcd_mode = mmu->io[IO_LCDSTAT & 0xFF] & MASK_LCDSTAT_MODE_FLAG;
     if (!mmu->oam_access) {
         if (address >= 0xFE00 && address < 0xFEA0) { // OAM
@@ -166,7 +163,12 @@ u8 read_u8(gbc_mmu *mmu, u16 address) {
 }
 
 void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
+    if (address < 0x8000) {
+        return gbc_mbc_write_u8(mmu->mbc, address, val);
+    }
+
     u8 *ptr = get_address_ptr(mmu, address);
+
     if (address == 0xFF50) {
         mmu->in_bios = false;
     }
