@@ -158,8 +158,8 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "./data/mbc1/rom_1Mb.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/mbc1/rom_2Mb.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/mbc1/rom_4Mb.gb"); // PASSED
-    //gbc_load_rom_file(&mmu, "./data/mbc1/rom_8Mb.gb");
-    //gbc_load_rom_file(&mmu, "./data/mbc1/rom_16Mb.gb");
+    //gbc_load_rom_file(&mmu, "./data/mbc1/rom_8Mb.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "./data/mbc1/rom_16Mb.gb"); // PASSED
 
     // ppu tests
     //gbc_load_rom_file(&mmu, "data/m2_win_en_toggle.gb");

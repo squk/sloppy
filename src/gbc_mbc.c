@@ -14,7 +14,6 @@ void gbc_mbc_init(gbc_mbc *mbc) {
 
     mbc->bank1 = 1;
     mbc->bank2 = 0;
-    /*mbc->ram_bank = 0;*/
 
     mbc->mode_select = 0;
     mbc->cart_ram = 0;
@@ -37,10 +36,6 @@ void gbc_mbc_init(gbc_mbc *mbc) {
 }
 
 u8 gbc_mbc_read_u8(gbc_mbc *mbc, u16 address) {
-    if (address < 0x4000) {
-        return mbc->rom[address];
-    }
-
     switch (mbc->type) {
         case ROM_ONLY:
             return mbc->rom[address];
@@ -93,7 +88,9 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
         // value left by 5 bits
         u8 upper_bits = mbc->mode_select ? (mbc->bank2 << 5) : 0;
         long haddr = ((upper_bits << 14) | (address & 0x7FFF)) % mbc->rom_numbytes;
-        //printf("banky: 0x%x  haddr:0x%x\n", rom_bank, haddr);
+        //if (mbc->mode_select) {
+            //printf("m:%d bank1: 0x%x  bank2:0x%x  addr:0x%x\n", mbc->mode_select, mbc->bank1, mbc->bank2, address);
+        //}
         //return mbc->rom[address];
         return mbc->rom[haddr];
     }
@@ -106,9 +103,7 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
         // the BANK2 register value is always ignored because those bits are
         // simply not connected to the ROM.
         u8 rom_bank = (mbc->bank2 << 5) | mbc->bank1;
-        //long haddr = ((rom_bank << 14) | (address & 0x7FFF)) % mbc->rom_numbytes;
         long haddr = (address + (CART_ROM_BANK_SIZE * (rom_bank - 1))) % mbc->rom_numbytes;
-        //printf("bank: 0x%x  haddr:0x%x\n", rom_bank, haddr);
         return mbc->rom[haddr];
     }
     if (address < 0xC000) { // RAM Bank 00-03, if any (Read/Write)

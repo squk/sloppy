@@ -88,8 +88,6 @@ typedef struct {
     u8 ram_size;
 
     u8 bank1, bank2;
-    //u8 rom_bank;
-    //u8 ram_bank;
     u8 mode_select;
     u8 type;
 
