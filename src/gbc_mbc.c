@@ -88,10 +88,6 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
         // value left by 5 bits
         u8 upper_bits = mbc->mode_select ? (mbc->bank2 << 5) : 0;
         long haddr = ((upper_bits << 14) | (address & 0x7FFF)) % mbc->rom_numbytes;
-        //if (mbc->mode_select) {
-            //printf("m:%d bank1: 0x%x  bank2:0x%x  addr:0x%x\n", mbc->mode_select, mbc->bank1, mbc->bank2, address);
-        //}
-        //return mbc->rom[address];
         return mbc->rom[haddr];
     }
     if (address < 0x8000) { // ROM Bank 01-7F (Read Only)

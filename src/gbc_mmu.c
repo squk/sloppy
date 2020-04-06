@@ -162,6 +162,7 @@ u8 read_u8(gbc_mmu *mmu, u16 address) {
 
 void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
     if (address < 0x8000) {
+        printf("ROM write %x=%x\n", address, val);
         return gbc_mbc_write_u8(mmu->mbc, address, val);
     }
 
