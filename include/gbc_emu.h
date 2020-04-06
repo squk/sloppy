@@ -146,13 +146,13 @@ void emu_test() {
 
     // mbc tests
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank1.gb"); // PASSED
-    //gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank2.gb");
-    //gbc_load_rom_file(&mmu, "./data/mbc1/bits_mode.gb");
+    gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank2.gb");
+    //gbc_load_rom_file(&mmu, "./data/mbc1/bits_mode.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_ramg.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/multicart_rom_8Mb.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/ram_64kb.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/ram_256kb.gb");
-    //
+
     //gbc_load_rom_file(&mmu, "./data/mbc1/rom_512kb.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/mbc1/rom_1Mb.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/mbc1/rom_2Mb.gb"); // PASSED
@@ -169,7 +169,7 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing_sprites.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode3_timing.gb");
-    //
+
     // interrupts
     //gbc_load_rom_file(&mmu, "./data/mooneye-gb_hwtests/acceptance/interrupts/ie_push.gb");
     //gbc_load_rom_file(&mmu, "./data/tests/interrupt_time/interrupt_time.gb");
@@ -181,14 +181,15 @@ void emu_test() {
 
     //gbc_load_rom_file(&mmu, "./DrMario.gb");
     //gbc_load_rom_file(&mmu, "./Tetris.gb");
+    //gbc_load_rom_file(&mmu, "DK.gb");
+    //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
     //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
     //gbc_load_rom_file(&mmu, "data/tests/instr_timing/instr_timing.gb");
-    //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
-    //gbc_load_rom_file(&mmu, "DK.gb");
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     // CPU instruction tests
     //gbc_load_rom_file(&mmu, "data/tests/cpu_instrs/cpu_instrs.gb");
+    //gbc_load_rom_file(&mmu, "data/tests/oam_bug/oam_bug.gb");
     //gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len); // PASSED
     //gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len); // PASSED
     //gbc_load_rom(&mmu, __03_op_sp_hl_gb, __03_op_sp_hl_gb_len); // PASSED
