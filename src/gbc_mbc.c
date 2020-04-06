@@ -30,7 +30,7 @@ void gbc_mbc_init(gbc_mbc *mbc) {
     // 0149 - RAM Size
     mbc->ram_size = mbc->rom[0x149];
     mbc->num_ram_banks = mbc->rom_numbytes / CART_ROM_BANK_SIZE;
-    printf("RAM SIZE: 0x%x  BANKS: %d\n", mbc->ram_size, mbc->num_ram_banks);
+    printf("RAM SIZE: 0x%x\n", mbc->ram_size);
 }
 
 u8 gbc_mbc_read_u8(gbc_mbc *mbc, u16 address) {
@@ -96,7 +96,7 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
          * allowing to *address up to 125 ROM Banks (almost 2MByte).  Bank
          * numbers 20h, 40h, and 60h cannot be used, resulting in the odd
          * amount of *125 banks. */
-        if (mbc->rom_bank > 1) {
+        if (mbc->rom_bank < 1) {
             printf("bank:0x%x addy:0x%x/0x%x\n", mbc->rom_bank, (int)(address + CART_ROM_BANK_SIZE * (mbc->rom_bank - 1)), mbc->rom_numbytes);
         }
         return mbc->rom[address + CART_ROM_BANK_SIZE * (mbc->rom_bank - 1)];
@@ -145,7 +145,7 @@ void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
         // If 0b00000 is written, the resulting value will be 0b00001 instead.
 
         mbc->rom_bank = (val & 0x1F) | (mbc->rom_bank & 0x60);
-		if(mbc->rom_bank & 0x1F == 0) {
+		if((mbc->rom_bank & 0x1F) == 0) {
             mbc->rom_bank |= 1;
 		}
         mbc->rom_bank %= mbc->num_rom_banks;
@@ -162,10 +162,6 @@ void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
         val &= 0x3;
 		if (mbc->mode_select) {
             mbc->rom_bank = (mbc->rom_bank & 0x1F) | (val << 5);
-
-			//if(mbc->rom_bank & 0x1F == 0) {
-                //mbc->rom_bank |= 1;
-			//}
             mbc->rom_bank %= mbc->num_rom_banks;
 		} else {
             mbc->ram_bank = (val & 3);
