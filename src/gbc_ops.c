@@ -594,6 +594,7 @@ void execute_op(gbc_cpu *cpu, u8 opcode) {
             break;
         case 0xBE: // CP (HL)
             CP_u8(cpu, read_u8(cpu->mmu, get_hl(cpu)));
+            cpu->registers.clk.m = 2;
             break;
         case 0xBF: // CP A   slightly optimized
             set_flag_z(cpu, 1);
@@ -781,13 +782,12 @@ void execute_op(gbc_cpu *cpu, u8 opcode) {
             EI(cpu);
             break;
         case 0xFC: // BLANK
-            printf("non-existant GB opcode: FC\n");
-            break;
         case 0xFD:
-            printf("non-existant GB opcode: FD\n");
+            printf("non-existant GB opcode: %d\n", opcode);
             break;
         case 0xFE: // CP d8
             CP_u8(cpu, read_u8(cpu->mmu, cpu->registers.pc++));
+            cpu->registers.clk.m = 2;
             break;
         case 0xFF: // RST 38H
             RST_u8(cpu, 0x38);
@@ -1604,6 +1604,12 @@ void BIT_RES_SET(gbc_cpu *cpu, u8 opcode) {
         if (mHL) write_u8(cpu->mmu, get_hl(cpu), read_u8(cpu->mmu, get_hl(cpu)) | bit); // sets the selected bit to 0
         else *r8 = (*r8 | bit); // sets the selected bit to 1
     }
+
+    if (mHL) {
+        cpu->registers.clk.m = 4;
+    } else {
+        cpu->registers.clk.m = 2;
+    }
 }
 
 void LD_r8_r8(gbc_cpu *cpu, u8 *r1, u8 *r2) {
@@ -2131,7 +2137,7 @@ void RET(gbc_cpu *cpu) {
 }
 
 void RET_I(gbc_cpu *cpu) {
-    cpu->registers.clk.m = 0;
+    cpu->registers.clk.m = 4;
     cpu->IME = 1;
     RET(cpu);
 }

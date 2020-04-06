@@ -14,9 +14,7 @@
 
 #define IO_IFLAGS  0xFF0F
 
-/* DIV Register is incremented at rate of 16384Hz.
- * 4194304 / 16384 = 256 clock cycles for one increment. */
-#define DIV_CYCLES          256
+#define DIV_M_CYCLES          64
 
 // http://bgb.bircd.org/pandocs.htm#timeranddividerregisters
 static const u16 TAC_CYCLES[4] = {1024, 16, 64, 256};

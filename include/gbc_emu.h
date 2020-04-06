@@ -8,6 +8,7 @@
 
 #include "types.h"
 #include "gbc_cpu.h"
+#include "gbc_ops.h"
 #include "gbc_ppu.h"
 #include "gbc_mmu.h"
 #include "dmg_rom.h"
@@ -132,10 +133,10 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/div_timing.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/div_write.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/rapid_toggle.gb");
-    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim00.gb"); // PASSED
-    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim01.gb"); // PASSED
-    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim10.gb"); // PASSED
-    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim11.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim00.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim01.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim10.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim11.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim00_div_trigger.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim01_div_trigger.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim10_div_trigger.gb");
@@ -146,7 +147,7 @@ void emu_test() {
 
     // mbc tests
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank1.gb"); // PASSED
-    gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank2.gb");
+    //gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank2.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_mode.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_ramg.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/multicart_rom_8Mb.gb");
@@ -201,6 +202,18 @@ void emu_test() {
     //gbc_load_rom(&mmu, __09_op_r_r_gb, __09_op_r_r_gb_len); // PASSED
     //gbc_load_rom(&mmu, __10_bit_ops_gb, __10_bit_ops_gb_len); // PASSED
     //gbc_load_rom(&mmu, __11_op_a__hl__gb, __11_op_a__hl__gb_len); // PASSED
+    //
+
+    //printf("OPCODE CYCLES (m): \n");
+    //for (int i=0; i<0x100; i++) {
+        //if ((i % 0x10) == 0) {
+            //printf("\n");
+        //}
+        //execute_op(&cpu, i);
+        //printf("%x,", cpu.registers.clk.m);
+    //}
+    //printf("\n");
+    //printf("END OPCODE CYCLES\n");
 
     //printf("emulator initialized\n");
     gbc_cpu_loop(&cpu);

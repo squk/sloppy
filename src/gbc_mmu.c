@@ -217,15 +217,15 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
             /* - When writing to DIV, the whole counter is reseted, so the timer
              *    is also affected. */
             mmu->counter->tima = 0;
-            //mmu->counter->div = 0;
+            mmu->counter->div = 0;
 
             /* - When writing to DIV, if the current output is '1' and timer is
              *    enabled, as the new value after reseting DIV will be '0', the
              *    falling edge detector will detect a falling edge and TIMA will
              *    increase. */
-            /*if (*ptr == 1 && (read_io(mmu, IO_TAC) & MASK_TAC_ENABLE)) {*/
-                /*write_io(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);*/
-            /*}*/
+            if (*ptr == 1 && (read_u8(mmu, IO_TAC) & MASK_TAC_ENABLE)) {
+                write_u8(mmu, IO_TIMA, read_u8(mmu, IO_TIMA) + 1);
+            }
             *ptr = 0x00;
             break;
         case IO_TAC: {
