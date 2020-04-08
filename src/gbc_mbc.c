@@ -6,6 +6,39 @@
 #include "gbc_io.h"
 #include "gbc_mbc.h"
 
+const char *mbc_type_str(gbc_mbc *mbc) {
+    switch (mbc->type) {
+        case 0x00: return "ROM_ONLY";
+        case 0x01: return "MBC1";
+        case 0x02: return "MBC1_RAM";
+        case 0x03: return "MBC1_RAM_BATTERY";
+        case 0x05: return "MBC2";
+        case 0x06: return "MBC2_BATTERY";
+        case 0x08: return "ROM_RAM";
+        case 0x09: return "ROM_RAM_BATTERY";
+        case 0x0B: return "MMM01";
+        case 0x0C: return "MMM01_RAM";
+        case 0x0D: return "MMM01_RAM_BATTERY";
+        case 0x0F: return "MBC3_TIMER_BATTERY";
+        case 0x10: return "MBC3_TIMER_RAM_BATTERY";
+        case 0x11: return "MBC3";
+        case 0x12: return "MBC3_RAM";
+        case 0x13: return "MBC3_RAM_BATTERY";
+        case 0x19: return "MBC5";
+        case 0x1A: return "MBC5_RAM";
+        case 0x1B: return "MBC5_RAM_BATTERY";
+        case 0x1C: return "MBC5_RUMBLE";
+        case 0x1D: return "MBC5_RUMBLE_RAM";
+        case 0x1E: return "MBC5_RUMBLE_RAM_BATTERY";
+        case 0x20: return "MBC6";
+        case 0x22: return "MBC7_SENSOR_RUMBLE_RAM_BATTERY";
+        case 0xFC: return "POCKET_CAMERA";
+        case 0xFD: return "BANDAI_TAMA5";
+        case 0xFE: return "HuC3";
+        case 0xFF: return "HuC1_RAM_BATTERY";
+    }
+}
+
 const char * RAM_SIZE_STR[6] = {
     "NONE",
     "2K",
@@ -32,7 +65,7 @@ void gbc_mbc_init(gbc_mbc *mbc) {
     printf("TITLE: %s\n", mbc->cart.title);
     // 0147 - Cartridge Type
     mbc->type = mbc->rom[0x147];
-    printf("MBC TYPE: 0x%x\n", mbc->type);
+    printf("MBC TYPE: %s\n", mbc_type_str(mbc));
     // 0148 - ROM Size
     mbc->rom_size = mbc->rom[0x148];
     mbc->num_rom_banks = mbc->rom_numbytes / CART_ROM_BANK_SIZE;
@@ -43,7 +76,7 @@ void gbc_mbc_init(gbc_mbc *mbc) {
     /*mbc->ram_numbytes = BYTES_256K;*/
     mbc->num_ram_banks = mbc->ram_numbytes / CART_RAM_BANK_SIZE;
     mbc->ram = (u8*)malloc(mbc->ram_numbytes);
-    memset(mbc->ram, 0xFF, mbc->ram_numbytes); // TODO: ?
+    memset(mbc->ram, 0xFF, mbc->ram_numbytes); // TODO: is this right?
     printf("RAM SIZE: %s  BANKS: %d\n", RAM_SIZE_STR[mbc->ram_size], mbc->num_ram_banks);
 }
 
@@ -115,13 +148,17 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
         return mbc->rom[haddr];
     }
     if (address < 0xC000) { // RAM Bank 00-03, if any (Read/Write)
-        /* This area is used to address external RAM in the cartridge (if any). External
-         * RAM is often battery buffered, allowing to store game positions or high
-         * score tables, even if the gameboy is turned off, or if the cartridge is
-         * removed from the gameboy. Available RAM sizes are: 2KByte (at A000-A7FF),
-         * 8KByte (at A000-BFFF), and 32KByte (in form of four 8K banks at *A000-BFFF). */
+        // This area is used to address external RAM in the cartridge (if any). External
+        // RAM is often battery buffered, allowing to store game positions or high
+        // score tables, even if the gameboy is turned off, or if the cartridge is
+        // removed from the gameboy. Available RAM sizes are: 2KByte (at A000-A7FF),
+        // 8KByte (at A000-BFFF), and 32KByte (in form of four 8K banks at *A000-BFFF).
+
         printf("read ram\n");
         if (mbc->RAMG == 0xA) {
+            // In MODE 0b0 the BANK2 register value is not used, so the first RAM
+            // bank is always mapped to the 0xA000-0xBFFF area. In MODE 0b1 the
+            // BANK2 register value is used as the bank number.
             u8 upper_bits = mbc->MODE ? (mbc->BANK2 << 14) : 0;
             u16 haddr = (upper_bits) | (address & 0x1F);
             printf("read mbc1 ram upper : %x\n", haddr);
@@ -159,9 +196,9 @@ void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
         // If 0b00000 is written, the resulting value will be 0b00001 instead.
 
         mbc->BANK1 = (val & 0x1F);
-		if(mbc->BANK1 == 0) {
+        if(mbc->BANK1 == 0) {
             mbc->BANK1 = 1;
-		}
+        }
     }
     else if (address < 0x6000) { // RAM Bank Number - or - Upper Bits of ROM Bank Number (Write Only)
         // BANK2 - gbctr.pdf
