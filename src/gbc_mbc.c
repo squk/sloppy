@@ -191,9 +191,11 @@ void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
          * form of four 8K banks at *A000-BFFF). */
         printf("write ram\n");
         if (mbc->RAMG == 0xA) {
-            /*mbc->ram[address - 0xA000 + CART_RAM_BANK_SIZE * mbc->ram_bank] = val;*/
-            u8 upper_bits = mbc->MODE ? (mbc->BANK2 << 5) : 0;
-            u16 haddr = (upper_bits << 14) | (address & 0x1F);
+            // On boards that have RAM, the A0-A12 cartridge bus signals are
+            // connected directly to the corresponding RAM pins, and pins
+            // A13-A14 are controlled by the MBC1.
+            u8 upper_bits = mbc->MODE ? (mbc->BANK2 << 14) : 0;
+            u16 haddr = upper_bits | (address & 0x1F);
             printf("write mbc1 ram upper : %x  v:%x\n", haddr, val);
             mbc->ram[haddr] = val;
         }
