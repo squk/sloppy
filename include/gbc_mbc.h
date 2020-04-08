@@ -77,6 +77,19 @@ enum MBC_TYPE {
     HuC1_RAM_BATTERY               = 0xFF
 };
 
+enum RAM_SIZE {
+    RAM_NONE = 0x00,
+    RAM_2K   = 0x01,
+    RAM_8K   = 0x02,
+    RAM_32K  = 0x03,
+    RAM_128K = 0x04,
+    RAM_64K  = 0x05
+};
+
+#define BYTES_256K 262144
+
+const long RAM_NUMBYTES[6] = { 0, 2048, 8192, 32768, 131072, 65536 };
+
 typedef struct {
     u8 title[0x10];
 } gbc_cartridge;
@@ -91,11 +104,11 @@ typedef struct {
     u8 mode_select;
     u8 type;
 
-    u8 cart_ram;     // whether the MBC has internal RAM
-    u8 ram_enable;
+    u8 ramg;
     u8 *ram;
     u8 *rom;
     long rom_numbytes;
+    long ram_numbytes;
 
     gbc_cartridge cart;
 

@@ -6,6 +6,15 @@
 #include "gbc_io.h"
 #include "gbc_mbc.h"
 
+const char * RAM_SIZE_STR[6] = {
+    "NONE",
+    "2K",
+    "8K",
+    "32K",
+    "128K",
+    "64K"
+};
+
 void gbc_mbc_init(gbc_mbc *mbc) {
     mbc->num_rom_banks = 0;
     mbc->num_ram_banks = 0;
@@ -16,8 +25,7 @@ void gbc_mbc_init(gbc_mbc *mbc) {
     mbc->bank2 = 0;
 
     mbc->mode_select = 0;
-    mbc->cart_ram = 0;
-    mbc->ram_enable = 0;
+    mbc->ramg = 0;
 
     // 0134-0143 - Title
     memcpy(&mbc->cart.title, &mbc->rom[0x134], 0x10);
@@ -31,14 +39,18 @@ void gbc_mbc_init(gbc_mbc *mbc) {
     printf("ROM SIZE: 0x%x  BANKS: %d\n", mbc->rom_size, mbc->num_rom_banks);
     // 0149 - RAM Size
     mbc->ram_size = mbc->rom[0x149];
-    mbc->num_ram_banks = mbc->rom_numbytes / CART_ROM_BANK_SIZE;
-    printf("RAM SIZE: 0x%x\n", mbc->ram_size);
+    /*mbc->ram_numbytes = RAM_NUMBYTES[mbc->ram_size];*/
+    mbc->ram_numbytes = BYTES_256K;
+    mbc->num_ram_banks = mbc->ram_numbytes / CART_RAM_BANK_SIZE;
+    mbc->ram = (u8*)malloc(mbc->ram_numbytes);
+    printf("RAM SIZE: %s  BANKS: %d\n", RAM_SIZE_STR[mbc->ram_size], mbc->num_ram_banks);
 }
 
 u8 gbc_mbc_read_u8(gbc_mbc *mbc, u16 address) {
     switch (mbc->type) {
         case ROM_ONLY:
             return mbc->rom[address];
+        case ROM_RAM: case ROM_RAM_BATTERY:
         case MBC1: case MBC1_RAM: case MBC1_RAM_BATTERY:
             return mbc1_read_u8(mbc, address);
         case MBC2:
@@ -47,7 +59,6 @@ u8 gbc_mbc_read_u8(gbc_mbc *mbc, u16 address) {
             return mbc3_read_u8(mbc, address);
         case MBC5: case MBC5_RAM:
             return mbc5_read_u8(mbc, address);
-        case ROM_RAM: case ROM_RAM_BATTERY:
         default:
             printf("read unsupported MBC type %d\n", mbc->type);
             break;
@@ -60,9 +71,9 @@ void gbc_mbc_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
         case ROM_ONLY:
             break;
         case ROM_RAM: case ROM_RAM_BATTERY:
-            break;
         case MBC1: case MBC1_RAM: case MBC1_RAM_BATTERY:
             mbc1_write_u8(mbc, address, val);
+            printf("BANK1: 0x%x  BANK2: 0x%x  MODE: %d  RAMG: 0x%x\n", mbc->bank1, mbc->bank2, mbc->mode_select, mbc->ramg);
             break;
         case MBC2:
             mbc2_write_u8(mbc, address, val);
@@ -108,10 +119,12 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
          * score tables, even if the gameboy is turned off, or if the cartridge is
          * removed from the gameboy. Available RAM sizes are: 2KByte (at A000-A7FF),
          * 8KByte (at A000-BFFF), and 32KByte (in form of four 8K banks at *A000-BFFF). */
-        u8 upper_bits = mbc->mode_select ? (mbc->bank2 << 5) : 0;
-        u16 haddr = (address & 0x1FFF) | upper_bits;
-        printf("read mbc1 ram upper : %x\n", haddr);
-        return mbc->ram[haddr];
+        if (mbc->ramg == 0xA) {
+            u8 upper_bits = mbc->mode_select ? (mbc->bank2 << 14) : 0;
+            u16 haddr = (upper_bits) | (address & 0x1F);
+            printf("read mbc1 ram upper : %x\n", haddr);
+            return mbc->ram[haddr];
+        }
     }
     return 0xFF;
 }
@@ -123,11 +136,7 @@ void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
         // bit 3-0 RAMG<3:0>: RAM gate register
         // 0b1010= enable access to cartridge RAM
         // All other values disable access to cartridge RAM
-        if (val == 0xA) {
-            mbc->ram_enable = 0xA;
-        } else {
-            mbc->ram_enable = 0;
-        }
+        mbc->ramg = val;
     }
     else if (address < 0x4000) { // ROM Bank Number (Write Only)
         // BANK1 - gbctr.pdf
@@ -178,10 +187,10 @@ void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
          * or if the cartridge is removed from the gameboy. Available RAM sizes
          * are: 2KByte (at A000-A7FF), 8KByte (at A000-BFFF), and 32KByte (in
          * form of four 8K banks at *A000-BFFF). */
-        if (mbc->ram_enable) {
+        if (mbc->ramg == 0xA) {
             /*mbc->ram[address - 0xA000 + CART_RAM_BANK_SIZE * mbc->ram_bank] = val;*/
             u8 upper_bits = mbc->mode_select ? (mbc->bank2 << 5) : 0;
-            u16 haddr = (address & 0x1FFF) | upper_bits;
+            u16 haddr = (upper_bits << 14) | (address & 0x1F);
             printf("write mbc1 ram upper : %x  v:%x\n", haddr, val);
             mbc->ram[haddr] = val;
         }

@@ -253,7 +253,7 @@ void gbc_cpu_timer_run(gbc_cpu *cpu) {
     // DIV register timing
     //The divider register increments at a fixed frequency (1 per 256 clock cycles = 1 per 64 machine cycles)
     cpu->counter.div += cpu->registers.clk.m;
-    if (cpu->counter.div > DIV_M_CYCLES) {
+    if (cpu->counter.div >= DIV_M_CYCLES) {
         cpu->counter.div -= DIV_M_CYCLES;
         write_u8(cpu->mmu, IO_DIV, read_u8(cpu->mmu, IO_DIV) + 1);
     }
@@ -264,7 +264,7 @@ void gbc_cpu_timer_run(gbc_cpu *cpu) {
         u8 IF = read_u8(cpu->mmu, IO_IFLAGS);
         cpu->counter.tima  += cpu->registers.clk.m * 4; // *4 since we clk.m is in machine cycles
 
-        if(cpu->counter.tima > TAC_CYCLES[TAC & MASK_TAC_CYCLES]) {
+        if(cpu->counter.tima >= TAC_CYCLES[TAC & MASK_TAC_CYCLES]) {
             cpu->counter.tima -= TAC_CYCLES[TAC & MASK_TAC_CYCLES];
             u8 temp = read_u8(cpu->mmu, IO_TIMA) + 1;
 
