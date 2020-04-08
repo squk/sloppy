@@ -147,9 +147,9 @@ void emu_test() {
 
     // mbc tests
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank1.gb"); // PASSED
-    //gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank2.gb");
+    gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank2.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_mode.gb"); // PASSED
-    gbc_load_rom_file(&mmu, "./data/mbc1/bits_ramg.gb");
+    //gbc_load_rom_file(&mmu, "./data/mbc1/bits_ramg.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/multicart_rom_8Mb.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/ram_64kb.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/ram_256kb.gb");

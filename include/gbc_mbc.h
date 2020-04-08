@@ -100,11 +100,9 @@ typedef struct {
     u8 rom_size;
     u8 ram_size;
 
-    u8 bank1, bank2;
-    u8 mode_select;
+    u8 RAMG, BANK1, BANK2, MODE;
     u8 type;
 
-    u8 ramg;
     u8 *ram;
     u8 *rom;
     long rom_numbytes;
