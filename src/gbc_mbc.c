@@ -39,14 +39,19 @@ const char *mbc_type_str(gbc_mbc *mbc) {
     }
 }
 
-const char * RAM_SIZE_STR[6] = {
-    "NONE",
-    "2K",
-    "8K",
-    "32K",
-    "128K",
-    "64K"
-};
+const long RAM_NUMBYTES(gbc_mbc *mbc) {
+    switch (mbc->ram_size) {
+        case RAM_32K: return BYTES_32K;
+        case RAM_64K: return BYTES_64K;
+        case RAM_128K: return BYTES_128K;
+        case RAM_256K: return BYTES_256K;
+        case RAM_512K: return BYTES_512K;
+        case RAM_1M: return BYTES_1M;
+        case RAM_2M: return BYTES_2M;
+        case RAM_4M: return BYTES_4M;
+        case RAM_8M: return BYTES_8M;
+    }
+}
 
 void gbc_mbc_init(gbc_mbc *mbc) {
     mbc->num_rom_banks = 0;
@@ -72,12 +77,12 @@ void gbc_mbc_init(gbc_mbc *mbc) {
     printf("ROM SIZE: 0x%x  BANKS: %d\n", mbc->rom_size, mbc->num_rom_banks);
     // 0149 - RAM Size
     mbc->ram_size = mbc->rom[0x149];
-    mbc->ram_numbytes = RAM_NUMBYTES[mbc->ram_size];
+    mbc->ram_numbytes = RAM_NUMBYTES(mbc);
     /*mbc->ram_numbytes = BYTES_256K;*/
     mbc->num_ram_banks = mbc->ram_numbytes / CART_RAM_BANK_SIZE;
     mbc->ram = (u8*)malloc(mbc->ram_numbytes);
     memset(mbc->ram, 0xFF, mbc->ram_numbytes); // TODO: is this right?
-    printf("RAM SIZE: %s  BANKS: %d\n", RAM_SIZE_STR[mbc->ram_size], mbc->num_ram_banks);
+    /*printf("RAM SIZE: %s  BANKS: %d\n", RAM_SIZE_STR[mbc->ram_size], mbc->num_ram_banks);*/
 }
 
 u8 gbc_mbc_read_u8(gbc_mbc *mbc, u16 address) {
@@ -107,7 +112,6 @@ void gbc_mbc_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
             break;
         case MBC1: case MBC1_RAM: case MBC1_RAM_BATTERY:
             mbc1_write_u8(mbc, address, val);
-            printf("BANK1: 0x%x  BANK2: 0x%x  MODE: %d  RAMG: 0x%x\n", mbc->BANK1, mbc->BANK2, mbc->MODE, mbc->RAMG);
             break;
         case MBC2:
             mbc2_write_u8(mbc, address, val);
@@ -160,7 +164,6 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
             // BANK2 register value is used as the bank number.
             u8 upper_bits = mbc->MODE ? mbc->BANK2: 0;
             u16 haddr = (upper_bits << 14) | (address & 0x1F);
-            printf("read mbc1 ram upper : %x\n", haddr);
             return mbc->ram[haddr];
         }
     }
@@ -231,7 +234,6 @@ void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
             // A13-A14 are controlled by the MBC1.
             u8 upper_bits = mbc->MODE ? mbc->BANK2: 0;
             u16 haddr = (upper_bits << 14) | (address & 0x1F);
-            printf("write mbc1 ram upper : %x  v:%x\n", haddr, val);
             mbc->ram[haddr] = val;
         }
     }

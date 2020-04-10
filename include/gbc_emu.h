@@ -147,10 +147,10 @@ void emu_test() {
 
     // mbc tests
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank1.gb"); // PASSED
-    gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank2.gb");
+    //gbc_load_rom_file(&mmu, "./data/mbc1/bits_bank2.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/pokemon_blue_gb.bin");
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_mode.gb"); // PASSED
-    //gbc_load_rom_file(&mmu, "./data/mbc1/bits_ramg.gb");
+    //gbc_load_rom_file(&mmu, "./data/mbc1/bits_ramg.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/mbc1/multicart_rom_8Mb.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/ram_64kb.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/ram_256kb.gb");
@@ -181,7 +181,7 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/02-write_timing.gb");
     //gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/03-modify_timing.gb");
 
-    //gbc_load_rom_file(&mmu, "./DrMario.gb");
+    gbc_load_rom_file(&mmu, "./DrMario.gb");
     //gbc_load_rom_file(&mmu, "./Tetris.gb");
     //gbc_load_rom_file(&mmu, "DK.gb");
     //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper

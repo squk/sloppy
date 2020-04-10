@@ -78,17 +78,31 @@ enum MBC_TYPE {
 };
 
 enum RAM_SIZE {
-    RAM_NONE = 0x00,
-    RAM_2K   = 0x01,
-    RAM_8K   = 0x02,
-    RAM_32K  = 0x03,
-    RAM_128K = 0x04,
-    RAM_64K  = 0x05
+    RAM_32K = 0x00,
+    RAM_64K = 0x01,
+    RAM_128K = 0x02,
+    RAM_256K = 0x03,
+    RAM_512K = 0x04,
+    RAM_1M = 0x05,
+    RAM_2M = 0x06,
+    RAM_4M = 0x07,
+    RAM_8M = 0x08,
+
+    RAM_1_1M = 0x52,
+    RAM_1_2M = 0x53,
+    RAM_1_5M = 0x54
 };
 
+#define BYTES_8K   8192
+#define BYTES_32K  32768
+#define BYTES_64K  65536
+#define BYTES_128K 131072
 #define BYTES_256K 262144
-
-const long RAM_NUMBYTES[6] = { 0, 2048, 8192, 32768, 131072, 65536 };
+#define BYTES_512K 524288
+#define BYTES_1M   1048576
+#define BYTES_2M   2097152
+#define BYTES_4M   4194304
+#define BYTES_8M   8388608
 
 typedef struct {
     u8 title[0x10];
