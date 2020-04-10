@@ -154,13 +154,12 @@ u8 mbc1_read_u8(gbc_mbc *mbc, u16 address) {
         // removed from the gameboy. Available RAM sizes are: 2KByte (at A000-A7FF),
         // 8KByte (at A000-BFFF), and 32KByte (in form of four 8K banks at *A000-BFFF).
 
-        printf("read ram\n");
         if (mbc->RAMG == 0xA) {
             // In MODE 0b0 the BANK2 register value is not used, so the first RAM
             // bank is always mapped to the 0xA000-0xBFFF area. In MODE 0b1 the
             // BANK2 register value is used as the bank number.
-            u8 upper_bits = mbc->MODE ? (mbc->BANK2 << 14) : 0;
-            u16 haddr = (upper_bits) | (address & 0x1F);
+            u8 upper_bits = mbc->MODE ? mbc->BANK2: 0;
+            u16 haddr = (upper_bits << 14) | (address & 0x1F);
             printf("read mbc1 ram upper : %x\n", haddr);
             return mbc->ram[haddr];
         }
@@ -226,13 +225,12 @@ void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val) {
          * or if the cartridge is removed from the gameboy. Available RAM sizes
          * are: 2KByte (at A000-A7FF), 8KByte (at A000-BFFF), and 32KByte (in
          * form of four 8K banks at *A000-BFFF). */
-        printf("write ram\n");
         if (mbc->RAMG == 0xA) {
             // On boards that have RAM, the A0-A12 cartridge bus signals are
             // connected directly to the corresponding RAM pins, and pins
             // A13-A14 are controlled by the MBC1.
-            u8 upper_bits = mbc->MODE ? (mbc->BANK2 << 14) : 0;
-            u16 haddr = upper_bits | (address & 0x1F);
+            u8 upper_bits = mbc->MODE ? mbc->BANK2: 0;
+            u16 haddr = (upper_bits << 14) | (address & 0x1F);
             printf("write mbc1 ram upper : %x  v:%x\n", haddr, val);
             mbc->ram[haddr] = val;
         }

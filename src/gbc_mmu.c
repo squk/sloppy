@@ -100,7 +100,7 @@ u8* get_address_ptr(gbc_mmu *mmu, u16 address) {
 }
 
 //void gbc_load_rom(gbc_mmu *mmu, const void *src, size_t n) {
-    //memcpy(mmu->rom, src, n);
+//memcpy(mmu->rom, src, n);
 //}
 
 void gbc_load_rom_file(gbc_mmu *mmu, const char *fname) {
@@ -139,7 +139,8 @@ u8 read_u8(gbc_mmu *mmu, u16 address) {
     if (address < 0x100 && mmu->in_bios) {
         return mmu->bios[address];
     }
-    if (address < 0x8000) {
+    if (address < 0x8000 ||
+        (address >= 0xA000 && address <  0xC000)) {
         return gbc_mbc_read_u8(mmu->mbc, address);
     }
 
@@ -161,7 +162,8 @@ u8 read_u8(gbc_mmu *mmu, u16 address) {
 }
 
 void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
-    if (address < 0x8000) {
+    if (address < 0x8000 ||
+        (address >= 0xA000 && address <  0xC000)) {
         return gbc_mbc_write_u8(mmu->mbc, address, val);
     }
 
@@ -246,14 +248,14 @@ void write_u8(gbc_mmu *mmu, u16 address, u8 val) {
             u8 new_enable = new_TAC & MASK_TAC_ENABLE;
 
             if (old_enable == 0) {
-                 //TODO:
-                 //has a different behaviour in GBC (AGB and AGS seem to have
-                 //strange behaviour even in the other statements). When
-                 //enabling the timer and maintaining the same frequency it
-                 //doesn't glitch. When disabling the timer it doesn't glitch
-                 //either. When another change of value happens (so timer is
-                 //enabled after the write), the behaviour depends on a race
-                 //condition, so it cannot be predicted for every device. 
+                //TODO:
+                //has a different behaviour in GBC (AGB and AGS seem to have
+                //strange behaviour even in the other statements). When
+                //enabling the timer and maintaining the same frequency it
+                //doesn't glitch. When disabling the timer it doesn't glitch
+                //either. When another change of value happens (so timer is
+                //enabled after the write), the behaviour depends on a race
+                //condition, so it cannot be predicted for every device.
                 glitch = 0;
             } else {
                 if (new_enable == 0) {
