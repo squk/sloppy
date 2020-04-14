@@ -3,24 +3,23 @@
 /*#include <gba_video.h>*/
 
 #include <signal.h>
-#include <string.h>
+#include <string>
 #include <stdio.h>
 
 #include "types.h"
-#include "gbc_ppu.h"
+#include "gbc_ppu.hpp"
 #include "gbc_io.h"
-#include "gbc_mmu.h"
+#include "gbc_mmu.hpp"
 
+void gbc_ppu::init() {
+    quit = false;
+    mode_clock = 0;
+    memset(fb, 0, sizeof fb);
+    memset(bg_disp, 0, sizeof bg_disp);
+    memset(win_disp, 0, sizeof win_disp);
+    memset(obj_disp, 0, sizeof obj_disp);
 
-void ppu_init(gbc_ppu *ppu) {
-    ppu->quit = false;
-    ppu->mode_clock = 0;
-    memset(ppu->fb, 0, sizeof ppu->fb);
-    memset(ppu->bg_disp, 0, sizeof ppu->bg_disp);
-    memset(ppu->win_disp, 0, sizeof ppu->win_disp);
-    memset(ppu->obj_disp, 0, sizeof ppu->obj_disp);
-
-    ppu_start_frame(ppu);
+    start_frame();
 }
 
 void insertion_sort(void *array, int length,
@@ -52,13 +51,13 @@ void insertion_sort(void *array, int length,
  *  2  Dark gray
  *  3  Black
  */
-u8 ppu_get_palette_color(gbc_ppu *ppu, u16 palette_addr, u8 color) {
+u8 gbc_ppu::get_palette_color(u16 palette_addr, u8 color) {
     u8 p = 0;
     switch (palette_addr) {
         case IO_BGRDPAL:
         case IO_OBJ0PAL:
         case IO_OBJ1PAL:
-            p = read_u8(ppu->mmu, palette_addr);
+            p = mmu->read_u8(palette_addr);
             break;
         default:
             printf("invalid PPU palette address: %x\n", palette_addr);
@@ -90,26 +89,26 @@ u8 ppu_get_palette_color(gbc_ppu *ppu, u16 palette_addr, u8 color) {
     return bits;
 }
 
-void ppu_start_frame(gbc_ppu *ppu) {
+void gbc_ppu::start_frame() {
     int i, j;
 
     // set win and obj to transparent
     for (i = 0; i < 256; i++) {
         for (j = 0; j < 256; j++) {
-            ppu->bg_disp[i * 256 + 1] = 0;
-            ppu->win_disp[i * 256 + j] = TRANSPARENT;
-            ppu->obj_disp[i * 256 + j] = TRANSPARENT;
+            bg_disp[i * 256 + 1] = 0;
+            win_disp[i * 256 + j] = TRANSPARENT;
+            obj_disp[i * 256 + j] = TRANSPARENT;
         }
     }
-    u8 r = ppu_run(ppu, 0);
+    u8 r = run(0);
 }
 
-void ppu_dump(gbc_ppu *ppu) {
+void gbc_ppu::dump() {
     printf("BG: \n");
     int i, j;
     for (j = 0; j < 128; j++) {
         for (i = 0; i < 256; i++) {
-            printf("%d", ppu->bg_disp[j * 256 + i]);
+            printf("%d", bg_disp[j * 256 + i]);
         }
         printf("\n");
     }
@@ -118,7 +117,7 @@ void ppu_dump(gbc_ppu *ppu) {
     printf("WIN: \n");
     for (j = 0; j < 128; j++) {
         for (i = 0; i < 256; i++) {
-            printf("%d", ppu->win_disp[j * 256 + i]);
+            printf("%d", win_disp[j * 256 + i]);
         }
         printf("\n");
     }
@@ -127,7 +126,7 @@ void ppu_dump(gbc_ppu *ppu) {
     printf("OBJ: \n");
     for (j = 0; j < 128; j++) {
         for (i = 0; i < 256; i++) {
-            printf("%d", ppu->obj_disp[j * 256 + i]);
+            printf("%d", obj_disp[j * 256 + i]);
         }
         printf("\n");
     }
@@ -135,65 +134,65 @@ void ppu_dump(gbc_ppu *ppu) {
 }
 
 // TODO: cleanup and optimize
-void ppu_draw_line_fb(gbc_ppu *ppu, u8 line) {
+void gbc_ppu::draw_line_fb(u8 line) {
     for (int i = 0; i < SIZE_X; i++) {
         int px_index = line * SIZE_X + i;
-        ppu->fb[px_index] = ppu->bg_disp[line * 256 + i];
+        fb[px_index] = bg_disp[line * 256 + i];
         // check non painted
-        if (ppu->win_disp[line * 256 + i] < 8) {
-            ppu->fb[px_index] = ppu->win_disp[line * 256 + i];
+        if (win_disp[line * 256 + i] < 8) {
+            fb[px_index] = win_disp[line * 256 + i];
         }
 
         int obj_index = (line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X;
 
         //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
         //(Used for both BG and Window. BG color 0 is always behind OBJ)
-        if ((ppu->fb[px_index] != 0 && ppu->obj_disp[obj_index] >= 4)) {
+        if ((fb[px_index] != 0 && obj_disp[obj_index] >= 4)) {
             continue;
         }
-        if (ppu->obj_disp[obj_index] == 0) {
+        if (obj_disp[obj_index] == 0) {
             continue;
         }
-        ppu->fb[px_index] = ppu->obj_disp[obj_index] & 0x03;
+        fb[px_index] = obj_disp[obj_index] & 0x03;
     }
 }
 
-void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
+void gbc_ppu::draw_line_bg(u8 line) {
     u16 bg_tile_map, tile_data;
     u8 oam_row, py;
     u8 py_a, py_b;
     s16 obj;
 
-    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
         bg_tile_map = 0x9C00;
     } else {
         bg_tile_map = 0x9800;
     }
 
-    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
         tile_data = 0x8000;
     } else {
         tile_data = 0x9000;
     }
 
     // optimization for GBA. it's ARM CPU struggled with div and mod operators
-    /*oam_row = (u8)Div(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
-    /*py = (u8)DivMod(line + read_u8(ppu->mmu, IO_SCROLLY), 8);*/
-    oam_row = (u8)((line + read_u8(ppu->mmu, IO_SCROLLY)) / 8);
-    py = (u8)((line + read_u8(ppu->mmu, IO_SCROLLY)) % 8);
+    /*oam_row = (u8)Div(line + mmu->read_u8(IO_SCROLLY), 8);*/
+    /*py = (u8)DivMod(line + mmu->read_u8(IO_SCROLLY), 8);*/
+    oam_row = (u8)((line + mmu->read_u8(IO_SCROLLY)) / 8);
+    py = (u8)((line + mmu->read_u8(IO_SCROLLY)) % 8);
 
     u8 i, j;
     for (i = 0; i < 32; i++) {
         if (tile_data == 0x9000) {
-            obj = (s8)read_u8(ppu->mmu, bg_tile_map + oam_row * 32 + i);
+            obj = (s8)mmu->read_u8(bg_tile_map + oam_row * 32 + i);
         } else {
-            obj = (u8)read_u8(ppu->mmu, bg_tile_map + oam_row * 32 + i);
+            obj = (u8)mmu->read_u8(bg_tile_map + oam_row * 32 + i);
         }
-        py_a = read_u8(ppu->mmu, tile_data + obj * 16 + py * 2);
-        py_b = read_u8(ppu->mmu, tile_data + obj * 16 + py * 2 + 1);
+        py_a = mmu->read_u8(tile_data + obj * 16 + py * 2);
+        py_b = mmu->read_u8(tile_data + obj * 16 + py * 2 + 1);
         for (j = 0; j < 8; j++) {
-            ppu->bg_disp[line * 256 + (u8)(i * 8 - read_u8(ppu->mmu, IO_SCROLLX) + j)] =
-                ppu_get_palette_color(ppu, IO_BGRDPAL,
+            bg_disp[line * 256 + (u8)(i * 8 - mmu->read_u8(IO_SCROLLX) + j)] =
+                get_palette_color(IO_BGRDPAL,
                                       ((py_a & (1 << (7 - j))) ? 1 : 0) +
                                       ((py_b & (1 << (7 - j))) ? 2 : 0)
                                       );
@@ -201,45 +200,45 @@ void ppu_draw_line_bg(gbc_ppu *ppu, u8 line) {
     }
 }
 
-void ppu_draw_line_win(gbc_ppu *ppu, u8 line) {
+void gbc_ppu::draw_line_win(u8 line) {
     u16 win_tile_map, tile_data;
     u8 oam_row, py;
     u8 py_a, py_b;
     s16 obj;
 
-    if (read_u8(ppu->mmu, IO_WNDPOSY)  > line || read_u8(ppu->mmu, IO_WNDPOSX) > SIZE_X) {
+    if (mmu->read_u8(IO_WNDPOSY)  > line || mmu->read_u8(IO_WNDPOSX) > SIZE_X) {
         return;
     }
 
-    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Tile_Map_Display_Select)) {
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_Window_Tile_Map_Display_Select)) {
         win_tile_map = 0x9C00;
     } else {
         win_tile_map = 0x9800;
     }
 
-    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
         tile_data = 0x8000;
     } else {
         tile_data = 0x9000;
     }
 
     // optimization for GBA. it's ARM CPU struggled with div and mod operators
-    /*oam_row = Div((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
-    /*py = DivMod((u8)(line - read_u8(ppu->mmu, IO_WNDPOSY)), 8);*/
-    oam_row = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) / 8);
-    py = (u8)((line - read_u8(ppu->mmu, IO_WNDPOSY)) % 8);
+    /*oam_row = Div((u8)(line - mmu->read_u8(IO_WNDPOSY)), 8);*/
+    /*py = DivMod((u8)(line - mmu->read_u8(IO_WNDPOSY)), 8);*/
+    oam_row = (u8)((line - mmu->read_u8(IO_WNDPOSY)) / 8);
+    py = (u8)((line - mmu->read_u8(IO_WNDPOSY)) % 8);
     u8 i, j;
-    for (i = 0; i < (SIZE_X - (read_u8(ppu->mmu, IO_WNDPOSX) - 8)) / 8 + 1; i++) {
+    for (i = 0; i < (SIZE_X - (mmu->read_u8(IO_WNDPOSX) - 8)) / 8 + 1; i++) {
         if (tile_data == 0x9000) {
-            obj = (s8)read_u8(ppu->mmu, win_tile_map + oam_row * 32 + i);
+            obj = (s8)mmu->read_u8(win_tile_map + oam_row * 32 + i);
         } else {
-            obj = (u8)read_u8(ppu->mmu, win_tile_map + oam_row * 32 + i);
+            obj = (u8)mmu->read_u8(win_tile_map + oam_row * 32 + i);
         }
-        py_a = read_u8(ppu->mmu, tile_data + obj * 16 + py * 2);
-        py_b = read_u8(ppu->mmu, tile_data + obj * 16 + py * 2 + 1);
+        py_a = mmu->read_u8(tile_data + obj * 16 + py * 2);
+        py_b = mmu->read_u8(tile_data + obj * 16 + py * 2 + 1);
         for (j = 0; j < 8; j++) {
-            ppu->win_disp[line * 256 + (u8)(i * 8 + read_u8(ppu->mmu, IO_WNDPOSX) - 7 + j)] =
-                ppu_get_palette_color(ppu, IO_BGRDPAL,
+            win_disp[line * 256 + (u8)(i * 8 + mmu->read_u8(IO_WNDPOSX) - 7 + j)] =
+                get_palette_color(IO_BGRDPAL,
                                       ((py_a & (1 << (7 - j))) ? 1 : 0) +
                                       ((py_b & (1 << (7 - j))) ? 2 : 0)
                                       );
@@ -307,11 +306,11 @@ void obj_swap(void *array, int i, int j) {
 // overlaps a sprite with a lower priority and a nonzero background pixel, the
 // background pixel is displayed regardless of the lower-priority sprite's
 // OBJ-to-BG Priority.
-void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
+void gbc_ppu::draw_line_obj(u8 line) {
     u8 obj_height, py;
     line += SPRITE_INI_Y;
 
-    switch (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Size)) {
+    switch (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Size)) {
         case OPT_OBJ_Size_8x8:
             obj_height = 8;
             break;
@@ -328,10 +327,10 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
 
         ppu_obj obj;
         obj.id = i;
-        obj.y = read_u8(ppu->mmu, addr++);
-        obj.x = read_u8(ppu->mmu, addr++);
-        obj.pat = read_u8(ppu->mmu, addr++);
-        obj.flags = read_u8(ppu->mmu, addr);
+        obj.y = mmu->read_u8(addr++);
+        obj.x = mmu->read_u8(addr++);
+        obj.pat = mmu->read_u8(addr++);
+        obj.flags = mmu->read_u8(addr);
 
         // Take the candidate objects to be drawn in the line
         if(!((obj.y != 0)
@@ -349,8 +348,8 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
         }
 
         // fetch the tile
-        u8 t1 = read_u8(ppu->mmu, 0x8000 + obj.pat * 16 + py * 2);
-        u8 t2 = read_u8(ppu->mmu, 0x8000 + obj.pat * 16 + py * 2 + 1);
+        u8 t1 = mmu->read_u8(0x8000 + obj.pat * 16 + py * 2);
+        u8 t2 = mmu->read_u8(0x8000 + obj.pat * 16 + py * 2 + 1);
 
         for (j = 0; j < 8; j++) {
             pos = line * 256 + (obj.x + (x_flip ? 7 - j : j)) % 256;
@@ -360,46 +359,46 @@ void ppu_draw_line_obj(gbc_ppu *ppu, u8 line) {
                              ((t2 & (1 << (7 - j))) ? 2 : 0);
 
             if (obj.flags & OPT_OBJ_Flag_palette) {
-                color = ppu_get_palette_color(ppu, IO_OBJ1PAL, color_index);
+                color = get_palette_color(IO_OBJ1PAL, color_index);
             } else {
-                color = ppu_get_palette_color(ppu, IO_OBJ0PAL, color_index);
+                color = get_palette_color(IO_OBJ0PAL, color_index);
             }
 
-            ppu->obj_disp[pos] = color;
+            obj_disp[pos] = color;
 
             //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
             //(Used for both BG and Window. BG color 0 is always behind OBJ)
             if (!(obj.flags & OPT_OBJ_Flag_priority)) {
-                ppu->obj_disp[pos] |= 4;
+                obj_disp[pos] |= 4;
             }
         }
     }
 }
 
-void ppu_draw_line(gbc_ppu *ppu, u8 line) {
-    if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
-        if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
-            ppu_draw_line_bg(ppu, line);
+void gbc_ppu::draw_line(u8 line) {
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
+        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
+            draw_line_bg(line);
         }
-        if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
-            ppu_draw_line_win(ppu, line);
+        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
+            draw_line_win(line);
         }
-        if (read_bit(ppu->mmu, IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
-            ppu_draw_line_obj(ppu, line);
+        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
+            draw_line_obj(line);
         }
     }
 
-    ppu_draw_line_fb(ppu, line);
+    draw_line_fb(line);
 }
 
-void sdl_run(gbc_ppu *ppu) {
+void gbc_ppu::sdl_run() {
 #if defined(SLOPPY_RENDER)
     SDL_Delay(16);             // hack for ~60FPS
-    SDL_RenderClear(ppu->renderer);
+    SDL_RenderClear(renderer);
     for (int y = 0; y < SIZE_Y; y++) {
         for (int x = 0; x < SIZE_X; x++) {
             int px_index = y * SIZE_X + x;
-            u8 color = ppu->fb[px_index];
+            u8 color = fb[px_index];
             u8 r,g,b;
             switch(color) {
                 case 0:             // 332c50
@@ -416,14 +415,14 @@ void sdl_run(gbc_ppu *ppu) {
                     break;
             }
 
-            SDL_SetRenderDrawColor(ppu->renderer, r, g, b, 0xFF);
-            SDL_RenderDrawPoint(ppu->renderer, x, y);
+            SDL_SetRenderDrawColor(renderer, r, g, b, 0xFF);
+            SDL_RenderDrawPoint(renderer, x, y);
         }
     }
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) {
-            ppu->quit = true;
+            quit = true;
         }
 
         /*
@@ -438,62 +437,62 @@ void sdl_run(gbc_ppu *ppu) {
          */
         if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_ESCAPE) {
-                ppu->quit = true;
+                quit = true;
             }
             if (e.key.keysym.sym == SDLK_UP) {
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // direction
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<2);             // up
+                mmu->set_bit(IO_JOYPAD, 1<<4);             // direction
+                mmu->set_bit(IO_JOYPAD, 1<<2);             // up
             } else if (e.key.keysym.sym == SDLK_DOWN) {
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // direction
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<3);             // down
+                mmu->set_bit(IO_JOYPAD, 1<<4);             // direction
+                mmu->set_bit(IO_JOYPAD, 1<<3);             // down
             } else if (e.key.keysym.sym == SDLK_LEFT) {
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // direction
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<1);             // left
+                mmu->set_bit(IO_JOYPAD, 1<<4);             // direction
+                mmu->set_bit(IO_JOYPAD, 1<<1);             // left
             } else if (e.key.keysym.sym == SDLK_LEFT) {
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // direction
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<0);             // right
+                mmu->set_bit(IO_JOYPAD, 1<<4);             // direction
+                mmu->set_bit(IO_JOYPAD, 1<<0);             // right
             } else if (e.key.keysym.sym == SDLK_x) {
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<5);             // button
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<0);             // A
+                mmu->set_bit(IO_JOYPAD, 1<<5);             // button
+                mmu->set_bit(IO_JOYPAD, 1<<0);             // A
             } else if (e.key.keysym.sym == SDLK_z) {
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<5);             // button
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<1);             // B
+                mmu->set_bit(IO_JOYPAD, 1<<5);             // button
+                mmu->set_bit(IO_JOYPAD, 1<<1);             // B
             } else if (e.key.keysym.sym == SDLK_RETURN) {
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<5);             // button
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<3);             // start
+                mmu->set_bit(IO_JOYPAD, 1<<5);             // button
+                mmu->set_bit(IO_JOYPAD, 1<<3);             // start
             } else if (e.key.keysym.sym == SDLK_TAB) {
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<5);             // button
-                set_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // select
+                mmu->set_bit(IO_JOYPAD, 1<<5);             // button
+                mmu->set_bit(IO_JOYPAD, 1<<4);             // select
             }
         } else if (e.type == SDL_KEYUP) {
             if (e.key.keysym.sym == SDLK_UP) {
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // direction
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<2);             // up
+                mmu->unset_bit(IO_JOYPAD, 1<<4);             // direction
+                mmu->unset_bit(IO_JOYPAD, 1<<2);             // up
             } else if (e.key.keysym.sym == SDLK_DOWN) {
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // direction
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<3);             // down
+                mmu->unset_bit(IO_JOYPAD, 1<<4);             // direction
+                mmu->unset_bit(IO_JOYPAD, 1<<3);             // down
             } else if (e.key.keysym.sym == SDLK_LEFT) {
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // direction
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<1);             // left
+                mmu->unset_bit(IO_JOYPAD, 1<<4);             // direction
+                mmu->unset_bit(IO_JOYPAD, 1<<1);             // left
             } else if (e.key.keysym.sym == SDLK_LEFT) {
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // direction
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<0);             // right
+                mmu->unset_bit(IO_JOYPAD, 1<<4);             // direction
+                mmu->unset_bit(IO_JOYPAD, 1<<0);             // right
             } else if (e.key.keysym.sym == SDLK_x) {
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<5);             // button
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<0);             // A
+                mmu->unset_bit(IO_JOYPAD, 1<<5);             // button
+                mmu->unset_bit(IO_JOYPAD, 1<<0);             // A
             } else if (e.key.keysym.sym == SDLK_z) {
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<5);             // button
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<1);             // B
+                mmu->unset_bit(IO_JOYPAD, 1<<5);             // button
+                mmu->unset_bit(IO_JOYPAD, 1<<1);             // B
             } else if (e.key.keysym.sym == SDLK_RETURN) {
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<5);             // button
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<3);             // start
+                mmu->unset_bit(IO_JOYPAD, 1<<5);             // button
+                mmu->unset_bit(IO_JOYPAD, 1<<3);             // start
             } else if (e.key.keysym.sym == SDLK_TAB) {
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<5);             // button
-                unset_bit(ppu->mmu, IO_JOYPAD, 1<<4);             // select
+                mmu->unset_bit(IO_JOYPAD, 1<<5);             // button
+                mmu->unset_bit(IO_JOYPAD, 1<<4);             // select
             }
         }
     }
-    SDL_RenderPresent(ppu->renderer);
+    SDL_RenderPresent(renderer);
 #endif
 }
 
@@ -530,85 +529,63 @@ void sdl_run(gbc_ppu *ppu) {
    The Mode Flag goes through the values 0, 2, and 3 at a cycle of about 109uS. 0 is present about 48.6uS, 2 about 19uS, and 3 about 41uS. This is interrupted every 16.6ms by the VBlank (1). The mode flag stays set at 1 for about 1.08 ms.
    Mode 0 is present between 201-207 clks, 2 about 77-83 clks, and 3 about 169-175 clks. A complete cycle through these states takes 456 clks. VBlank lasts 4560 clks. A complete screen refresh occurs every 70224 clks.)
  */
-u8 ppu_run(gbc_ppu *ppu, int cycles) {
-    ppu->mode_clock += cycles;
+u8 gbc_ppu::run(int cycles) {
+    mode_clock += cycles;
 
-    if (ppu->mode_clock >= LCD_LINE_CYCLES) {
-        ppu->mode_clock -= LCD_LINE_CYCLES;
+    if (mode_clock >= LCD_LINE_CYCLES) {
+        mode_clock -= LCD_LINE_CYCLES;
 
         // next line
-        write_u8(ppu->mmu, IO_CURLINE, (read_u8(ppu->mmu, IO_CURLINE) + 1) % LCD_VERT_LINES);
+        mmu->write_u8(IO_CURLINE, (mmu->read_u8(IO_CURLINE) + 1) % LCD_VERT_LINES);
 
         // LYC Update
-        if (read_u8(ppu->mmu, IO_CURLINE) == read_u8(ppu->mmu, IO_CMPLINE)) {
-            set_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
-            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_LYC_LY_COINCIDENCE_INTERRUPT)) {
-                set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+        if (mmu->read_u8(IO_CURLINE) == mmu->read_u8(IO_CMPLINE)) {
+            mmu->set_bit(IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
+            if (mmu->read_bit(IO_LCDSTAT, MASK_LCDSTAT_LYC_LY_COINCIDENCE_INTERRUPT)) {
+                mmu->set_bit(IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
         } else {
-            unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
+            mmu->unset_bit(IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
         }
 
         // VBLANK
-        if (read_u8(ppu->mmu, IO_CURLINE) == SIZE_Y) {
+        if (mmu->read_u8(IO_CURLINE) == SIZE_Y) {
             // Set Mode Flag to VBLANK at LCDSTAT
-            unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
-            set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_VBLANK);
+            mmu->unset_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
+            mmu->set_bit(IO_LCDSTAT, OPT_MODE_VBLANK);
 
             // Interrupt VBlank
-            set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_VBLANK);
-            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
-                set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+            mmu->set_bit(IO_IFLAGS, MASK_INT_VBLANK);
+            if (mmu->read_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_1_VBLANK_INTERRUPT)) {
+                mmu->set_bit(IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
 
-            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
-                set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+            if (mmu->read_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
+                mmu->set_bit(IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
-            sdl_run(ppu);
-            ppu_dump(ppu);
+            sdl_run();
+            /*ppu_dump();*/
         }
         // Normal line
-        else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
-            unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
-            set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM);
+        else if (mmu->read_u8(IO_CURLINE) < SIZE_Y) {
+            mmu->unset_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
+            mmu->set_bit(IO_LCDSTAT, OPT_MODE_OAM);
 
-            if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
-                set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+            if (mmu->read_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_2_OAM_INTERRUPT)) {
+                mmu->set_bit(IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
         }
-    } else if (((read_u8(ppu->mmu, IO_LCDSTAT) & MASK_LCDSTAT_MODE_FLAG) == OPT_MODE_OAM) && ppu->mode_clock >= END_OAM) {
-        unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
-        set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_OAM_VRAM);
-    } else if (((read_u8(ppu->mmu, IO_LCDSTAT) & MASK_LCDSTAT_MODE_FLAG) == OPT_MODE_OAM_VRAM) && ppu->mode_clock >= END_OAM_VRAM) {
-        unset_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
-        set_bit(ppu->mmu, IO_LCDSTAT, OPT_MODE_HBLANK);
-        ppu_draw_line(ppu, read_u8(ppu->mmu, IO_CURLINE));
+    } else if (((mmu->read_u8(IO_LCDSTAT) & MASK_LCDSTAT_MODE_FLAG) == OPT_MODE_OAM) && mode_clock >= END_OAM) {
+        mmu->unset_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
+        mmu->set_bit(IO_LCDSTAT, OPT_MODE_OAM_VRAM);
+    } else if (((mmu->read_u8(IO_LCDSTAT) & MASK_LCDSTAT_MODE_FLAG) == OPT_MODE_OAM_VRAM) && mode_clock >= END_OAM_VRAM) {
+        mmu->unset_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
+        mmu->set_bit(IO_LCDSTAT, OPT_MODE_HBLANK);
+        draw_line(mmu->read_u8(IO_CURLINE));
 
-        if (read_bit(ppu->mmu, IO_LCDSTAT, MASK_LCDSTAT_MODE_0_HBLANK_INTERRUPT)) {
-            set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
+        if (mmu->read_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_0_HBLANK_INTERRUPT)) {
+            mmu->set_bit(IO_IFLAGS, MASK_INT_LCDSTAT_INT);
         }
     }
     return 0;
 }
-
-unsigned long gbcToRgb32(unsigned const bgr15) {
-    unsigned long const r = bgr15       & 0x1F;
-    unsigned long const g = bgr15 >>  5 & 0x1F;
-    unsigned long const b = bgr15 >> 10 & 0x1F;
-
-    return ((r * 13 + g * 2 + b) >> 1) << 16
-           | (g * 3 + b) << 9
-           | (r * 3 + g * 2 + b * 11) >> 1;
-}
-
-/*u16 rgb32ToRgb16(u32 rgb32) {*/
-/*int red = red / 8;*/
-/*int green = green / 4;*/
-/*int blue = blue / 8;*/
-/*return RGB8(red, green, blue);*/
-/*}*/
-
-/*u16 color_dmg_to_gba(unsigned const bgr15) {*/
-/*return rgb32ToRgb16(gbcToRgb32(bgr15));*/
-/*//return gbcToRgb32(bgr15);*/
-/*}*/
