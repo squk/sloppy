@@ -271,8 +271,4 @@ void gbc_cpu::loop() {
             quit = true;
         }
     }
-#if defined(SLOPPY_RENDER)
-    atexit(SDL_Quit);
-    SDL_Quit();
-#endif
 }

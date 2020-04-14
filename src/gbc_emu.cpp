@@ -19,18 +19,7 @@ gbc_emu::gbc_emu() {
     cpu.ppu = &ppu;
 
 #if defined(SLOPPY_RENDER)
-    SDL_Init(SDL_INIT_EVERYTHING);
-    float scale = 2.0f;
-    SDL_CreateWindowAndRenderer(SIZE_X*scale, SIZE_Y*scale, 0, &window, &renderer);
-    SDL_RenderSetScale(renderer, scale, scale);
-    SDL_SetWindowTitle(window, "sloppy emu");
-    // Check that the window was successfully created
-    if (window == NULL) {
-        // In the case that the window could not be made...
-        printf("Could not create window: %s\n", SDL_GetError());
-        return;
-    }
-    ppu.renderer = renderer;
+    // gui init
 #endif
 
     cpu.reset();
@@ -159,8 +148,6 @@ void gbc_emu::test() {
     cpu.loop();
 
 #if defined(SLOPPY_RENDER)
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    // gui quit
 #endif
 }

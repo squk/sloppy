@@ -114,8 +114,6 @@ class gbc_ppu {
 
     public:
         gbc_mmu *mmu;
-        SDL_Renderer *renderer;
-        SDL_Window *window;
 
         u8 fb[SIZE_X * SIZE_Y];
         u8 bg_disp[512*512];
@@ -132,7 +130,6 @@ class gbc_ppu {
         void draw_line_fb(u8 line);
         void draw_line(u8 line);
         u8 run(int cycles);
-        void sdl_run();
 
         /*
          * Bit 7-6 - Shade for Color Number 3
