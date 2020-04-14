@@ -59,7 +59,6 @@ void gbc_mmu_init(gbc_mmu *mmu){
     mmu->vram_access = true;
 
     memset(mmu->bios, 0xFF, sizeof mmu->bios);
-    //memset(mmu->rom,  0xFF, sizeof mmu->rom);
     memset(mmu->vram, 0xFF, sizeof mmu->vram);
     memset(mmu->wram, 0xFF, sizeof mmu->wram);
     memset(mmu->oam,  0xFF, sizeof mmu->oam);

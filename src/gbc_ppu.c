@@ -565,7 +565,7 @@ u8 ppu_run(gbc_ppu *ppu, int cycles) {
                 set_bit(ppu->mmu, IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
             sdl_run(ppu);
-            /*ppu_dump(ppu);*/
+            ppu_dump(ppu);
         }
         // Normal line
         else if (read_u8(ppu->mmu, IO_CURLINE) < SIZE_Y) {
