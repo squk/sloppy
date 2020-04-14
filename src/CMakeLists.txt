@@ -7,6 +7,10 @@ list(APPEND MAIN_APP_SOURCES
     gbc_mbc.cpp
     gbc_ppu.cpp
 
+    sloppy_gui/cpu_window.cpp
+    sloppy_gui/io_window.cpp
+    sloppy_gui/mbc_window.cpp
+
     ../modules/imgui/imgui.cpp
     ../modules/imgui/imgui_draw.cpp
     ../modules/imgui/imgui_widgets.cpp

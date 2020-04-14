@@ -13,6 +13,7 @@
 
 void gbc_ppu::init() {
     quit = false;
+    vblank = true;
     mode_clock = 0;
     memset(fb, 0, sizeof fb);
     memset(bg_disp, 0, sizeof bg_disp);
@@ -459,6 +460,7 @@ u8 gbc_ppu::run(int cycles) {
                 mmu->set_bit(IO_IFLAGS, MASK_INT_LCDSTAT_INT);
             }
             /*ppu_dump();*/
+            vblank = true;
         }
         // Normal line
         else if (mmu->read_u8(IO_CURLINE) < SIZE_Y) {

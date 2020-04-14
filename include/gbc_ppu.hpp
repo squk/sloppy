@@ -121,6 +121,7 @@ class gbc_ppu {
         u8 obj_disp[512*512];
 
         u16 mode_clock; // Object Attribute Memory
+        bool vblank; // helper used for the GUI
 
         bool quit;
 

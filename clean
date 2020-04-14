@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+rm -rf build
+echo "removed build"
+rm -rf CMakeFiles
+echo "removed CMakeFiles"
+rm -rf CMakeCache.txt
+echo "removed CMakeCache.txt"
+rm -rf Makefile
+echo "removed Makefile"
