@@ -1,4 +1,5 @@
 #include "gbc_emu.hpp"
+#include "gui.hpp"
 
 #include "dmg_rom.h"
 #include "01_special.h"
@@ -33,6 +34,7 @@ void gbc_emu::run() {
 }
 
 void gbc_emu::test() {
+    GUI_RUN();
     memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len); mmu.in_bios = true;
     //gbc_cpu_set_boot_state(&cpu);
     cpu.mmu->io[0x00] = 0xFF;
