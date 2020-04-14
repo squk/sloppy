@@ -1,10 +1,11 @@
 list(APPEND MAIN_APP_SOURCES
-    main.c
-    gbc_cpu.c
-    gbc_mmu.c
-    gbc_mbc.c
+    main.cpp
+    gbc_emu.cpp
+    gbc_cpu.cpp
     gbc_ops.c
-    gbc_ppu.c
+    gbc_mmu.cpp
+    gbc_mbc.cpp
+    gbc_ppu.cpp
     )
 
 set(ENV{PATH} ${CMAKE_SOURCE_DIR}:$ENV{PATH})
