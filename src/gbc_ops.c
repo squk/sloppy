@@ -940,7 +940,7 @@ const char* op_string(u8 opcode) {
         case 0x8C: return "ADC A,H";
         case 0x8D: return "ADC A,L";
         case 0x8E: return "ADC A,(HL)";
-        case 0x8F: return "ADC A,A   optimized";
+        case 0x8F: return "ADC A,A";
         case 0x90: return "SUB B";
         case 0x91: return "SUB C";
         case 0x92: return "SUB D";
@@ -956,7 +956,7 @@ const char* op_string(u8 opcode) {
         case 0x9C: return "SBC A,H";
         case 0x9D: return "SBC A,L";
         case 0x9E: return "SBC A,(HL)";
-        case 0x9F: return "SBC A,A  slightly optimized";
+        case 0x9F: return "SBC A,A";
         case 0xA0: return "AND B";
         case 0xA1: return "AND C";
         case 0xA2: return "AND D";
@@ -972,7 +972,7 @@ const char* op_string(u8 opcode) {
         case 0xAC: return "XOR H";
         case 0xAD: return "XOR L";
         case 0xAE: return "XOR (HL)";
-        case 0xAF: return "XOR A   slightly optimized";
+        case 0xAF: return "XOR A";
         case 0xB0: return "OR B";
         case 0xB1: return "OR C";
         case 0xB2: return "OR D";
@@ -988,7 +988,7 @@ const char* op_string(u8 opcode) {
         case 0xBC: return "CP H";
         case 0xBD: return "CP L";
         case 0xBE: return "CP (HL)";
-        case 0xBF: return "CP A   slightly optimized";
+        case 0xBF: return "CP A";
         case 0xC0: return "RET NZ";
         case 0xC1: return "POP BC";
         case 0xC2: return "JP NZ,a16";

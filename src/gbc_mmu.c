@@ -155,9 +155,6 @@ u8 read_u8(gbc_mmu *mmu, u16 address) {
             return 0xFF;
         }
     }
-    if (address == IO_DIV) {
-        return mmu->counter->div >> 8;
-    }
     return *get_address_ptr(mmu, address);
 }
 

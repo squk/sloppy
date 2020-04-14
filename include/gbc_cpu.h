@@ -66,10 +66,6 @@ bool flag_z(gbc_cpu *cpu);
 bool flag_n(gbc_cpu *cpu);
 bool flag_h(gbc_cpu *cpu);
 bool flag_c(gbc_cpu *cpu);
-bool flag_nz(gbc_cpu *cpu);
-bool flag_nn(gbc_cpu *cpu);
-bool flag_nh(gbc_cpu *cpu);
-bool flag_nc(gbc_cpu *cpu);
 
 void set_flag_z(gbc_cpu *cpu, bool val);
 void set_flag_n(gbc_cpu *cpu, bool val);

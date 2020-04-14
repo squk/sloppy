@@ -113,7 +113,7 @@ void gbc_registers_debug(gbc_cpu *cpu, u8 opcode) {
 
     u8 temp = read_u8(cpu->mmu,cpu->registers.pc+1);
     printf("A:%02hX F:%s BC:%02hx%02hx DE:%02hx%02hx HL:%02hx%02hx SP:%04hx PC:%04hx    %02hx %s, %x", r->a, flags, r->b, r->c, r->d, r->e, r->h, r->l, r->sp, r->pc, opcode, op_string(opcode), temp);
-    printf("  M: %d  TIMA: %d  DIV: %d  TAC: %X\n", cpu->registers.clk.m, read_u8(cpu->mmu, IO_TIMA), read_u8(cpu->mmu, IO_DIV), read_u8(cpu->mmu, IO_DIV));
+    printf("  M: %d  TIMA: %d  DIV: %d  TAC: %X\n", cpu->registers.clk.m, read_u8(cpu->mmu, IO_TIMA), read_u8(cpu->mmu, IO_DIV), read_u8(cpu->mmu, IO_TAC));
 }
 
 bool setup_stack = false;
@@ -255,7 +255,7 @@ void gbc_cpu_timer_run(gbc_cpu *cpu) {
     cpu->counter.div += cpu->registers.clk.m;
     if (cpu->counter.div >= DIV_M_CYCLES) {
         cpu->counter.div -= DIV_M_CYCLES;
-        write_u8(cpu->mmu, IO_DIV, read_u8(cpu->mmu, IO_DIV) + 1);
+        (*get_address_ptr(cpu->mmu, IO_DIV))++;
     }
 
     // TIMA register timing
@@ -288,10 +288,10 @@ void gbc_cpu_step(gbc_cpu *cpu) {
 
     u16 old_pc = cpu->registers.pc;
     execute_op(cpu, opcode);
+    gbc_cpu_timer_run(cpu);
+
     //if (opcode != 0xCB)
         //cpu->registers.clk.m = op_m_cycles[opcode];
-
-    gbc_cpu_timer_run(cpu);
     //debug_dmg_bootrom(cpu, old_pc, opcode);
 
     // Add execution time to the CPU clk

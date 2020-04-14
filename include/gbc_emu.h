@@ -130,13 +130,13 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/rst_timing.gb");
 
     // timer tests
-    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/div_timing.gb");
-    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/div_write.gb"); // PASSED
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/div_timing.gb"); // PASS
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/div_write.gb"); // PASS
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/rapid_toggle.gb");
-    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim00.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim00.gb"); // PASS
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim01.gb"); // PASS
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim10.gb"); // PASS
-    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim11.gb");
+    //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim11.gb"); // PASS
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim00_div_trigger.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim01_div_trigger.gb");
     //gbc_load_rom_file(&mmu, "data/mooneye-gb_hwtests/acceptance/timer/tim10_div_trigger.gb");
@@ -153,7 +153,7 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "./data/mbc1/bits_ramg.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/mbc1/multicart_rom_8Mb.gb");
     //gbc_load_rom_file(&mmu, "./data/mbc1/ram_64kb.gb");
-    //gbc_load_rom_file(&mmu, "./data/mbc1/ram_256kb.gb");
+    //gbc_load_rom_file(&mmu, "./data/mbc1/ram_256kb.gb"); // PASSED
 
     //gbc_load_rom_file(&mmu, "./data/mbc1/rom_512kb.gb"); // PASSED
     //gbc_load_rom_file(&mmu, "./data/mbc1/rom_1Mb.gb"); // PASSED
@@ -181,42 +181,16 @@ void emu_test() {
     //gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/02-write_timing.gb");
     //gbc_load_rom_file(&mmu, "./data/tests/mem_timing/individual/03-modify_timing.gb");
 
-    gbc_load_rom_file(&mmu, "./DrMario.gb");
-    //gbc_load_rom_file(&mmu, "./Tetris.gb");
+    //gbc_load_rom_file(&mmu, "./DrMario.gb");
+    gbc_load_rom_file(&mmu, "./Tetris.gb");
     //gbc_load_rom_file(&mmu, "DK.gb");
     //gbc_load_rom_file(&mmu, "./MarioLand.gb"); // required mapper
     //gbc_load_rom_file(&mmu, "data/sprite_priority.gb");
-    //gbc_load_rom_file(&mmu, "data/tests/instr_timing/instr_timing.gb");
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     // CPU instruction tests
-    //gbc_load_rom_file(&mmu, "data/tests/cpu_instrs/cpu_instrs.gb");
     //gbc_load_rom_file(&mmu, "data/tests/oam_bug/oam_bug.gb");
-    //gbc_load_rom(&mmu, __01_special_gb, __01_special_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __02_interrupts_gb, __02_interrupts_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __03_op_sp_hl_gb, __03_op_sp_hl_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __04_op_r_imm_gb, __04_op_r_imm_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __05_op_rp_gb, __05_op_rp_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __06_ld_r_r_gb, __06_ld_r_r_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __07_jr_jp_call_ret_rst_gb, __07_jr_jp_call_ret_rst_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __08_misc_instrs_gb, __08_misc_instrs_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __09_op_r_r_gb, __09_op_r_r_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __10_bit_ops_gb, __10_bit_ops_gb_len); // PASSED
-    //gbc_load_rom(&mmu, __11_op_a__hl__gb, __11_op_a__hl__gb_len); // PASSED
-    //
-
-    //printf("OPCODE CYCLES (m): \n");
-    //for (int i=0; i<0x100; i++) {
-        //if ((i % 0x10) == 0) {
-            //printf("\n");
-        //}
-        //execute_op(&cpu, i);
-        //printf("%x,", cpu.registers.clk.m);
-    //}
-    //printf("\n");
-    //printf("END OPCODE CYCLES\n");
-
-    //printf("emulator initialized\n");
+    //gbc_load_rom_file(&mmu, "data/tests/cpu_instrs/cpu_instrs.gb");
     gbc_cpu_loop(&cpu);
 
 #if defined(SLOPPY_RENDER)
