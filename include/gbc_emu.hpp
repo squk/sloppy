@@ -1,16 +1,16 @@
 #pragma once
 
+#include <string>
 #include <stdio.h>
-#include <string.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
 
 #include "types.h"
-#include "gbc_cpu.h"
-#include "gbc_ops.h"
-#include "gbc_ppu.h"
-#include "gbc_mmu.h"
+#include "gbc_cpu.hpp"
+//#include "gbc_ops.hpp"
+#include "gbc_ppu.hpp"
+#include "gbc_mmu.hpp"
 
 class gbc_emu {
     public:
