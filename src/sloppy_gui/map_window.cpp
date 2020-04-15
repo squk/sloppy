@@ -7,7 +7,7 @@ u8 bg_fb[256 * 256 * 3]; // 3 bytes per pixel
 u8 win_fb[256 * 256 * 3]; // 3 bytes per pixel
 
 void gbc_emu::map_window() {
-    ImGui::Begin("MAP", &map_window_open, ImGuiWindowFlags_None);
+    ImGui::Begin("MAP", &map_window_open);
 
     u8 *bg_px = &bg_fb[0];
     u8 *win_px = &win_fb[0];
