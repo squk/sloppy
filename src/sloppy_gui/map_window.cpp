@@ -3,9 +3,9 @@
 #include "gbc_io.h"
 
 bool map_window_open = true;
-u8 bg_fb[512 * 512 * 3]; // 3 bytes per pixel
-u8 win_fb[512 * 512 * 3]; // 3 bytes per pixel
-u8 obj_fb[512 * 512 * 3]; // 3 bytes per pixel
+u8 bg_fb[256 * 256 * 3]; // 3 bytes per pixel
+u8 win_fb[256 * 256 * 3]; // 3 bytes per pixel
+u8 obj_fb[256 * 256 * 3]; // 3 bytes per pixel
 
 u32 get_paletted_color(u8 color) {
     u8 r=0, g=0, b=0;
@@ -32,9 +32,9 @@ void gbc_emu::map_window() {
     u8 *bg_px = &bg_fb[0];
     u8 *win_px = &win_fb[0];
     u8 *obj_px = &obj_fb[0];
-    for (int y = 0; y < 512; y++) {
-        for (int x = 0; x < 512; x++) {
-            int px_index = y * 512 + x;
+    for (int y = 0; y < 256; y++) {
+        for (int x = 0; x < 256; x++) {
+            int px_index = y * 256 + x;
             u32 bg_color = get_paletted_color(ppu.bg_disp[px_index]);
             u8 win_color = get_paletted_color(ppu.win_disp[px_index]);
             u8 obj_color = get_paletted_color(ppu.obj_disp[px_index]);
@@ -50,7 +50,7 @@ void gbc_emu::map_window() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glEnable(GL_TEXTURE_2D);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, bg_fb);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, bg_fb);
     ImGui::Text("BG:");
     ImGui::Image((void*)(intptr_t)bg_tex, ImVec2(256, 256));
 
@@ -60,7 +60,7 @@ void gbc_emu::map_window() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glEnable(GL_TEXTURE_2D);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, win_fb);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, win_fb);
     ImGui::Text("WIN:");
     ImGui::Image((void*)(intptr_t)win_tex, ImVec2(256, 256));
 
@@ -70,7 +70,7 @@ void gbc_emu::map_window() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glEnable(GL_TEXTURE_2D);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, obj_fb);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, obj_fb);
     ImGui::Text("OBJ:");
     ImGui::Image((void*)(intptr_t)obj_tex, ImVec2(256, 256));
 

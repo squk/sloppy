@@ -116,9 +116,9 @@ class gbc_ppu {
         gbc_mmu *mmu;
 
         u8 fb[SIZE_X * SIZE_Y];
-        u8 bg_disp[512*512];
-        u8 win_disp[512*512];
-        u8 obj_disp[512*512];
+        u8 bg_disp[256*256];
+        u8 win_disp[256*256];
+        u8 obj_disp[256*256];
 
         u16 mode_clock; // Object Attribute Memory
         bool vblank; // helper used for the GUI
