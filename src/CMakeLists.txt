@@ -13,6 +13,7 @@ list(APPEND MAIN_APP_SOURCES
     sloppy_gui/mbc_window.cpp
     sloppy_gui/io_window.cpp
     sloppy_gui/serial_window.cpp
+    sloppy_gui/themes.cpp
 
     ../modules/imgui/imgui.cpp
     ../modules/imgui/imgui_draw.cpp

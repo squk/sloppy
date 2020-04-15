@@ -50,6 +50,10 @@ class gbc_emu {
         void serial_window();
         u32 get_paletted_color(u8 color);
 
+        void theme_grey();
+        void theme_corporate_grey();
+        void theme_blackhat();
+
     public:
         gbc_cpu cpu;
         gbc_ppu ppu;

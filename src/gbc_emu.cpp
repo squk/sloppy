@@ -50,6 +50,8 @@ gbc_emu::gbc_emu() {
     cpu.reset();
     mmu.init();
     ppu.init();
+    //theme_corporate_grey();
+    theme_grey();
 }
 
 void gbc_emu::run() {
