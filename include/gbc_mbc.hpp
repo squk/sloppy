@@ -119,7 +119,7 @@ class gbc_mbc {
         u8 type;
 
         u8 *ram;
-        u8 *rom;
+        std::string rom;
         long rom_numbytes;
         long ram_numbytes;
         std::string title;

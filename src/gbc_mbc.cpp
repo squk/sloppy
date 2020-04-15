@@ -68,8 +68,10 @@ void gbc_mbc::init() {
     MODE = 0;
     RAMG = 0;
 
+    printf("ROM BYTES: %d\n", rom_numbytes);
+
     // 0134-0143 - Title
-    memcpy(&title, &rom[0x134], 0x10);
+    title = rom.substr(0x134, 0x10);
     std::cout << "TITLE: " << title << std::endl;
 
     // 0147 - Cartridge Type
@@ -84,7 +86,7 @@ void gbc_mbc::init() {
     ram_numbytes = RAM_NUMBYTES();
     num_ram_banks = ram_numbytes / CART_RAM_BANK_SIZE;
     printf("RAM SIZE: %d    BYTES: %d   BANKS: %d\n", ram_size, ram_numbytes, num_ram_banks);
-    if (ram_numbytes) {
+    if (ram_numbytes > 0x00) {
         ram = (u8*)malloc(ram_numbytes);
         memset(ram, 0xFF, ram_numbytes); // TODO: is this right?
     }

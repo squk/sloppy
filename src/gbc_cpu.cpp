@@ -58,6 +58,7 @@ void gbc_cpu::reset() {
 }
 
 void gbc_cpu::set_boot_state() {
+    mmu->in_bios = false;
     registers.pc = 0x100;
     registers.a = 0x01;
     registers.f = 0xB0;

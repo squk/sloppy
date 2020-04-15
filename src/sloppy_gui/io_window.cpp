@@ -1,11 +1,14 @@
 #include <iostream>
 #include "gbc_emu.hpp"
 #include "gbc_io.h"
+bool io_window_open = true;
 
 void gbc_emu::io_window() {
-    bool open = true;
 
-    ImGui::Begin("IO");
+    ImGui::SetNextWindowSize(ImVec2(200, 372));
+    ImGui::Begin("IO", &io_window_open, ImGuiWindowFlags_NoResize);
+    //ImVec2 s = ImGui::GetWindowSize();
+    //printf("w: %f h:%f\n", s.x, s.y);
     ImGui::Text("0xFF00\t[JOYP]: %d", mmu.read_u8(IO_JOYPAD));
     ImGui::Text("0xFF01\t[SB]: %d", mmu.read_u8(0xFF01));
     ImGui::Text("0xFF02\t[SC]: %d", mmu.read_u8(0xFF02));

@@ -38,8 +38,8 @@ void gbc_emu::run() {
 }
 
 void gbc_emu::test() {
-    memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len); mmu.in_bios = true;
-    //gbc_cpu_set_boot_state(&cpu);
+    //memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len);
+    cpu.set_boot_state();
     cpu.mmu->io[0x00] = 0xFF;
 
     //mmu.load_rom_file("data/mooneye-gb_hwtests/acceptance/ei_timing.gb");
@@ -140,8 +140,8 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./data/tests/mem_timing/individual/03-modify_timing.gb");
 
     //mmu.load_rom_file("./DrMario.gb");
-    mmu.load_rom_file("./Tetris.gb");
-    //mmu.load_rom_file("DK.gb");
+    //mmu.load_rom_file("./Tetris.gb");
+    mmu.load_rom_file("DK.gb");
     //mmu.load_rom_file("./MarioLand.gb"); // required mapper
     //mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
@@ -238,6 +238,10 @@ int gbc_emu::gui_init() {
     // Setup Platform/Renderer bindings
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+    // Create a OpenGL texture identifier
+    GLuint lcd_tex;
+    glGenTextures(1, &lcd_tex);
 }
 
 int gbc_emu::gui_step() {
@@ -264,6 +268,7 @@ int gbc_emu::gui_step() {
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
 
+    lcd_window();
     cpu_window();
     mbc_window();
     io_window();

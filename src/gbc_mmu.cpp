@@ -53,16 +53,24 @@ u8* gbc_mmu::get_address_ptr(u16 address) {
 }
 
 void gbc_mmu::load_rom_file(const std::string& fname) {
-    std::ifstream infile(fname);
+    std::ifstream t(fname);
 
-    //get length of file
-    infile.seekg(0, std::ios::end);
-    mbc.rom_numbytes = infile.tellg();
-    infile.seekg(0, std::ios::beg);
+    t.seekg(0, std::ios::end);
+    mbc.rom.reserve(t.tellg());
+    t.seekg(0, std::ios::beg);
 
-    mbc.rom = (u8*)malloc(mbc.rom_numbytes);
+    mbc.rom.assign((std::istreambuf_iterator<char>(t)),
+                std::istreambuf_iterator<char>());
 
-    infile.read((char*)mbc.rom, mbc.rom_numbytes);
+    mbc.rom_numbytes = mbc.rom.size();
+
+    if (mbc.rom_numbytes == 0) {
+        printf("ROM is tucked\n");
+        return;
+    }
+    //mbc.rom = (u8*)malloc(mbc.rom_numbytes);
+
+    //infile.read((char*)mbc.rom, mbc.rom_numbytes);
     mbc.init();
 }
 
