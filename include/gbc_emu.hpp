@@ -47,6 +47,7 @@ class gbc_emu {
         void cpu_window();
         void mbc_window();
         void io_window();
+        void serial_window();
 
     public:
         gbc_cpu cpu;
@@ -55,7 +56,7 @@ class gbc_emu {
 
         SDL_Window *window = nullptr;
         SDL_GLContext gl_context;
-        GLuint lcd_tex, bg_tex, win_tex, obj_tex;
+        GLuint lcd_tex, bg_tex, win_tex;
 
         gbc_emu();
         void run();

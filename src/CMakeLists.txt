@@ -10,8 +10,9 @@ list(APPEND MAIN_APP_SOURCES
     sloppy_gui/emulator_window.cpp
     sloppy_gui/map_window.cpp
     sloppy_gui/cpu_window.cpp
-    sloppy_gui/io_window.cpp
     sloppy_gui/mbc_window.cpp
+    sloppy_gui/io_window.cpp
+    sloppy_gui/serial_window.cpp
 
     ../modules/imgui/imgui.cpp
     ../modules/imgui/imgui_draw.cpp

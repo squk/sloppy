@@ -141,9 +141,9 @@ void gbc_emu::test() {
 
     //mmu.load_rom_file("./DrMario.gb");
     //mmu.load_rom_file("./Tetris.gb");
-    //mmu.load_rom_file("DK.gb");
+    mmu.load_rom_file("DK.gb");
     //mmu.load_rom_file("./MarioLand.gb"); // required mapper
-    mmu.load_rom_file("data/sprite_priority.gb");
+    //mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     // CPU instruction tests
@@ -243,7 +243,6 @@ int gbc_emu::gui_init() {
     glGenTextures(1, &lcd_tex);
     glGenTextures(1, &bg_tex);
     glGenTextures(1, &win_tex);
-    glGenTextures(1, &obj_tex);
 
     return 0;
 }
@@ -346,6 +345,7 @@ int gbc_emu::gui_step() {
     cpu_window();
     mbc_window();
     io_window();
+    serial_window();
 
     ImGui::Begin("Debug");
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
