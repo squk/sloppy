@@ -55,7 +55,7 @@ class gbc_emu {
 
         SDL_Window *window = nullptr;
         SDL_GLContext gl_context;
-        GLuint lcd_tex, obj_tex, win_tex, bg_tex;
+        GLuint lcd_tex, bg_tex, win_tex, obj_tex;
 
         gbc_emu();
         void run();

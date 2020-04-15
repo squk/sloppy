@@ -140,10 +140,10 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./data/tests/mem_timing/individual/03-modify_timing.gb");
 
     //mmu.load_rom_file("./DrMario.gb");
-    mmu.load_rom_file("./Tetris.gb");
+    //mmu.load_rom_file("./Tetris.gb");
     //mmu.load_rom_file("DK.gb");
     //mmu.load_rom_file("./MarioLand.gb"); // required mapper
-    //mmu.load_rom_file("data/sprite_priority.gb");
+    mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     // CPU instruction tests
@@ -198,7 +198,7 @@ int gbc_emu::gui_init() {
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    window = SDL_CreateWindow("Dear ImGui SDL2+OpenGL3 example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+    window = SDL_CreateWindow("sloppy emu", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
     gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
     //SDL_GL_SetSwapInterval(1); // Enable vsync
@@ -244,6 +244,8 @@ int gbc_emu::gui_init() {
     glGenTextures(1, &bg_tex);
     glGenTextures(1, &win_tex);
     glGenTextures(1, &obj_tex);
+
+    return 0;
 }
 
 int gbc_emu::gui_step() {
