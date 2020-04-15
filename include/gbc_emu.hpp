@@ -48,6 +48,7 @@ class gbc_emu {
         void mbc_window();
         void io_window();
         void serial_window();
+        u32 get_paletted_color(u8 color);
 
     public:
         gbc_cpu cpu;

@@ -15,6 +15,26 @@
 #include "10_bit_ops.h"
 #include "11_op_a_mhl.h"
 
+u32 purpg_palette[4] = {
+    0x332c50,
+    0x46878f,
+    0x94e344,
+    0xe2f3e4
+};
+
+u32 grey_palette[4] = {
+    0xFFFFFF,
+    0xAAAAAA,
+    0x555555,
+    0x000000
+};
+
+u32 gbc_emu::get_paletted_color(u8 color) {
+    u8 r=0, g=0, b=0;
+    //return purpg_palette[color];
+    return grey_palette[color];
+}
+
 gbc_emu::gbc_emu() {
     cpu.mmu = &mmu;
     ppu.mmu = &mmu;

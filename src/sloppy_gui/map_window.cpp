@@ -6,25 +6,6 @@ bool map_window_open = true;
 u8 bg_fb[256 * 256 * 3]; // 3 bytes per pixel
 u8 win_fb[256 * 256 * 3]; // 3 bytes per pixel
 
-u32 get_paletted_color(u8 color) {
-    u8 r=0, g=0, b=0;
-    switch(color) {
-        case 0:             // 332c50
-            r = 0x33; g = 0x2c; b = 0x50;
-            break;
-        case 1:             // 46878f
-            r = 0x46; g = 0x87; b = 0x8f;
-            break;
-        case 2:             // 94e344
-            r = 0x94; g = 0xe3; b = 0x44;
-            break;
-        case 3:             // e2f3e4
-            r = 0xe2; g = 0xf3; b = 0xe4;
-            break;
-    }
-    return (r << 16) | (g << 8) | (b << 0);
-}
-
 void gbc_emu::map_window() {
     ImGui::Begin("MAP", &map_window_open, ImGuiWindowFlags_None);
 
