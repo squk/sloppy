@@ -34,7 +34,7 @@ void gbc_emu::map_window() {
         for (int x = 0; x < 256; x++) {
             int px_index = y * 256 + x;
             u32 bg_color = get_paletted_color(ppu.bg_disp[px_index]);
-            u8 win_color = get_paletted_color(ppu.win_disp[px_index]);
+            u32 win_color = get_paletted_color(ppu.win_disp[px_index]);
 
             *bg_px++ = (bg_color >> 16) & 0xFF; *bg_px++ = (bg_color >> 8) & 0xFF; *bg_px++ = (bg_color & 0xFF);
             *win_px++ = (win_color >> 16) & 0xFF; *win_px++ = (win_color >> 8) & 0xFF; *win_px++ = (win_color & 0xFF);
