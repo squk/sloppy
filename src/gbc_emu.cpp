@@ -38,8 +38,8 @@ void gbc_emu::run() {
 }
 
 void gbc_emu::test() {
-    //memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len);
-    cpu.set_boot_state();
+    memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len);
+    //cpu.set_boot_state();
     cpu.mmu->io[0x00] = 0xFF;
 
     //mmu.load_rom_file("data/mooneye-gb_hwtests/acceptance/ei_timing.gb");
@@ -241,25 +241,97 @@ int gbc_emu::gui_init() {
 
     // Create a OpenGL texture identifier
     glGenTextures(1, &lcd_tex);
+    glGenTextures(1, &bg_tex);
+    glGenTextures(1, &win_tex);
+    glGenTextures(1, &obj_tex);
 }
 
 int gbc_emu::gui_step() {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
 
     // Poll and handle events (inputs, window resize, etc.)
     // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
     // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
     // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
     // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
+    SDL_Event e;
+    while (SDL_PollEvent(&e))
     {
-        ImGui_ImplSDL2_ProcessEvent(&event);
-        if (event.type == SDL_QUIT)
+        ImGui_ImplSDL2_ProcessEvent(&e);
+        if (e.type == SDL_QUIT)
             return -1;
-        if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
+        if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE && e.window.windowID == SDL_GetWindowID(window))
             return -1;
+
+        /*
+         * Bit 7 - Not used
+         * Bit 6 - Not used
+         * Bit 5 - P15 Select Button Keys      (0=Select)
+         * Bit 4 - P14 Select Direction Keys   (0=Select)
+         * Bit 3 - P13 Input Down  or Start    (0=Pressed) (Read Only)
+         * Bit 2 - P12 Input Up    or Select   (0=Pressed) (Read Only)
+         * Bit 1 - P11 Input Left  or Button B (0=Pressed) (Read Only)
+         * Bit 0 - P10 Input Right or Button A (0=Pressed) (Read Only)
+         */
+        if (e.type == SDL_KEYDOWN) {
+            u8 v = mmu.read_u8(IO_JOYPAD);
+            if (e.key.keysym.sym == SDLK_ESCAPE) {
+                return -1;
+            }
+            if (e.key.keysym.sym == SDLK_UP) {
+                mmu.io[0x00] = v & ~(1<<4);             // direction
+                mmu.io[0x00] = v & ~(1<<2);             // up
+            } else if (e.key.keysym.sym == SDLK_DOWN) {
+                mmu.io[0x00] = v & ~(1<<4);             // direction
+                mmu.io[0x00] = v & ~(1<<3);             // down
+            } else if (e.key.keysym.sym == SDLK_LEFT) {
+                mmu.io[0x00] = v & ~(1<<4);             // direction
+                mmu.io[0x00] = v & ~(1<<1);             // left
+            } else if (e.key.keysym.sym == SDLK_LEFT) {
+                mmu.io[0x00] = v & ~(1<<4);             // direction
+                mmu.io[0x00] = v & ~(1<<0);             // right
+            } else if (e.key.keysym.sym == SDLK_x) {
+                mmu.io[0x00] = v & ~(1<<5);             // button
+                mmu.io[0x00] = v & ~(1<<0);             // A
+            } else if (e.key.keysym.sym == SDLK_z) {
+                mmu.io[0x00] = v & ~(1<<5);             // button
+                mmu.io[0x00] = v & ~(1<<1);             // B
+            } else if (e.key.keysym.sym == SDLK_RETURN) {
+                mmu.io[0x00] = v & ~(1<<5);             // button
+                mmu.io[0x00] = v & ~(1<<3);             // start
+            } else if (e.key.keysym.sym == SDLK_TAB) {
+                mmu.io[0x00] = v & ~(1<<5);             // button
+                mmu.io[0x00] = v & ~(1<<4);             // select
+            }
+        } else if (e.type == SDL_KEYUP) {
+            u8 v = mmu.read_u8(IO_JOYPAD);
+            if (e.key.keysym.sym == SDLK_UP) {
+                mmu.io[0x00] = v | (1<<4);             // direction
+                mmu.io[0x00] = v | (1<<2);             // up
+            } else if (e.key.keysym.sym == SDLK_DOWN) {
+                mmu.io[0x00] = v | (1<<4);             // direction
+                mmu.io[0x00] = v | (1<<3);             // down
+            } else if (e.key.keysym.sym == SDLK_LEFT) {
+                mmu.io[0x00] = v | (1<<4);             // direction
+                mmu.io[0x00] = v | (1<<1);             // left
+            } else if (e.key.keysym.sym == SDLK_LEFT) {
+                mmu.io[0x00] = v | (1<<4);             // direction
+                mmu.io[0x00] = v | (1<<0);             // right
+            } else if (e.key.keysym.sym == SDLK_x) {
+                mmu.io[0x00] = v | (1<<5);             // button
+                mmu.io[0x00] = v | (1<<0);             // A
+            } else if (e.key.keysym.sym == SDLK_z) {
+                mmu.io[0x00] = v | (1<<5);             // button
+                mmu.io[0x00] = v | (1<<1);             // B
+            } else if (e.key.keysym.sym == SDLK_RETURN) {
+                mmu.io[0x00] = v | (1<<5);             // button
+                mmu.io[0x00] = v | (1<<3);             // start
+            } else if (e.key.keysym.sym == SDLK_TAB) {
+                mmu.io[0x00] = v | (1<<5);             // button
+                mmu.io[0x00] = v | (1<<4);             // select
+            }
+        }
     }
 
     // Start the Dear ImGui frame
@@ -267,7 +339,8 @@ int gbc_emu::gui_step() {
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
 
-    lcd_window();
+    emulator_window();
+    map_window();
     cpu_window();
     mbc_window();
     io_window();

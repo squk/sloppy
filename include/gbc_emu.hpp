@@ -42,7 +42,8 @@ using namespace gl;
 
 class gbc_emu {
     private:
-        void lcd_window();
+        void emulator_window();
+        void map_window();
         void cpu_window();
         void mbc_window();
         void io_window();
@@ -51,11 +52,10 @@ class gbc_emu {
         gbc_cpu cpu;
         gbc_ppu ppu;
         gbc_mmu mmu;
-        gbc_mbc mbc;
 
         SDL_Window *window = nullptr;
         SDL_GLContext gl_context;
-        GLuint lcd_tex;
+        GLuint lcd_tex, obj_tex, win_tex, bg_tex;
 
         gbc_emu();
         void run();
