@@ -140,8 +140,8 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./data/tests/mem_timing/individual/03-modify_timing.gb");
 
     //mmu.load_rom_file("./DrMario.gb");
-    //mmu.load_rom_file("./Tetris.gb");
-    mmu.load_rom_file("DK.gb");
+    mmu.load_rom_file("./Tetris.gb");
+    //mmu.load_rom_file("DK.gb");
     //mmu.load_rom_file("./MarioLand.gb"); // required mapper
     //mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
@@ -240,7 +240,6 @@ int gbc_emu::gui_init() {
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Create a OpenGL texture identifier
-    GLuint lcd_tex;
     glGenTextures(1, &lcd_tex);
 }
 
