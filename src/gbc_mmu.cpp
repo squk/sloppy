@@ -84,16 +84,17 @@ u8 gbc_mmu::read_u8(u16 address) {
     }
 
     u8 lcd_mode = io[IO_LCDSTAT & 0xFF] & MASK_LCDSTAT_MODE_FLAG;
-    if (!oam_access) {
-        if (address >= 0xFE00 && address < 0xFEA0) { // OAM
-            return 0xFF;
-        }
-    }
-    if (!vram_access) {
-        if (address >= 0x8000 && address < 0xA000) { // VRAM
-            return 0xFF;
-        }
-    }
+    // don't restrict OAM/VRAM access until passing PPU timing tests
+    //if (!oam_access) {
+        //if (address >= 0xFE00 && address < 0xFEA0) { // OAM
+            //return 0xFF;
+        //}
+    //}
+    //if (!vram_access) {
+        //if (address >= 0x8000 && address < 0xA000) { // VRAM
+            //return 0xFF;
+        //}
+    //}
     return *get_address_ptr(address);
 }
 
@@ -116,16 +117,17 @@ void gbc_mmu::write_u8(u16 address, u8 val) {
     }
 
     u8 lcd_mode = io[IO_LCDSTAT & 0xFF] & MASK_LCDSTAT_MODE_FLAG;
+    // don't restrict OAM/VRAM access until passing PPU timing tests
     // OAM is not accessible in Mode 2 or 3
-    if (!vram_access) {
-        if (address >= 0x8000 && address < 0xA000) { // VRAM
-            return;
-        }
-    }
-    if (!oam_access) {
-        if (address >= 0xFE00 && address < 0xFEA0) // OAM
-            return;
-    }
+    //if (!vram_access) {
+        //if (address >= 0x8000 && address < 0xA000) { // VRAM
+            //return;
+        //}
+    //}
+    //if (!oam_access) {
+        //if (address >= 0xFE00 && address < 0xFEA0) // OAM
+            //return;
+    //}
 
     switch (address) {
         case IO_IFLAGS:
