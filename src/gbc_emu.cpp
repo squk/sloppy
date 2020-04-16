@@ -163,8 +163,8 @@ void gbc_emu::test() {
 
     //mmu.load_rom_file("./DrMario.gb");
     //mmu.load_rom_file("./Tetris.gb");
-    mmu.load_rom_file("DK.gb");
-    //mmu.load_rom_file("./MarioLand.gb"); // required mapper
+    //mmu.load_rom_file("DK.gb");
+    mmu.load_rom_file("./MarioLand.gb"); // required mapper
     //mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
@@ -173,7 +173,7 @@ void gbc_emu::test() {
     //mmu.load_rom_file("data/tests/cpu_instrs/cpu_instrs.gb");
     //mmu.load_rom_file("data/tests/instr_timing/instr_timing.gb");
     while(!cpu.quit) {
-        if (ppu.vblank || (cpu.clk.m % 4194304/60) == 0x00) {
+        if (ppu.vblank) {
             ppu.vblank = false;
             int r = gui_step();
             if (r == -1) {
@@ -346,7 +346,7 @@ int gbc_emu::gui_step() {
             } else if (e.key.keysym.sym == SDLK_LEFT) {
                 mmu.io[0x00] = v & ~(1<<4);             // direction
                 mmu.io[0x00] = v & ~(1<<1);             // left
-            } else if (e.key.keysym.sym == SDLK_LEFT) {
+            } else if (e.key.keysym.sym == SDLK_RIGHT) {
                 mmu.io[0x00] = v & ~(1<<4);             // direction
                 mmu.io[0x00] = v & ~(1<<0);             // right
             } else if (e.key.keysym.sym == SDLK_x) {
@@ -373,7 +373,7 @@ int gbc_emu::gui_step() {
             } else if (e.key.keysym.sym == SDLK_LEFT) {
                 mmu.io[0x00] = v | (1<<4);             // direction
                 mmu.io[0x00] = v | (1<<1);             // left
-            } else if (e.key.keysym.sym == SDLK_LEFT) {
+            } else if (e.key.keysym.sym == SDLK_RIGHT) {
                 mmu.io[0x00] = v | (1<<4);             // direction
                 mmu.io[0x00] = v | (1<<0);             // right
             } else if (e.key.keysym.sym == SDLK_x) {
