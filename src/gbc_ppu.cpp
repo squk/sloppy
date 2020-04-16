@@ -138,23 +138,29 @@ void gbc_ppu::dump() {
 void gbc_ppu::draw_line_fb(u8 line) {
     for (int i = 0; i < SIZE_X; i++) {
         int px_index = line * SIZE_X + i;
-        fb[px_index] = bg_disp[line * 256 + i];
+        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
+            fb[px_index] = bg_disp[line * 256 + i];
+        }
         // check non painted
-        if (win_disp[line * 256 + i] < 8) { // check priority?
-            fb[px_index] = win_disp[line * 256 + i];
+        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
+            if (win_disp[line * 256 + i] < 8) { // check priority?
+                fb[px_index] = win_disp[line * 256 + i];
+            }
         }
 
-        int obj_index = (line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X;
+        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
+            int obj_index = (line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X;
 
-        //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
-        //(Used for both BG and Window. BG color 0 is always behind OBJ)
-        if ((fb[px_index] != 0 && obj_disp[obj_index] >= 4)) {
-            continue;
+            //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
+            //(Used for both BG and Window. BG color 0 is always behind OBJ)
+            if ((fb[px_index] != 0 && obj_disp[obj_index] >= 4)) {
+                continue;
+            }
+            if (obj_disp[obj_index] == 0) {
+                continue;
+            }
+            fb[px_index] = obj_disp[obj_index] & 0x03;
         }
-        if (obj_disp[obj_index] == 0) {
-            continue;
-        }
-        fb[px_index] = obj_disp[obj_index] & 0x03;
     }
 }
 
@@ -194,9 +200,9 @@ void gbc_ppu::draw_line_bg(u8 line) {
         for (j = 0; j < 8; j++) {
             bg_disp[line * 256 + (u8)(i * 8 - mmu->read_u8(IO_SCROLLX) + j)] =
                 get_palette_color(IO_BGRDPAL,
-                                      ((py_a & (1 << (7 - j))) ? 1 : 0) +
-                                      ((py_b & (1 << (7 - j))) ? 2 : 0)
-                                      );
+                                  ((py_a & (1 << (7 - j))) ? 1 : 0) +
+                                  ((py_b & (1 << (7 - j))) ? 2 : 0)
+                                  );
         }
     }
 }
@@ -240,9 +246,9 @@ void gbc_ppu::draw_line_win(u8 line) {
         for (j = 0; j < 8; j++) {
             win_disp[line * 256 + (u8)(i * 8 + mmu->read_u8(IO_WNDPOSX) - 7 + j)] =
                 get_palette_color(IO_BGRDPAL,
-                                      ((py_a & (1 << (7 - j))) ? 1 : 0) +
-                                      ((py_b & (1 << (7 - j))) ? 2 : 0)
-                                      );
+                                  ((py_a & (1 << (7 - j))) ? 1 : 0) +
+                                  ((py_b & (1 << (7 - j))) ? 2 : 0)
+                                  );
         }
     }
 }
@@ -337,7 +343,7 @@ void gbc_ppu::draw_line_obj(u8 line) {
         if(!((obj.y != 0)
              && (obj.y < SPRITE_END_Y)
              && (obj.y <= line)
-             && ((obj.y + obj_height) > line))) { // does the sprite intercept the scanline?
+             && ((obj.y + obj_height) > line))) {        // does the sprite intercept the scanline?
             continue;
         }
 
@@ -378,15 +384,9 @@ void gbc_ppu::draw_line_obj(u8 line) {
 
 void gbc_ppu::draw_line(u8 line) {
     if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
-        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
-            draw_line_bg(line);
-        }
-        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
-            draw_line_win(line);
-        }
-        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
-            draw_line_obj(line);
-        }
+        draw_line_bg(line);
+        draw_line_win(line);
+        draw_line_obj(line);
     }
 
     draw_line_fb(line);
