@@ -52,7 +52,6 @@ class gbc_emu {
 
         void theme_grey();
         void theme_corporate_grey();
-        void theme_blackhat();
 
     public:
         gbc_cpu cpu;

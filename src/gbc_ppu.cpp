@@ -140,7 +140,7 @@ void gbc_ppu::draw_line_fb(u8 line) {
         int px_index = line * SIZE_X + i;
         fb[px_index] = bg_disp[line * 256 + i];
         // check non painted
-        if (win_disp[line * 256 + i] < 8) {
+        if (win_disp[line * 256 + i] < 8) { // check priority?
             fb[px_index] = win_disp[line * 256 + i];
         }
 

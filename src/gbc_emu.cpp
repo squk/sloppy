@@ -188,6 +188,10 @@ void gbc_emu::test() {
 #endif
 }
 
+const std::string shaderSource =
+#include "sloppy_gui/shaders/gbc-color.vs"
+;
+
 int gbc_emu::gui_init() {
     // Setup SDL
     // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
@@ -265,6 +269,37 @@ int gbc_emu::gui_init() {
     glGenTextures(1, &lcd_tex);
     glGenTextures(1, &bg_tex);
     glGenTextures(1, &win_tex);
+
+    // build and compile our shader program
+    // vertex shader
+    int shader = glCreateShader(GL_VERTEX_SHADER);
+    const char* src = shaderSource.c_str();
+    glShaderSource(shader, 1, &src, NULL);
+    glCompileShader(shader);
+    // check for shader compile errors
+    int success;
+    char infoLog[512];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    //std::cout << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+
+    // link shaders
+    int shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, shader);
+    glLinkProgram(shaderProgram);
+    // check for linking errors
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        return -1;
+    }
+    glDeleteShader(shader);
+    glUseProgram(shaderProgram);
 
     return 0;
 }

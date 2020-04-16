@@ -14,6 +14,7 @@ list(APPEND MAIN_APP_SOURCES
     sloppy_gui/io_window.cpp
     sloppy_gui/serial_window.cpp
     sloppy_gui/themes.cpp
+    sloppy_gui/shaders/gbc-color.vs
 
     ../modules/imgui/imgui.cpp
     ../modules/imgui/imgui_draw.cpp
