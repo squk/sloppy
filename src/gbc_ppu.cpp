@@ -93,12 +93,11 @@ u8 gbc_ppu::get_palette_color(u16 palette_addr, u8 color) {
 void gbc_ppu::start_frame() {
     int i, j;
 
-    // set win and obj to transparent
     for (i = 0; i < 256; i++) {
         for (j = 0; j < 256; j++) {
             bg_disp[i * 256 + 1] = 0;
-            win_disp[i * 256 + j] = TRANSPARENT;
-            obj_disp[i * 256 + j] = TRANSPARENT;
+            win_disp[i * 256 + j] = 0;
+            obj_disp[i * 256 + j] = 0;
         }
     }
     u8 r = run(0);
@@ -138,25 +137,31 @@ void gbc_ppu::dump() {
 void gbc_ppu::draw_line_fb(u8 line) {
     for (int i = 0; i < SIZE_X; i++) {
         int px_index = line * SIZE_X + i;
-        fb[px_index] = bg_disp[line * 256 + i];
+
+        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWIN_Display_Priority)) {
+            fb[px_index] = bg_disp[line * 256 + i];
+        } else {
+            fb[px_index] = get_palette_color(IO_BGRDPAL, 0);
+        }
+
         if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable)) {
-            fb[px_index] = win_disp[line * 256 + i] & 0x3;
+            if (!(mmu->read_u8(IO_WINPOSY) > line || mmu->read_u8(IO_WINPOSX) > SIZE_X)) {
+                fb[px_index] = win_disp[line * 256 + i] & 0x3;
+            }
         }
 
         if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
             int obj_index = (line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X;
-            bool override_priority = mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWIN_Display_Priority);
+            //bool override_priority = mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWIN_Display_Priority);
             bool priority = ((obj_disp[obj_index] & 0x4) > 0);
 
             //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
             //(Used for both BG and WIN. BG color 0 is always behind OBJ)
-            if((!priority || override_priority) && (fb[px_index] & 0x3) != 0) {
-                //
-                //
-             // Note: The BG transparent color is bg_pal[0]
+            if(priority && fb[px_index] != get_palette_color(IO_BGRDPAL, 0)) {
+                 // Note: The BG transparent color is bg_pal[0]
                 continue;
             }
-            if (obj_disp[obj_index] & 0x3 == 0) { // transparent pixel
+            if ((obj_disp[obj_index] & 0x3) == 0) { // transparent pixel
                 continue;
             }
             fb[px_index] = obj_disp[obj_index] & 0x03; // AND 0x3 to remove any extra bit we may have set
@@ -166,8 +171,8 @@ void gbc_ppu::draw_line_fb(u8 line) {
 
 void gbc_ppu::draw_line_bg(u8 line) {
     u16 bg_tile_map, tile_data;
-    u8 oam_row, py;
-    u8 py_a, py_b;
+    u8 bg_row, px_row;
+    u8 px_row_a, px_row_b;
     s16 obj;
 
     if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
@@ -184,24 +189,24 @@ void gbc_ppu::draw_line_bg(u8 line) {
 
     // optimization for GBA. it's ARM CPU struggled with div and mod operators
     /*oam_row = (u8)Div(line + mmu->read_u8(IO_SCROLLY), 8);*/
-    /*py = (u8)DivMod(line + mmu->read_u8(IO_SCROLLY), 8);*/
-    oam_row = (u8)((line + mmu->read_u8(IO_SCROLLY)) / 8);
-    py = (u8)((line + mmu->read_u8(IO_SCROLLY)) % 8);
+    /*px_row = (u8)DivMod(line + mmu->read_u8(IO_SCROLLY), 8);*/
+    bg_row = (u8)((line + mmu->read_u8(IO_SCROLLY)) / 8);
+    px_row = (u8)((line + mmu->read_u8(IO_SCROLLY)) % 8);
 
     u8 i, j;
     for (i = 0; i < 32; i++) {
         if (tile_data == 0x9000) {
-            obj = (s8)mmu->read_u8(bg_tile_map + (oam_row * 32) + i);
+            obj = (s8)mmu->read_u8(bg_tile_map + (bg_row * 32) + i);
         } else {
-            obj = (u8)mmu->read_u8(bg_tile_map + (oam_row * 32) + i);
+            obj = (u8)mmu->read_u8(bg_tile_map + (bg_row * 32) + i);
         }
-        py_a = mmu->read_u8(tile_data + (obj * 16) + (py * 2));
-        py_b = mmu->read_u8(tile_data + (obj * 16) + (py * 2) + 1);
+        px_row_a = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2));
+        px_row_b = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2) + 1);
         for (j = 0; j < 8; j++) {
             bg_disp[line * 256 + (u8)(i * 8 - mmu->read_u8(IO_SCROLLX) + j)] =
                 get_palette_color(IO_BGRDPAL,
-                                  ((py_a & (1 << (7 - j))) ? 1 : 0) +
-                                  ((py_b & (1 << (7 - j))) ? 2 : 0)
+                                  ((px_row_a & (1 << (7 - j))) ? 1 : 0) +
+                                  ((px_row_b & (1 << (7 - j))) ? 2 : 0)
                                   );
         }
     }
@@ -228,13 +233,9 @@ void gbc_ppu::draw_line_bg(u8 line) {
  */
 void gbc_ppu::draw_line_win(u8 line) {
     u16 win_tile_map, tile_data;
-    u8 oam_row, py;
-    u8 py_a, py_b;
-    s16 obj;
-
-    if (mmu->read_u8(IO_WNDPOSY)  > line || mmu->read_u8(IO_WNDPOSX) > SIZE_X) {
-        return;
-    }
+    u8 win_row, px_row;
+    u8 px_row_a, px_row_b;
+    u16 obj;
 
     if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Tile_Map_Display_Select)) {
         win_tile_map = 0x9C00;
@@ -248,28 +249,23 @@ void gbc_ppu::draw_line_win(u8 line) {
         tile_data = 0x9000;
     }
 
-    // optimization for GBA. it's ARM CPU struggled with div and mod operators
-    /*oam_row = Div((u8)(line - mmu->read_u8(IO_WNDPOSY)), 8);*/
-    /*py = DivMod((u8)(line - mmu->read_u8(IO_WNDPOSY)), 8);*/
-    u8 wy = mmu->read_u8(IO_WNDPOSY);
-    u8 wx = mmu->read_u8(IO_WNDPOSX) - 7;
-    oam_row = (u8)((line - wy) / 8);
-    py = (u8)((line - wy) % 8);
+    win_row = (u8)((line - mmu->read_u8(IO_WINPOSY)) / 8);
+    px_row = (u8)((line - mmu->read_u8(IO_WINPOSY)) % 8);
+
     u8 i, j;
-    for (i = 0; i < (SIZE_X - (mmu->read_u8(IO_WNDPOSX) - 1)) / 8 + 1; i++) {
+    for (i = 0; i < 32; i++) {
         if (tile_data == 0x9000) {
-            obj = (s8)mmu->read_u8(win_tile_map + (oam_row * 32) + i);
+            obj = (s8)mmu->read_u8(win_tile_map + (win_row * 32) + i);
         } else {
-            obj = (u8)mmu->read_u8(win_tile_map + (oam_row * 32) + i);
+            obj = (u8)mmu->read_u8(win_tile_map + (win_row * 32) + i);
         }
-        py_a = mmu->read_u8(tile_data + (obj * 16) + (py * 2));
-        py_b = mmu->read_u8(tile_data + (obj * 16) + (py * 2) + 1);
+        px_row_a = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2));
+        px_row_b = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2) + 1);
         for (j = 0; j < 8; j++) {
-            int y_offset = line * 256;
-            win_disp[y_offset + (i * 8 + wx + j)] =
+            win_disp[line * 256 + (u8)(i * 8 + mmu->read_u8(IO_WINPOSX) - 7 + j)] =
                 get_palette_color(IO_BGRDPAL,
-                                  ((py_a & (1 << (7 - j))) ? 1 : 0) +
-                                  ((py_b & (1 << (7 - j))) ? 2 : 0)
+                                  ((px_row_a & (1 << (7 - j))) ? 1 : 0) +
+                                  ((px_row_b & (1 << (7 - j))) ? 2 : 0)
                                   );
         }
     }
@@ -396,9 +392,6 @@ void gbc_ppu::draw_line_obj(u8 line) {
                 color = get_palette_color(IO_OBJ0PAL, color_index);
             }
 
-            if (color >= 4) {
-                printf("color %x\n", color);
-            }
             if (obj.flags & OPT_OBJ_Flag_priority) {
                 color |= 4; // flag this pixel for draw_line_fb
             }

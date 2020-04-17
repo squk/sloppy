@@ -64,8 +64,6 @@
 #define MASK_OBJ_X_FLIP   (0x01 << 5)
 #define MASK_OBJ_PALETTE  (0x01 << 4)
 
-#define TRANSPARENT 8
-
 
 /*
  * FF47 - BGP - BG Palette Data (R/W) - Non CGB Mode Only

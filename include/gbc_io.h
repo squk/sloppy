@@ -33,8 +33,8 @@ static const u16 TAC_CYCLES[4] = {1024, 16, 64, 256};
 #define IO_OBJ0PAL 0xFF48
 #define IO_OBJ1PAL 0xFF49
 
-#define IO_WNDPOSY 0xFF4A
-#define IO_WNDPOSX 0xFF4B
+#define IO_WINPOSY 0xFF4A
+#define IO_WINPOSX 0xFF4B
 
 #define IO_DMACONT 0xFF46
 #define IO_IENABLE 0xFFFF
@@ -118,7 +118,7 @@ static const u16 TAC_CYCLES[4] = {1024, 16, 64, 256};
 #define MASK_LCDCONT_BG_Tile_Map_Display_Select     (0x01 << 3)
 #define MASK_LCDCONT_OBJ_Size                       (0x01 << 2)
 #define MASK_LCDCONT_OBJ_Display_Enable             (0x01 << 1)
-#define MASK_LCDCONT_BGWIN_Display_Priority              (0x01 << 0)
+#define MASK_LCDCONT_BGWIN_Display_Priority              (0x01 << 0) // only disables BG on DMG, only alters priority on CGB
 
 #define MASK_INT_LCDSTAT_INT            (0x01 << 1)
 #define MASK_INT_VBLANK                 (0x01 << 0)

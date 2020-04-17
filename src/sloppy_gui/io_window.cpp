@@ -25,8 +25,8 @@ void gbc_emu::io_window() {
     ImGui::Text("0xFF47\t[BGP]: %d", mmu.read_u8(IO_BGRDPAL));
     ImGui::Text("0xFF48\t[OBP0]: %d", mmu.read_u8(IO_OBJ0PAL));
     ImGui::Text("0xFF49\t[OBP1]: %d", mmu.read_u8(IO_OBJ1PAL));
-    ImGui::Text("0xFF4A\t[WY]: %d", mmu.read_u8(IO_WNDPOSY));
-    ImGui::Text("0xFF4B\t[WX]: %d", mmu.read_u8(IO_WNDPOSX));
+    ImGui::Text("0xFF4A\t[WY]: %d", mmu.read_u8(IO_WINPOSY));
+    ImGui::Text("0xFF4B\t[WX]: %d", mmu.read_u8(IO_WINPOSX));
     ImGui::Text("0xFFFF\t[IE]: %d", mmu.read_u8(IO_IENABLE));
     ImGui::End();
 }
