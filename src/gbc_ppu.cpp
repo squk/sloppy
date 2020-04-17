@@ -450,10 +450,10 @@ u8 gbc_ppu::run(int cycles) {
         mode_clock -= LCD_LINE_CYCLES;
 
         // next line
-        mmu->write_u8(IO_CURLINE, (mmu->read_u8(IO_CURLINE) + 1) % LCD_VERT_LINES);
+        mmu->write_u8(IO_LY, (mmu->read_u8(IO_LY) + 1) % LCD_VERT_LINES);
 
         // LYC Update
-        if (mmu->read_u8(IO_CURLINE) == mmu->read_u8(IO_CMPLINE)) {
+        if (mmu->read_u8(IO_LY) == mmu->read_u8(IO_LYC)) {
             mmu->set_bit(IO_LCDSTAT, MASK_LCDSTAT_COINCIDENCE_FLAG);
             if (mmu->read_bit(IO_LCDSTAT, MASK_LCDSTAT_LYC_LY_COINCIDENCE_INTERRUPT)) {
                 mmu->set_bit(IO_IFLAGS, MASK_INT_LCDSTAT_INT);
@@ -463,7 +463,7 @@ u8 gbc_ppu::run(int cycles) {
         }
 
         // VBLANK
-        if (mmu->read_u8(IO_CURLINE) == SIZE_Y) {
+        if (mmu->read_u8(IO_LY) == SIZE_Y) {
             // Set Mode Flag to VBLANK at LCDSTAT
             mmu->unset_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
             mmu->set_bit(IO_LCDSTAT, OPT_MODE_VBLANK);
@@ -481,7 +481,7 @@ u8 gbc_ppu::run(int cycles) {
             vblank = true;
         }
         // Normal line
-        else if (mmu->read_u8(IO_CURLINE) < SIZE_Y) {
+        else if (mmu->read_u8(IO_LY) < SIZE_Y) {
             mmu->unset_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
             mmu->set_bit(IO_LCDSTAT, OPT_MODE_OAM);
 
@@ -495,7 +495,7 @@ u8 gbc_ppu::run(int cycles) {
     } else if (((mmu->read_u8(IO_LCDSTAT) & MASK_LCDSTAT_MODE_FLAG) == OPT_MODE_OAM_VRAM) && mode_clock >= END_OAM_VRAM) {
         mmu->unset_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_FLAG);
         mmu->set_bit(IO_LCDSTAT, OPT_MODE_HBLANK);
-        draw_line(mmu->read_u8(IO_CURLINE));
+        draw_line(mmu->read_u8(IO_LY));
 
         if (mmu->read_bit(IO_LCDSTAT, MASK_LCDSTAT_MODE_0_HBLANK_INTERRUPT)) {
             mmu->set_bit(IO_IFLAGS, MASK_INT_LCDSTAT_INT);

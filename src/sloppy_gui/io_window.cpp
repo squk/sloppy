@@ -20,8 +20,8 @@ void gbc_emu::io_window() {
     ImGui::Text("0xFF41\t[STAT]: %d", mmu.read_u8(IO_LCDSTAT));
     ImGui::Text("0xFF42\t[SCY]: %d", mmu.read_u8(IO_SCROLLY));
     ImGui::Text("0xFF43\t[SCX]: %d", mmu.read_u8(IO_SCROLLX));
-    ImGui::Text("0xFF44\t[LY]: %d", mmu.read_u8(IO_CURLINE));
-    ImGui::Text("0xFF45\t[LYC]: %d", mmu.read_u8(IO_CMPLINE));
+    ImGui::Text("0xFF44\t[LY]: %d", mmu.read_u8(IO_LY));
+    ImGui::Text("0xFF45\t[LYC]: %d", mmu.read_u8(IO_LYC));
     ImGui::Text("0xFF47\t[BGP]: %d", mmu.read_u8(IO_BGRDPAL));
     ImGui::Text("0xFF48\t[OBP0]: %d", mmu.read_u8(IO_OBJ0PAL));
     ImGui::Text("0xFF49\t[OBP1]: %d", mmu.read_u8(IO_OBJ1PAL));

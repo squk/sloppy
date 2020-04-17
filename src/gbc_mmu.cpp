@@ -147,7 +147,7 @@ void gbc_mmu::write_u8(u16 address, u8 val) {
                     return;
                 }
                 write_u8(IO_LCDSTAT, (read_u8(IO_LCDSTAT) & ~0x03) | OPT_MODE_VBLANK);
-                write_u8(IO_CURLINE, 0);
+                write_u8(IO_LY, 0);
             }
             break;
         case IO_DMACONT:

@@ -26,8 +26,8 @@ static const u16 TAC_CYCLES[4] = {1024, 16, 64, 256};
 #define IO_SCROLLY 0xFF42
 #define IO_SCROLLX 0xFF43
 
-#define IO_CURLINE 0xFF44 // LY
-#define IO_CMPLINE 0xFF45 // LYC
+#define IO_LY 0xFF44
+#define IO_LYC 0xFF45
 
 #define IO_BGRDPAL 0xFF47
 #define IO_OBJ0PAL 0xFF48
