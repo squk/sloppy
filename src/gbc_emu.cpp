@@ -188,11 +188,14 @@ void gbc_emu::test() {
 #endif
 }
 
+#if defined(SLOPPY_RENDER)
 const std::string shaderSource =
 #include "sloppy_gui/shaders/gbc-color.vs"
 ;
+#endif
 
 int gbc_emu::gui_init() {
+#if defined(SLOPPY_RENDER)
     // Setup SDL
     // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
     // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
@@ -269,6 +272,7 @@ int gbc_emu::gui_init() {
     glGenTextures(1, &lcd_tex);
     glGenTextures(1, &bg_tex);
     glGenTextures(1, &win_tex);
+    glGenTextures(1, &obj_tex);
 
     // build and compile our shader program
     // vertex shader
@@ -301,10 +305,12 @@ int gbc_emu::gui_init() {
     glDeleteShader(shader);
     glUseProgram(shaderProgram);
 
+#endif
     return 0;
 }
 
 int gbc_emu::gui_step() {
+#if defined(SLOPPY_RENDER)
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
 
@@ -414,10 +420,12 @@ int gbc_emu::gui_step() {
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     SDL_GL_SwapWindow(window);
+#endif
     return 0;
 }
 
 void gbc_emu::gui_exit() {
+#if defined(SLOPPY_RENDER)
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
@@ -425,5 +433,5 @@ void gbc_emu::gui_exit() {
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();
-
+#endif
 }

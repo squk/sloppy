@@ -5,14 +5,17 @@
 bool mbc_window_open = true;
 
 void mbcText(std::string title, u8 val) {
+#if defined(SLOPPY_RENDER)
     const ImVec4 c(1.f, 0.5f, 0.2f, 1.f);
     ImGui::Text("%s:", title.c_str());
     ImGui::SameLine();
     ImGui::TextColored(c, "%02X", val);
     ImGui::SameLine();
+#endif
 }
 
 void gbc_emu::mbc_window() {
+#if defined(SLOPPY_RENDER)
     ImGui::Begin("MBC", &mbc_window_open);
     ImGui::Text("TITLE %s", mmu.mbc.title.c_str());
     ImGui::Text("TYPE %s", mmu.mbc.TYPE_STR().c_str());
@@ -23,4 +26,5 @@ void gbc_emu::mbc_window() {
     mbcText("BANK2", mmu.mbc.BANK2);
     mbcText("MODE", mmu.mbc.MODE);
     ImGui::End();
+#endif
 }

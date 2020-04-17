@@ -5,20 +5,25 @@
 bool map_window_open = true;
 u8 bg_fb[256 * 256 * 3]; // 3 bytes per pixel
 u8 win_fb[256 * 256 * 3]; // 3 bytes per pixel
+u8 obj_fb[256 * 256 * 3]; // 3 bytes per pixel
 
 void gbc_emu::map_window() {
+#if defined(SLOPPY_RENDER)
     ImGui::Begin("MAP", &map_window_open);
 
     u8 *bg_px = &bg_fb[0];
     u8 *win_px = &win_fb[0];
+    u8 *obj_px = &obj_fb[0];
     for (int y = 0; y < 256; y++) {
         for (int x = 0; x < 256; x++) {
             int px_index = y * 256 + x;
             u32 bg_color = get_paletted_color(ppu.bg_disp[px_index]);
             u32 win_color = get_paletted_color(ppu.win_disp[px_index]);
+            u32 obj_color = get_paletted_color(ppu.obj_disp[px_index]);
 
             *bg_px++ = (bg_color >> 16) & 0xFF; *bg_px++ = (bg_color >> 8) & 0xFF; *bg_px++ = (bg_color & 0xFF);
             *win_px++ = (win_color >> 16) & 0xFF; *win_px++ = (win_color >> 8) & 0xFF; *win_px++ = (win_color & 0xFF);
+            *obj_px++ = (obj_color >> 16) & 0xFF; *obj_px++ = (obj_color >> 8) & 0xFF; *obj_px++ = (obj_color & 0xFF);
         }
     }
 
@@ -35,7 +40,7 @@ void gbc_emu::map_window() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glEnable(GL_TEXTURE_2D);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, bg_fb);
-    ImGui::Text("BG:");
+    ImGui::Text("BG:\tEnabled:%d", mmu.read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable));
     ImGui::Image((void*)(intptr_t)bg_tex, ImVec2(256, 256));
 
     glBindTexture(GL_TEXTURE_2D, win_tex);
@@ -45,8 +50,19 @@ void gbc_emu::map_window() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glEnable(GL_TEXTURE_2D);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, win_fb);
-    ImGui::Text("WIN:");
+    ImGui::Text("WIN:\tEnabled:%d", mmu.read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable));
     ImGui::Image((void*)(intptr_t)win_tex, ImVec2(256, 256));
 
+    glBindTexture(GL_TEXTURE_2D, obj_tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glEnable(GL_TEXTURE_2D);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, obj_fb);
+    ImGui::Text("OBJ:\tEnabled:%d", mmu.read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable));
+    ImGui::Image((void*)(intptr_t)obj_tex, ImVec2(256, 256));
+
     ImGui::End();
+#endif
 }

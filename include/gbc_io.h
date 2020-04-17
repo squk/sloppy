@@ -112,9 +112,9 @@ static const u16 TAC_CYCLES[4] = {1024, 16, 64, 256};
 
 // from: https://github.com/Dhole/miniBoy/blob/461697a267648391fe78897ac83daa54df080810/io_regs.h
 #define MASK_LCDCONT_LCD_Display_Enable             (0x01 << 7)
-#define MASK_LCDCONT_Window_Tile_Map_Display_Select (0x01 << 6)
-#define MASK_LCDCONT_Window_Display_Enable          (0x01 << 5)
-#define MASK_LCDCONT_BGWindow_Tile_Data_Select      (0x01 << 4)
+#define MASK_LCDCONT_WIN_Tile_Map_Display_Select (0x01 << 6)
+#define MASK_LCDCONT_WIN_Display_Enable          (0x01 << 5)
+#define MASK_LCDCONT_BGWIN_Tile_Data_Select      (0x01 << 4)
 #define MASK_LCDCONT_BG_Tile_Map_Display_Select     (0x01 << 3)
 #define MASK_LCDCONT_OBJ_Size                       (0x01 << 2)
 #define MASK_LCDCONT_OBJ_Display_Enable             (0x01 << 1)

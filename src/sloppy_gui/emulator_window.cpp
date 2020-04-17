@@ -6,6 +6,7 @@ bool emulator_window_open = true;
 u8 lcd_fb[SIZE_X * SIZE_Y * 3]; // 3 bytes per pixel
 
 void gbc_emu::emulator_window() {
+#if defined(SLOPPY_RENDER)
     ImGui::Begin(("EMU: " + mmu.mbc.title).c_str(), &emulator_window_open, ImGuiWindowFlags_NoResize);
     glBindTexture(GL_TEXTURE_2D, lcd_tex);
 
@@ -29,4 +30,5 @@ void gbc_emu::emulator_window() {
 
     ImGui::Image((void*)(intptr_t)lcd_tex, ImVec2(SIZE_X*1.5f, SIZE_Y*1.5f));
     ImGui::End();
+#endif
 }

@@ -141,9 +141,8 @@ void gbc_ppu::draw_line_fb(u8 line) {
         if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
             fb[px_index] = bg_disp[line * 256 + i];
         }
-        // check non painted
-        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_Window_Display_Enable)) {
-            if (win_disp[line * 256 + i] < 8) { // check priority?
+        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable)) {
+            if (win_disp[line * 256 + i] < 8) {
                 fb[px_index] = win_disp[line * 256 + i];
             }
         }
@@ -152,14 +151,15 @@ void gbc_ppu::draw_line_fb(u8 line) {
             int obj_index = (line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X;
 
             //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
-            //(Used for both BG and Window. BG color 0 is always behind OBJ)
-            if ((fb[px_index] != 0 && obj_disp[obj_index] >= 4)) {
+            //(Used for both BG and WIN. BG color 0 is always behind OBJ)
+             if ((fb[px_index] != 0 && obj_disp[obj_index] >= 4)) {
+            //if (fb[px_index] != 0 && (obj_disp[obj_index] & 0x4) > 0) {
                 continue;
             }
-            if (obj_disp[obj_index] == 0) {
+            if (obj_disp[obj_index] == 0) { // transparent pixel
                 continue;
             }
-            fb[px_index] = obj_disp[obj_index] & 0x03;
+            fb[px_index] = obj_disp[obj_index] & 0x03; // AND 0x3 to remove any extra bit we may have set
         }
     }
 }
@@ -176,7 +176,7 @@ void gbc_ppu::draw_line_bg(u8 line) {
         bg_tile_map = 0x9800;
     }
 
-    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWIN_Tile_Data_Select)) {
         tile_data = 0x8000;
     } else {
         tile_data = 0x9000;
@@ -217,13 +217,13 @@ void gbc_ppu::draw_line_win(u8 line) {
         return;
     }
 
-    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_Window_Tile_Map_Display_Select)) {
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Tile_Map_Display_Select)) {
         win_tile_map = 0x9C00;
     } else {
         win_tile_map = 0x9800;
     }
 
-    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWindow_Tile_Data_Select)) {
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWIN_Tile_Data_Select)) {
         tile_data = 0x8000;
     } else {
         tile_data = 0x9000;
@@ -317,19 +317,16 @@ void gbc_ppu::draw_line_obj(u8 line) {
     u8 obj_height, py;
     line += SPRITE_INI_Y;
 
-    switch (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Size)) {
-        case OPT_OBJ_Size_8x8:
-            obj_height = 8;
-            break;
-        case OPT_OBJ_Size_8x16:
-            obj_height = 16;
-            break;
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Size)) { // 8x16
+        obj_height = 16;
+    } else { // 8x8
+        obj_height = 8;
     }
 
     u8 i, j;
     u16 addr, pos;
     // read sprites in reverse order so we don't have to sort
-    for (i = NUM_SPRITES-1; i != 0xFF; i--) {
+    for (i = NUM_SPRITES-1; i != NUM_SPRITES; i++){
         addr = MEM_OAM + i * 4;
 
         ppu_obj obj;
@@ -361,7 +358,7 @@ void gbc_ppu::draw_line_obj(u8 line) {
         for (j = 0; j < 8; j++) {
             pos = line * 256 + (obj.x + (x_flip ? 7 - j : j)) % 256;
 
-            u8 color;
+            u8 color = 0;
             u8 color_index = ((t1 & (1 << (7 - j))) ? 1 : 0) +
                              ((t2 & (1 << (7 - j))) ? 2 : 0);
 
@@ -371,13 +368,13 @@ void gbc_ppu::draw_line_obj(u8 line) {
                 color = get_palette_color(IO_OBJ0PAL, color_index);
             }
 
-            obj_disp[pos] = color;
-
-            //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
-            //(Used for both BG and Window. BG color 0 is always behind OBJ)
-            if (!(obj.flags & OPT_OBJ_Flag_priority)) {
-                obj_disp[pos] |= 4;
+            if (color >= 4) {
+                printf("color %x\n", color);
             }
+            if (!(obj.flags & OPT_OBJ_Flag_priority)) {
+                color |= 4; // flag this pixel for draw_line_fb
+            }
+            obj_disp[pos] = color;
         }
     }
 }

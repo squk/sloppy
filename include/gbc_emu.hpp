@@ -16,6 +16,7 @@
 #include "gbc_mmu.hpp"
 //#include "gbc_ops.hpp"
 
+#if defined(SLOPPY_RENDER)
 // About Desktop OpenGL function loaders:
 //  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
 //  Helper libraries are often used for this purpose! Here we are supporting a few common ones (gl3w, glew, glad).
@@ -39,6 +40,7 @@ using namespace gl;
 #else
 #include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #endif
+#endif
 
 class gbc_emu {
     private:
@@ -58,9 +60,11 @@ class gbc_emu {
         gbc_ppu ppu;
         gbc_mmu mmu;
 
+#if defined(SLOPPY_RENDER)
         SDL_Window *window = nullptr;
         SDL_GLContext gl_context;
-        GLuint lcd_tex, bg_tex, win_tex;
+        GLuint lcd_tex, bg_tex, win_tex, obj_tex;
+#endif
 
         gbc_emu();
         void run();
