@@ -17,9 +17,9 @@ void gbc_emu::map_window() {
     for (int y = 0; y < 256; y++) {
         for (int x = 0; x < 256; x++) {
             int px_index = y * 256 + x;
-            u32 bg_color = get_paletted_color(ppu.bg_disp[px_index]);
-            u32 win_color = get_paletted_color(ppu.win_disp[px_index]);
-            u32 obj_color = get_paletted_color(ppu.obj_disp[px_index]);
+            u32 bg_color = get_paletted_color(ppu.bg_disp[px_index] & 0x3);
+            u32 win_color = get_paletted_color(ppu.win_disp[px_index] & 0x3);
+            u32 obj_color = get_paletted_color(ppu.obj_disp[px_index] & 0x3);
 
             *bg_px++ = (bg_color >> 16) & 0xFF; *bg_px++ = (bg_color >> 8) & 0xFF; *bg_px++ = (bg_color & 0xFF);
             *win_px++ = (win_color >> 16) & 0xFF; *win_px++ = (win_color >> 8) & 0xFF; *win_px++ = (win_color & 0xFF);
@@ -40,7 +40,7 @@ void gbc_emu::map_window() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glEnable(GL_TEXTURE_2D);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, bg_fb);
-    ImGui::Text("BG:\tEnabled:%d", mmu.read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable));
+    ImGui::Text("BG:\t");
     ImGui::Image((void*)(intptr_t)bg_tex, ImVec2(256, 256));
 
     glBindTexture(GL_TEXTURE_2D, win_tex);
@@ -50,7 +50,7 @@ void gbc_emu::map_window() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glEnable(GL_TEXTURE_2D);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, win_fb);
-    ImGui::Text("WIN:\tEnabled:%d", mmu.read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable));
+    ImGui::Text("WIN:\t:");
     ImGui::Image((void*)(intptr_t)win_tex, ImVec2(256, 256));
 
     glBindTexture(GL_TEXTURE_2D, obj_tex);
@@ -60,7 +60,7 @@ void gbc_emu::map_window() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glEnable(GL_TEXTURE_2D);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, obj_fb);
-    ImGui::Text("OBJ:\tEnabled:%d", mmu.read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable));
+    ImGui::Text("OBJ:\t");
     ImGui::Image((void*)(intptr_t)obj_tex, ImVec2(256, 256));
 
     ImGui::End();

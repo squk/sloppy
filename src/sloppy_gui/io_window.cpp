@@ -4,7 +4,6 @@
 bool io_window_open = true;
 
 void gbc_emu::io_window() {
-
     ImGui::SetNextWindowSize(ImVec2(200, 372));
     ImGui::Begin("IO", &io_window_open, ImGuiWindowFlags_NoResize);
     //ImVec2 s = ImGui::GetWindowSize();

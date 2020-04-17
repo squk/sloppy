@@ -13,6 +13,7 @@ list(APPEND MAIN_APP_SOURCES
     sloppy_gui/mbc_window.cpp
     sloppy_gui/io_window.cpp
     sloppy_gui/serial_window.cpp
+    sloppy_gui/tiledata_window.cpp
     sloppy_gui/themes.cpp
     sloppy_gui/shaders/gbc-color.vs
 

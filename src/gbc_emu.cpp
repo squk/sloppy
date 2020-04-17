@@ -32,6 +32,9 @@ u32 grey_palette[4] = {
 u32 gbc_emu::get_paletted_color(u8 color) {
     u8 r=0, g=0, b=0;
     //return purpg_palette[color];
+    if (color > 3) {
+        return 0xFF0000; // red is invalid color requested
+    }
     return grey_palette[color];
 }
 
@@ -60,8 +63,8 @@ void gbc_emu::run() {
 }
 
 void gbc_emu::test() {
-    memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len);
-    //cpu.set_boot_state();
+    //memcpy(mmu.bios, DMG_ROM_bin, DMG_ROM_bin_len);
+    cpu.set_boot_state();
     cpu.mmu->io[0x00] = 0xFF;
 
     //mmu.load_rom_file("data/mooneye-gb_hwtests/acceptance/ei_timing.gb");
@@ -164,7 +167,8 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./DrMario.gb");
     //mmu.load_rom_file("./Tetris.gb");
     //mmu.load_rom_file("DK.gb");
-    mmu.load_rom_file("./MarioLand.gb"); // required mapper
+    //mmu.load_rom_file("./MarioLand.gb"); // required mapper
+    mmu.load_rom_file("dmg-acid2-preview.gb"); // required mapper
     //mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
@@ -273,6 +277,7 @@ int gbc_emu::gui_init() {
     glGenTextures(1, &bg_tex);
     glGenTextures(1, &win_tex);
     glGenTextures(1, &obj_tex);
+    glGenTextures(1, &tiledata_tex);
 
     // build and compile our shader program
     // vertex shader
@@ -405,6 +410,7 @@ int gbc_emu::gui_step() {
 
     emulator_window();
     map_window();
+    tiledata_window();
     cpu_window();
     mbc_window();
     io_window();

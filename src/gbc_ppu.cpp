@@ -138,25 +138,25 @@ void gbc_ppu::dump() {
 void gbc_ppu::draw_line_fb(u8 line) {
     for (int i = 0; i < SIZE_X; i++) {
         int px_index = line * SIZE_X + i;
-        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Display_Enable)) {
-            fb[px_index] = bg_disp[line * 256 + i];
-        }
+        fb[px_index] = bg_disp[line * 256 + i];
         if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable)) {
-            if (win_disp[line * 256 + i] < 8) {
-                fb[px_index] = win_disp[line * 256 + i];
-            }
+            fb[px_index] = win_disp[line * 256 + i] & 0x3;
         }
 
         if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_OBJ_Display_Enable)) {
             int obj_index = (line + SPRITE_INI_Y) * 256 + i + SPRITE_INI_X;
+            bool override_priority = mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWIN_Display_Priority);
+            bool priority = ((obj_disp[obj_index] & 0x4) > 0);
 
             //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
             //(Used for both BG and WIN. BG color 0 is always behind OBJ)
-             if ((fb[px_index] != 0 && obj_disp[obj_index] >= 4)) {
-            //if (fb[px_index] != 0 && (obj_disp[obj_index] & 0x4) > 0) {
+            if((!priority || override_priority) && (fb[px_index] & 0x3) != 0) {
+                //
+                //
+             // Note: The BG transparent color is bg_pal[0]
                 continue;
             }
-            if (obj_disp[obj_index] == 0) { // transparent pixel
+            if (obj_disp[obj_index] & 0x3 == 0) { // transparent pixel
                 continue;
             }
             fb[px_index] = obj_disp[obj_index] & 0x03; // AND 0x3 to remove any extra bit we may have set
@@ -191,12 +191,12 @@ void gbc_ppu::draw_line_bg(u8 line) {
     u8 i, j;
     for (i = 0; i < 32; i++) {
         if (tile_data == 0x9000) {
-            obj = (s8)mmu->read_u8(bg_tile_map + oam_row * 32 + i);
+            obj = (s8)mmu->read_u8(bg_tile_map + (oam_row * 32) + i);
         } else {
-            obj = (u8)mmu->read_u8(bg_tile_map + oam_row * 32 + i);
+            obj = (u8)mmu->read_u8(bg_tile_map + (oam_row * 32) + i);
         }
-        py_a = mmu->read_u8(tile_data + obj * 16 + py * 2);
-        py_b = mmu->read_u8(tile_data + obj * 16 + py * 2 + 1);
+        py_a = mmu->read_u8(tile_data + (obj * 16) + (py * 2));
+        py_b = mmu->read_u8(tile_data + (obj * 16) + (py * 2) + 1);
         for (j = 0; j < 8; j++) {
             bg_disp[line * 256 + (u8)(i * 8 - mmu->read_u8(IO_SCROLLX) + j)] =
                 get_palette_color(IO_BGRDPAL,
@@ -207,6 +207,25 @@ void gbc_ppu::draw_line_bg(u8 line) {
     }
 }
 
+/*
+ *  if WY = 70 and WX = 87.
+ *   0                   80                 159
+ *      ______________________________________
+ *   0 |                                      |
+ *     |                  |                   |
+ *     |        Background Display            |
+ *     |               Here                   |
+ *     |                                      |
+ *     |                                      |
+ *  70 |      -            +------------------|
+ *     |                   | 80,70            |
+ *     |                   |                  |
+ *     |                   |  Window Display  |
+ *     |                   |       Here       |
+ *     |                   |                  |
+ *     |                   |                  |
+ * 143 |___________________|__________________|
+ */
 void gbc_ppu::draw_line_win(u8 line) {
     u16 win_tile_map, tile_data;
     u8 oam_row, py;
@@ -232,19 +251,22 @@ void gbc_ppu::draw_line_win(u8 line) {
     // optimization for GBA. it's ARM CPU struggled with div and mod operators
     /*oam_row = Div((u8)(line - mmu->read_u8(IO_WNDPOSY)), 8);*/
     /*py = DivMod((u8)(line - mmu->read_u8(IO_WNDPOSY)), 8);*/
-    oam_row = (u8)((line - mmu->read_u8(IO_WNDPOSY)) / 8);
-    py = (u8)((line - mmu->read_u8(IO_WNDPOSY)) % 8);
+    u8 wy = mmu->read_u8(IO_WNDPOSY);
+    u8 wx = mmu->read_u8(IO_WNDPOSX) - 7;
+    oam_row = (u8)((line - wy) / 8);
+    py = (u8)((line - wy) % 8);
     u8 i, j;
-    for (i = 0; i < (SIZE_X - (mmu->read_u8(IO_WNDPOSX) - 8)) / 8 + 1; i++) {
+    for (i = 0; i < (SIZE_X - (mmu->read_u8(IO_WNDPOSX) - 1)) / 8 + 1; i++) {
         if (tile_data == 0x9000) {
-            obj = (s8)mmu->read_u8(win_tile_map + oam_row * 32 + i);
+            obj = (s8)mmu->read_u8(win_tile_map + (oam_row * 32) + i);
         } else {
-            obj = (u8)mmu->read_u8(win_tile_map + oam_row * 32 + i);
+            obj = (u8)mmu->read_u8(win_tile_map + (oam_row * 32) + i);
         }
-        py_a = mmu->read_u8(tile_data + obj * 16 + py * 2);
-        py_b = mmu->read_u8(tile_data + obj * 16 + py * 2 + 1);
+        py_a = mmu->read_u8(tile_data + (obj * 16) + (py * 2));
+        py_b = mmu->read_u8(tile_data + (obj * 16) + (py * 2) + 1);
         for (j = 0; j < 8; j++) {
-            win_disp[line * 256 + (u8)(i * 8 + mmu->read_u8(IO_WNDPOSX) - 7 + j)] =
+            int y_offset = line * 256;
+            win_disp[y_offset + (i * 8 + wx + j)] =
                 get_palette_color(IO_BGRDPAL,
                                   ((py_a & (1 << (7 - j))) ? 1 : 0) +
                                   ((py_b & (1 << (7 - j))) ? 2 : 0)
@@ -326,7 +348,11 @@ void gbc_ppu::draw_line_obj(u8 line) {
     u8 i, j;
     u16 addr, pos;
     // read sprites in reverse order so we don't have to sort
-    for (i = NUM_SPRITES-1; i != NUM_SPRITES; i++){
+    u8 found = 0;
+    for (i = 0; i < NUM_SPRITES; i++){
+        if (found >= 10) {
+            return;
+        }
         addr = MEM_OAM + i * 4;
 
         ppu_obj obj;
@@ -343,6 +369,8 @@ void gbc_ppu::draw_line_obj(u8 line) {
              && ((obj.y + obj_height) > line))) {        // does the sprite intercept the scanline?
             continue;
         }
+
+        found++;
 
         u8 x_flip = (obj.flags & OPT_OBJ_Flag_xflip) ? 1 : 0;
         u8 y_flip = (obj.flags & OPT_OBJ_Flag_yflip) ? 1 : 0;
@@ -371,7 +399,7 @@ void gbc_ppu::draw_line_obj(u8 line) {
             if (color >= 4) {
                 printf("color %x\n", color);
             }
-            if (!(obj.flags & OPT_OBJ_Flag_priority)) {
+            if (obj.flags & OPT_OBJ_Flag_priority) {
                 color |= 4; // flag this pixel for draw_line_fb
             }
             obj_disp[pos] = color;

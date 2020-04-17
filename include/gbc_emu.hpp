@@ -49,6 +49,7 @@ class gbc_emu {
         void cpu_window();
         void mbc_window();
         void io_window();
+        void tiledata_window();
         void serial_window();
         u32 get_paletted_color(u8 color);
 
@@ -63,7 +64,7 @@ class gbc_emu {
 #if defined(SLOPPY_RENDER)
         SDL_Window *window = nullptr;
         SDL_GLContext gl_context;
-        GLuint lcd_tex, bg_tex, win_tex, obj_tex;
+        GLuint lcd_tex, bg_tex, win_tex, obj_tex, tiledata_tex;
 #endif
 
         gbc_emu();
