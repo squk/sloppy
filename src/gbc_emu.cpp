@@ -40,6 +40,7 @@ u32 gbc_emu::get_paletted_color(u8 color) {
 
 gbc_emu::gbc_emu() {
     cpu.mmu = &mmu;
+    cpu.mmu->counter = &cpu.counter;
     ppu.mmu = &mmu;
     cpu.ppu = &ppu;
 
@@ -168,13 +169,13 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./Tetris.gb");
     //mmu.load_rom_file("DK.gb");
     //mmu.load_rom_file("./MarioLand.gb"); // required mapper
-    mmu.load_rom_file("dmg-acid2-preview.gb"); // required mapper
+    //mmu.load_rom_file("dmg-acid2-preview.gb"); // required mapper
     //mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     // CPU instruction tests
     //mmu.load_rom_file("data/tests/oam_bug/oam_bug.gb");
-    //mmu.load_rom_file("data/tests/cpu_instrs/cpu_instrs.gb");
+    mmu.load_rom_file("data/tests/cpu_instrs/cpu_instrs.gb");
     //mmu.load_rom_file("data/tests/instr_timing/instr_timing.gb");
     while(!cpu.quit) {
         if (ppu.vblank) {
