@@ -6,10 +6,12 @@ bool map_window_open = true;
 u8 bg_fb[256 * 256 * 3]; // 3 bytes per pixel
 u8 win_fb[256 * 256 * 3]; // 3 bytes per pixel
 u8 obj_fb[256 * 256 * 3]; // 3 bytes per pixel
+int map_scale = 1;
 
 void gbc_emu::map_window() {
 #if defined(SLOPPY_RENDER)
     ImGui::Begin("MAP", &map_window_open);
+    ImGui::SliderInt("Scale", &map_scale, 1, 5);
 
     u8 *bg_px = &bg_fb[0];
     u8 *win_px = &win_fb[0];
@@ -41,7 +43,7 @@ void gbc_emu::map_window() {
 	glEnable(GL_TEXTURE_2D);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, bg_fb);
     ImGui::Text("BG:\t");
-    ImGui::Image((void*)(intptr_t)bg_tex, ImVec2(256, 256));
+    ImGui::Image((void*)(intptr_t)bg_tex, ImVec2(256*map_scale, 256*map_scale));
 
     glBindTexture(GL_TEXTURE_2D, win_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -51,7 +53,7 @@ void gbc_emu::map_window() {
     glEnable(GL_TEXTURE_2D);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, win_fb);
     ImGui::Text("WIN:\t:");
-    ImGui::Image((void*)(intptr_t)win_tex, ImVec2(256, 256));
+    ImGui::Image((void*)(intptr_t)win_tex, ImVec2(256*map_scale, 256*map_scale));
 
     glBindTexture(GL_TEXTURE_2D, obj_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -61,7 +63,7 @@ void gbc_emu::map_window() {
     glEnable(GL_TEXTURE_2D);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, obj_fb);
     ImGui::Text("OBJ:\t");
-    ImGui::Image((void*)(intptr_t)obj_tex, ImVec2(256, 256));
+    ImGui::Image((void*)(intptr_t)obj_tex, ImVec2(256*map_scale, 256*map_scale));
 
     ImGui::End();
 #endif
