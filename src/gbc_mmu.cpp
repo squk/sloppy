@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "types.h"
+#include "gbc_emu.hpp"
 #include "gbc_mmu.hpp"
 #include "gbc_mbc.hpp"
 #include "gbc_io.h"
@@ -63,7 +64,7 @@ void gbc_mmu::load_rom_file(const std::string& fname) {
     t.seekg(0, std::ios::beg);
 
     mbc.rom.assign((std::istreambuf_iterator<char>(t)),
-                std::istreambuf_iterator<char>());
+                   std::istreambuf_iterator<char>());
 
     mbc.rom_numbytes = mbc.rom.size();
 
@@ -86,17 +87,37 @@ u8 gbc_mmu::read_u8(u16 address) {
         return mbc.read_u8(address);
     }
 
-    u8 lcd_mode = io[IO_LCDSTAT & 0xFF] & MASK_LCDSTAT_MODE_FLAG;
+    if (address == IO_JOYPAD) {
+        u8 *ptr = get_address_ptr(address);
+        const u8* ks = SDL_GetKeyboardState(NULL);
+        /*
+         * Bit 5 - P15 Select Button Keys      (0=Select)
+         * Bit 4 - P14 Select Direction Keys   (0=Select)
+         * Bit 3 - P13 Input Down  or Start    (0=Pressed) (Read Only)
+         * Bit 2 - P12 Input Up    or Select   (0=Pressed) (Read Only)
+         * Bit 1 - P11 Input Left  or Button B (0=Pressed) (Read Only)
+         * Bit 0 - P10 Input Right or Button A (0=Pressed) (Read Only)
+         */
+        u8 btn_dir = *ptr & 0x30;
+        if (btn_dir == 0x10) { // direction
+            *ptr |= ~((ks[SDL_SCANCODE_RETURN] << 3) | (ks[SDL_SCANCODE_TAB] << 2) |
+                      (ks[SDL_SCANCODE_Z] << 1) | (ks[SDL_SCANCODE_X] << 0));
+        }
+        if (btn_dir == 0x20) { // buttons
+            *ptr |= ~((ks[SDL_SCANCODE_DOWN] << 3) | (ks[SDL_SCANCODE_UP] << 2) |
+                      (ks[SDL_SCANCODE_LEFT] << 1) | (ks[SDL_SCANCODE_RIGHT] << 0));
+        }
+    }
     // don't restrict OAM/VRAM access until passing PPU timing tests
     //if (!oam_access) {
-        //if (address >= 0xFE00 && address < 0xFEA0) { // OAM
-            //return 0xFF;
-        //}
+    //if (address >= 0xFE00 && address < 0xFEA0) { // OAM
+    //return 0xFF;
+    //}
     //}
     //if (!vram_access) {
-        //if (address >= 0x8000 && address < 0xA000) { // VRAM
-            //return 0xFF;
-        //}
+    //if (address >= 0x8000 && address < 0xA000) { // VRAM
+    //return 0xFF;
+    //}
     //}
     return *get_address_ptr(address);
 }
@@ -119,17 +140,16 @@ void gbc_mmu::write_u8(u16 address, u8 val) {
         fflush(stdout);
     }
 
-    u8 lcd_mode = io[IO_LCDSTAT & 0xFF] & MASK_LCDSTAT_MODE_FLAG;
     // don't restrict OAM/VRAM access until passing PPU timing tests
     // OAM is not accessible in Mode 2 or 3
     //if (!vram_access) {
-        //if (address >= 0x8000 && address < 0xA000) { // VRAM
-            //return;
-        //}
+    //if (address >= 0x8000 && address < 0xA000) { // VRAM
+    //return;
+    //}
     //}
     //if (!oam_access) {
-        //if (address >= 0xFE00 && address < 0xFEA0) // OAM
-            //return;
+    //if (address >= 0xFE00 && address < 0xFEA0) // OAM
+    //return;
     //}
 
     switch (address) {
@@ -151,9 +171,9 @@ void gbc_mmu::write_u8(u16 address, u8 val) {
             }
             break;
         case IO_DMACONT:
-            *ptr = (val << 8);
-            for(u8 i = 0; i < sizeof oam; i++) {
-                oam[i] = read_u8(*ptr + i);
+            *ptr = val;
+            for(u8 i = 0; i < 0xA0; i++) {
+                oam[i] = read_u8((val << 8) + i);
             }
             break;
         case IO_DIV:
@@ -216,8 +236,10 @@ void gbc_mmu::write_u8(u16 address, u8 val) {
             //write_io(mmu, IO_TIMA, read_u8(IO_TIMA) + 1);
             (*ptr) = val;
             break;
-        case IO_JOYPAD:     // READ ONLY
-            break;
+        case IO_JOYPAD: {
+            (*ptr) = val;
+        }
+        break;
         default:
             *ptr = val;
             break;

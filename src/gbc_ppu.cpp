@@ -23,23 +23,6 @@ void gbc_ppu::init() {
     start_frame();
 }
 
-void insertion_sort(void *array, int length,
-                    int compare(void*, int, int), void swap(void *, int, int)) {
-    int i, j; // loop indexes
-
-    for (j = 1; j < length; j++) {// index to insert array
-        for (i = j-1; 0 <= i; i--) {
-            // compare to previous index and swap if needed
-            // else if previous index is smaller, this is my place
-            if (!compare(array, i, i+1)) {
-                swap(array, i, i+1);
-            } else {
-                i = 0;
-            }
-        }
-    }
-}
-
 /*
  * Bit 7-6 - Shade for Color Number 3
  * Bit 5-4 - Shade for Color Number 2
@@ -135,6 +118,12 @@ void gbc_ppu::dump() {
 
 // TODO: cleanup and optimize
 void gbc_ppu::draw_line_fb(u8 line) {
+    if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable)) {
+        if (mmu->read_u8(IO_WINPOSY) <= line && mmu->read_u8(IO_WINPOSX) < 166) {
+            wlc++;
+        }
+    }
+
     for (int i = 0; i < SIZE_X; i++) {
         int px_index = line * SIZE_X + i;
 
@@ -145,8 +134,10 @@ void gbc_ppu::draw_line_fb(u8 line) {
         }
 
         if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable)) {
-            if (!(mmu->read_u8(IO_WINPOSY) > line || mmu->read_u8(IO_WINPOSX) > SIZE_X)) {
-                fb[px_index] = win_disp[line * 256 + i] & 0x3;
+            if (mmu->read_u8(IO_WINPOSY) <= line && i >= mmu->read_u8(IO_WINPOSX)) {
+                if (mmu->read_u8(IO_WINPOSX) <= SIZE_X) {
+                    fb[px_index] = win_disp[line * 256 + i] & 0x3;
+                }
             }
         }
 
@@ -158,7 +149,7 @@ void gbc_ppu::draw_line_fb(u8 line) {
             //OBJ-to-BG Priority (0=OBJ Above BG, 1=OBJ Behind BG color 1-3)
             //(Used for both BG and WIN. BG color 0 is always behind OBJ)
             if(priority && fb[px_index] != get_palette_color(IO_BGRDPAL, 0)) {
-                 // Note: The BG transparent color is bg_pal[0]
+                // Note: The BG transparent color is bg_pal[0]
                 continue;
             }
             if ((obj_disp[obj_index] & 0x3) == 0) { // transparent pixel
@@ -172,7 +163,7 @@ void gbc_ppu::draw_line_fb(u8 line) {
 void gbc_ppu::draw_line_bg(u8 line) {
     u16 bg_tile_map, tile_data;
     u8 bg_row, px_row;
-    u8 px_row_a, px_row_b;
+    u8 data1, data2;
     s16 obj;
 
     if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BG_Tile_Map_Display_Select)) {
@@ -200,13 +191,13 @@ void gbc_ppu::draw_line_bg(u8 line) {
         } else {
             obj = (u8)mmu->read_u8(bg_tile_map + (bg_row * 32) + i);
         }
-        px_row_a = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2));
-        px_row_b = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2) + 1);
+        data1 = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2));
+        data2 = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2) + 1);
         for (j = 0; j < 8; j++) {
             bg_disp[line * 256 + (u8)(i * 8 - mmu->read_u8(IO_SCROLLX) + j)] =
                 get_palette_color(IO_BGRDPAL,
-                                  ((px_row_a & (1 << (7 - j))) ? 1 : 0) +
-                                  ((px_row_b & (1 << (7 - j))) ? 2 : 0)
+                                  ((data1 & (1 << (7 - j))) ? 1 : 0) +
+                                  ((data2 & (1 << (7 - j))) ? 2 : 0)
                                   );
         }
     }
@@ -232,72 +223,44 @@ void gbc_ppu::draw_line_bg(u8 line) {
  * 143 |___________________|__________________|
  */
 void gbc_ppu::draw_line_win(u8 line) {
-    u16 win_tile_map, tile_data;
-    u8 win_row, px_row;
-    u8 px_row_a, px_row_b;
-    u16 obj;
+    u16 tile_map, tile_data;
+    u8 row, px_row;
+    u8 data1, data2;
+    u16 tile;
+    u8 wx = mmu->read_u8(IO_WINPOSX) - 7;
 
     if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Tile_Map_Display_Select)) {
-        win_tile_map = 0x9C00;
+        tile_map = 0x9C00;
     } else {
-        win_tile_map = 0x9800;
+        tile_map = 0x9800;
     }
 
     if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_BGWIN_Tile_Data_Select)) {
         tile_data = 0x8000;
     } else {
-        tile_data = 0x9000;
+        tile_data = 0x8000;
     }
 
-    win_row = (u8)((line - mmu->read_u8(IO_WINPOSY)) / 8);
-    px_row = (u8)((line - mmu->read_u8(IO_WINPOSY)) % 8);
+    u8 y = wlc;
+    row = (y / 8);
 
-    u8 i, j;
-    for (i = 0; i < 32; i++) {
+    u8 col, j;
+    for (col = 0; col < 32; col++) {
         if (tile_data == 0x9000) {
-            obj = (s8)mmu->read_u8(win_tile_map + (win_row * 32) + i);
+            tile = (s8)mmu->read_u8(tile_map + (row * 32) + col);
         } else {
-            obj = (u8)mmu->read_u8(win_tile_map + (win_row * 32) + i);
+            tile = (u8)mmu->read_u8(tile_map + (row * 32) + col);
         }
-        px_row_a = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2));
-        px_row_b = mmu->read_u8(tile_data + (obj * 16) + (px_row * 2) + 1);
+        data1 = mmu->read_u8(tile_data + (tile * 16) + (y % 8 * 2));
+        data2 = mmu->read_u8(tile_data + (tile * 16) + (y % 8 * 2) + 1);
         for (j = 0; j < 8; j++) {
-            win_disp[line * 256 + (u8)(i * 8 + mmu->read_u8(IO_WINPOSX) - 7 + j)] =
+            win_disp[line * 256 + (col * 8 + wx + j)] =
                 get_palette_color(IO_BGRDPAL,
-                                  ((px_row_a & (1 << (7 - j))) ? 1 : 0) +
-                                  ((px_row_b & (1 << (7 - j))) ? 2 : 0)
+                                  ((data1 & (1 << (7 - j))) ? 1 : 0) +
+                                  ((data2 & (1 << (7 - j))) ? 2 : 0)
                                   );
         }
     }
-}
-
-int obj_comp(void *array, int i, int j) {
-    ppu_obj a = ((ppu_obj*)array)[i];
-    ppu_obj b = ((ppu_obj*)array)[j];
-
-    if (a.x < b.x) {
-        return 0;
-    }
-    if (a.x > b.x) {
-        return 1;
-    }
-
-    if (a.id < b.id) {
-        return 0;
-    }
-    if (a.id > b.id) {
-        return 1;
-    }
-    // this should never be reached
-    return 0;
-}
-
-void obj_swap(void *array, int i, int j) {
-    ppu_obj a = ((ppu_obj*)array)[i];
-    ppu_obj b = ((ppu_obj*)array)[j];
-
-    ((ppu_obj*)array)[i] = b;
-    ((ppu_obj*)array)[j] = a;
 }
 
 // 8x8 or 8x16
@@ -341,58 +304,74 @@ void gbc_ppu::draw_line_obj(u8 line) {
         obj_height = 8;
     }
 
+    ppu_obj objs[NUM_SPRITES];
+    ppu_obj *objs_line[10];
     u8 i, j;
     u16 addr, pos;
     // read sprites in reverse order so we don't have to sort
     u8 found = 0;
-    for (i = 0; i < NUM_SPRITES; i++){
-        if (found >= 10) {
-            return;
+    for (i = 0; i < NUM_SPRITES; i++) {
+        if (found > 9) {
+            break;
         }
         addr = MEM_OAM + i * 4;
+        objs[i].id = i;
+        objs[i].y = mmu->read_u8(addr++);
+        objs[i].x = mmu->read_u8(addr++);
+        objs[i].pat = mmu->read_u8(addr++);
+        objs[i].flags = mmu->read_u8(addr);
 
-        ppu_obj obj;
-        obj.id = i;
-        obj.y = mmu->read_u8(addr++);
-        obj.x = mmu->read_u8(addr++);
-        obj.pat = mmu->read_u8(addr++);
-        obj.flags = mmu->read_u8(addr);
+        if (obj_height == 16) {
+            objs[i].pat &= 0xFE; // Bit 0 of tile index for 8x16 objects should be ignored
+        }
 
         // Take the candidate objects to be drawn in the line
-        if(!((obj.y != 0)
-             && (obj.y < SPRITE_END_Y)
-             && (obj.y <= line)
-             && ((obj.y + obj_height) > line))) {        // does the sprite intercept the scanline?
+        if(!((objs[i].y != 0)
+             && (objs[i].y < SPRITE_END_Y)
+             && (objs[i].y <= line)
+             && ((objs[i].y + obj_height) > line))) {                      // does the sprite intercept the scanline?
             continue;
         }
 
-        found++;
+        objs_line[found++] = &objs[i];
+    }
 
-        u8 x_flip = (obj.flags & OPT_OBJ_Flag_xflip) ? 1 : 0;
-        u8 y_flip = (obj.flags & OPT_OBJ_Flag_yflip) ? 1 : 0;
-        py = (line - obj.y) % obj_height;
+    // paint the highest X coordinate objects first. if two objects have the
+    // same X coordinate then paint the one occurring later in OAM first
+    std::sort(objs_line, objs_line + found, [](ppu_obj *a, ppu_obj *b) { // is that a lambda func I see? :D
+        if (a->x != b->x) {
+            return a->x > b->x;
+        }
+        return a->id > b->id;
+    });
+
+    for (i = 0; i < found; i++) {
+        ppu_obj *obj = objs_line[i];
+        u8 x_flip = (obj->flags & OPT_OBJ_Flag_xflip) ? 1 : 0;
+        u8 y_flip = (obj->flags & OPT_OBJ_Flag_yflip) ? 1 : 0;
+        py = (line - obj->y) % obj_height;
         if (y_flip) {
             py = obj_height - 1 - py;
         }
 
         // fetch the tile
-        u8 t1 = mmu->read_u8(0x8000 + obj.pat * 16 + py * 2);
-        u8 t2 = mmu->read_u8(0x8000 + obj.pat * 16 + py * 2 + 1);
+        u8 t1 = mmu->read_u8(0x8000 + obj->pat * 16 + py * 2);
+        u8 t2 = mmu->read_u8(0x8000 + obj->pat * 16 + py * 2 + 1);
 
         for (j = 0; j < 8; j++) {
-            pos = line * 256 + (obj.x + (x_flip ? 7 - j : j)) % 256;
+            pos = line * 256 + (obj->x + (x_flip ? 7 - j : j)) % 256;
 
             u8 color = 0;
             u8 color_index = ((t1 & (1 << (7 - j))) ? 1 : 0) +
                              ((t2 & (1 << (7 - j))) ? 2 : 0);
 
-            if (obj.flags & OPT_OBJ_Flag_palette) {
+            if (obj->flags & OPT_OBJ_Flag_palette) {
                 color = get_palette_color(IO_OBJ1PAL, color_index);
             } else {
                 color = get_palette_color(IO_OBJ0PAL, color_index);
             }
 
-            if (obj.flags & OPT_OBJ_Flag_priority) {
+            if (obj->flags & OPT_OBJ_Flag_priority) {
                 color |= 4; // flag this pixel for draw_line_fb
             }
             obj_disp[pos] = color;
@@ -403,7 +382,9 @@ void gbc_ppu::draw_line_obj(u8 line) {
 void gbc_ppu::draw_line(u8 line) {
     if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_LCD_Display_Enable)) {
         draw_line_bg(line);
-        draw_line_win(line);
+        if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable)) {
+            draw_line_win(line);
+        }
         draw_line_obj(line);
     }
 
@@ -479,6 +460,7 @@ u8 gbc_ppu::run(int cycles) {
             }
             /*ppu_dump();*/
             vblank = true;
+            wlc = 0;
         }
         // Normal line
         else if (mmu->read_u8(IO_LY) < SIZE_Y) {

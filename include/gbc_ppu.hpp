@@ -121,6 +121,8 @@ class gbc_ppu {
         u16 mode_clock; // Object Attribute Memory
         bool vblank; // helper used for the GUI
 
+        u8 wlc; // window line counter
+
         bool quit;
 
         void init();

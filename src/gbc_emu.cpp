@@ -147,7 +147,6 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./data/mbc1/rom_16Mb.gb"); // PASSED
 
     // ppu tests
-    //mmu.load_rom_file("data/m2_win_en_toggle.gb");
     //mmu.load_rom_file("data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing.gb");
     //mmu.load_rom_file("data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode4_timing.gb");
     //mmu.load_rom_file("data/mooneye-gb_hwtests/acceptance/ppu/intr_2_oam_ok_timing.gb");
@@ -168,14 +167,17 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./DrMario.gb");
     //mmu.load_rom_file("./Tetris.gb");
     //mmu.load_rom_file("DK.gb");
-    //mmu.load_rom_file("./MarioLand.gb"); // required mapper
+    mmu.load_rom_file("./MarioLand.gb"); // required mapper
+    //mmu.load_rom_file("data/m2_win_en_toggle.gb");
+    //mmu.load_rom_file("dmg-acid2.gb"); // required mapper
     //mmu.load_rom_file("dmg-acid2-preview.gb"); // required mapper
     //mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     // CPU instruction tests
     //mmu.load_rom_file("data/tests/oam_bug/oam_bug.gb");
-    mmu.load_rom_file("data/tests/cpu_instrs/cpu_instrs.gb");
+    //mmu.load_rom_file("which.gb");
+    //mmu.load_rom_file("data/tests/cpu_instrs/cpu_instrs.gb");
     //mmu.load_rom_file("data/tests/instr_timing/instr_timing.gb");
     while(!cpu.quit) {
         if (ppu.vblank) {
@@ -320,86 +322,21 @@ int gbc_emu::gui_step() {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
 
+
     // Poll and handle events (inputs, window resize, etc.)
     // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
     // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
     // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
     // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
     SDL_Event e;
-    while (SDL_PollEvent(&e))
-    {
-        ImGui_ImplSDL2_ProcessEvent(&e);
+    while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT)
             return -1;
         if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE && e.window.windowID == SDL_GetWindowID(window))
             return -1;
-
-        /*
-         * Bit 7 - Not used
-         * Bit 6 - Not used
-         * Bit 5 - P15 Select Button Keys      (0=Select)
-         * Bit 4 - P14 Select Direction Keys   (0=Select)
-         * Bit 3 - P13 Input Down  or Start    (0=Pressed) (Read Only)
-         * Bit 2 - P12 Input Up    or Select   (0=Pressed) (Read Only)
-         * Bit 1 - P11 Input Left  or Button B (0=Pressed) (Read Only)
-         * Bit 0 - P10 Input Right or Button A (0=Pressed) (Read Only)
-         */
         if (e.type == SDL_KEYDOWN) {
-            u8 v = mmu.read_u8(IO_JOYPAD);
             if (e.key.keysym.sym == SDLK_ESCAPE) {
                 return -1;
-            }
-            if (e.key.keysym.sym == SDLK_UP) {
-                mmu.io[0x00] = v & ~(1<<4);             // direction
-                mmu.io[0x00] = v & ~(1<<2);             // up
-            } else if (e.key.keysym.sym == SDLK_DOWN) {
-                mmu.io[0x00] = v & ~(1<<4);             // direction
-                mmu.io[0x00] = v & ~(1<<3);             // down
-            } else if (e.key.keysym.sym == SDLK_LEFT) {
-                mmu.io[0x00] = v & ~(1<<4);             // direction
-                mmu.io[0x00] = v & ~(1<<1);             // left
-            } else if (e.key.keysym.sym == SDLK_RIGHT) {
-                mmu.io[0x00] = v & ~(1<<4);             // direction
-                mmu.io[0x00] = v & ~(1<<0);             // right
-            } else if (e.key.keysym.sym == SDLK_x) {
-                mmu.io[0x00] = v & ~(1<<5);             // button
-                mmu.io[0x00] = v & ~(1<<0);             // A
-            } else if (e.key.keysym.sym == SDLK_z) {
-                mmu.io[0x00] = v & ~(1<<5);             // button
-                mmu.io[0x00] = v & ~(1<<1);             // B
-            } else if (e.key.keysym.sym == SDLK_RETURN) {
-                mmu.io[0x00] = v & ~(1<<5);             // button
-                mmu.io[0x00] = v & ~(1<<3);             // start
-            } else if (e.key.keysym.sym == SDLK_TAB) {
-                mmu.io[0x00] = v & ~(1<<5);             // button
-                mmu.io[0x00] = v & ~(1<<4);             // select
-            }
-        } else if (e.type == SDL_KEYUP) {
-            u8 v = mmu.read_u8(IO_JOYPAD);
-            if (e.key.keysym.sym == SDLK_UP) {
-                mmu.io[0x00] = v | (1<<4);             // direction
-                mmu.io[0x00] = v | (1<<2);             // up
-            } else if (e.key.keysym.sym == SDLK_DOWN) {
-                mmu.io[0x00] = v | (1<<4);             // direction
-                mmu.io[0x00] = v | (1<<3);             // down
-            } else if (e.key.keysym.sym == SDLK_LEFT) {
-                mmu.io[0x00] = v | (1<<4);             // direction
-                mmu.io[0x00] = v | (1<<1);             // left
-            } else if (e.key.keysym.sym == SDLK_RIGHT) {
-                mmu.io[0x00] = v | (1<<4);             // direction
-                mmu.io[0x00] = v | (1<<0);             // right
-            } else if (e.key.keysym.sym == SDLK_x) {
-                mmu.io[0x00] = v | (1<<5);             // button
-                mmu.io[0x00] = v | (1<<0);             // A
-            } else if (e.key.keysym.sym == SDLK_z) {
-                mmu.io[0x00] = v | (1<<5);             // button
-                mmu.io[0x00] = v | (1<<1);             // B
-            } else if (e.key.keysym.sym == SDLK_RETURN) {
-                mmu.io[0x00] = v | (1<<5);             // button
-                mmu.io[0x00] = v | (1<<3);             // start
-            } else if (e.key.keysym.sym == SDLK_TAB) {
-                mmu.io[0x00] = v | (1<<5);             // button
-                mmu.io[0x00] = v | (1<<4);             // select
             }
         }
     }
