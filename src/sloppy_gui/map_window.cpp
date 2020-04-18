@@ -6,12 +6,12 @@ bool map_window_open = true;
 u8 bg_fb[256 * 256 * 3]; // 3 bytes per pixel
 u8 win_fb[256 * 256 * 3]; // 3 bytes per pixel
 u8 obj_fb[256 * 256 * 3]; // 3 bytes per pixel
-int map_scale = 1;
+float map_scale = 0.75;
 
 void gbc_emu::map_window() {
 #if defined(SLOPPY_RENDER)
     ImGui::Begin("MAP", &map_window_open);
-    ImGui::SliderInt("Scale", &map_scale, 1, 5);
+    ImGui::SliderFloat("Scale", &map_scale, 0.5f, 4.f);
 
     u8 *bg_px = &bg_fb[0];
     u8 *win_px = &win_fb[0];

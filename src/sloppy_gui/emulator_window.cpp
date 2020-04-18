@@ -4,6 +4,41 @@
 
 bool emulator_window_open = true;
 u8 lcd_fb[SIZE_X * SIZE_Y * 3]; // 3 bytes per pixel
+int emu_scale = 1;
+
+void gbc_emu::emulator_menubar() {
+#if defined(SLOPPY_RENDER)
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Exit")) {
+                cpu.quit = true;
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Window")) {
+            for (int scale = 1; scale <= 4; ++scale) {
+                char label[3];
+                snprintf(label, sizeof(label), "%dx", scale);
+                if (ImGui::MenuItem(label)) {
+                    // This is pretty cheesy, seems like there must be a better way.
+                    ImGuiStyle& style = ImGui::GetStyle();
+                    ImVec2 size = ImVec2(SIZE_X, SIZE_Y);
+                    ImGui::SetWindowSize(size);
+                }
+            }
+            //ImGui::Separator();
+            //ImGui::MenuItem("TileData", NULL, &tiledata_window.is_open);
+            //ImGui::MenuItem("Obj", NULL, &obj_window.is_open);
+            //ImGui::MenuItem("Map", NULL, &map_window.is_open);
+            //ImGui::MenuItem("Memory", NULL, &memory_window.is_open);
+            //ImGui::MenuItem("ROM", NULL, &rom_window.is_open);
+            //ImGui::MenuItem("IO", NULL, &io_window.is_open);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+#endif
+}
 
 void gbc_emu::emulator_window() {
 #if defined(SLOPPY_RENDER)
@@ -15,7 +50,7 @@ void gbc_emu::emulator_window() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	glEnable(GL_TEXTURE_2D);
+    glEnable(GL_TEXTURE_2D);
 
     u8 *fb_px = &lcd_fb[0];
     for (int y = 0; y < SIZE_Y; y++) {

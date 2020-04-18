@@ -45,6 +45,7 @@ using namespace gl;
 class gbc_emu {
     private:
         void emulator_window();
+        void emulator_menubar();
         void map_window();
         void cpu_window();
         void mbc_window();

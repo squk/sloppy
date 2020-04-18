@@ -165,9 +165,9 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./data/tests/mem_timing/individual/03-modify_timing.gb");
 
     //mmu.load_rom_file("./DrMario.gb");
-    mmu.load_rom_file("./Tetris.gb");
+    //mmu.load_rom_file("./Tetris.gb");
     //mmu.load_rom_file("DK.gb");
-    //mmu.load_rom_file("./MarioLand.gb"); // required mapper
+    mmu.load_rom_file("./MarioLand.gb"); // required mapper
     //mmu.load_rom_file("data/m2_win_en_toggle.gb");
     //mmu.load_rom_file("dmg-acid2.gb"); // required mapper
     //mmu.load_rom_file("dmg-acid2-preview.gb"); // required mapper
