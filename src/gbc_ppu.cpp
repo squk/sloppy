@@ -118,8 +118,9 @@ void gbc_ppu::dump() {
 
 // TODO: cleanup and optimize
 void gbc_ppu::draw_line_fb(u8 line) {
+    u8 wx = mmu->read_u8(IO_WINPOSX) - 7;
     if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable)) {
-        if (mmu->read_u8(IO_WINPOSY) <= line && mmu->read_u8(IO_WINPOSX) < 166) {
+        if (mmu->read_u8(IO_WINPOSY) <= line && wx < 166) {
             wlc++;
         }
     }
@@ -134,8 +135,8 @@ void gbc_ppu::draw_line_fb(u8 line) {
         }
 
         if (mmu->read_bit(IO_LCDCONT, MASK_LCDCONT_WIN_Display_Enable)) {
-            if (mmu->read_u8(IO_WINPOSY) <= line && i >= mmu->read_u8(IO_WINPOSX)) {
-                if (mmu->read_u8(IO_WINPOSX) <= SIZE_X) {
+            if (mmu->read_u8(IO_WINPOSY) <= line && i >= wx) {
+                if (wx <= SIZE_X) {
                     fb[px_index] = win_disp[line * 256 + i] & 0x3;
                 }
             }

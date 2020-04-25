@@ -132,7 +132,6 @@ void gbc_emu::test() {
     // mbc tests
     //mmu.load_rom_file("./data/mbc1/bits_bank1.gb"); // PASSED
     //mmu.load_rom_file("./data/mbc1/bits_bank2.gb"); // PASSED
-    //mmu.load_rom_file("./data/pokemon_blue_gb.bin");
     //mmu.load_rom_file("./data/mbc1/bits_mode.gb"); // PASSED
     //mmu.load_rom_file("./data/mbc1/bits_ramg.gb"); // PASSED
     //mmu.load_rom_file("./data/mbc1/multicart_rom_8Mb.gb");
@@ -145,6 +144,15 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./data/mbc1/rom_4Mb.gb"); // PASSED
     //mmu.load_rom_file("./data/mbc1/rom_8Mb.gb"); // PASSED
     //mmu.load_rom_file("./data/mbc1/rom_16Mb.gb"); // PASSED
+
+    //mbc2
+    //mmu.load_rom_file("./data/mbc2/bits_ramg.gb");
+    //mmu.load_rom_file("./data/mbc2/bits_romb.gb");
+    //mmu.load_rom_file("./data/mbc2/bits_unused.gb");
+    //mmu.load_rom_file("./data/mbc2/ram.gb");
+    //mmu.load_rom_file("./data/mbc2/rom_1Mb.gb");
+    //mmu.load_rom_file("./data/mbc2/rom_2Mb.gb");
+    //mmu.load_rom_file("./data/mbc2/rom_512kb.gb");
 
     // ppu tests
     //mmu.load_rom_file("data/mooneye-gb_hwtests/acceptance/ppu/intr_2_mode0_timing.gb");
@@ -166,12 +174,14 @@ void gbc_emu::test() {
 
     //mmu.load_rom_file("./DrMario.gb");
     //mmu.load_rom_file("./Tetris.gb");
+    //mmu.load_rom_file("./pocket.gb");
+    //mmu.load_rom_file("./data/pokemon_blue_gb.bin");
     //mmu.load_rom_file("DK.gb");
-    mmu.load_rom_file("./MarioLand.gb"); // required mapper
+    //mmu.load_rom_file("./MarioLand.gb"); // required mapper
     //mmu.load_rom_file("data/m2_win_en_toggle.gb");
     //mmu.load_rom_file("dmg-acid2.gb"); // required mapper
     //mmu.load_rom_file("dmg-acid2-preview.gb"); // required mapper
-    //mmu.load_rom_file("data/sprite_priority.gb");
+    mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     // CPU instruction tests
@@ -207,9 +217,8 @@ int gbc_emu::gui_init() {
     // Setup SDL
     // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
     // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
-    {
-        printf("Error: %s\n", SDL_GetError());
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
+        printf("SDL INIT Error: %s\n", SDL_GetError());
         return -1;
     }
 
@@ -269,8 +278,8 @@ int gbc_emu::gui_init() {
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
+    //ImGui::StyleColorsDark();
+    ImGui::StyleColorsClassic();
 
     // Setup Platform/Renderer bindings
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
@@ -285,34 +294,34 @@ int gbc_emu::gui_init() {
 
     // build and compile our shader program
     // vertex shader
-    int shader = glCreateShader(GL_VERTEX_SHADER);
-    const char* src = shaderSource.c_str();
-    glShaderSource(shader, 1, &src, NULL);
-    glCompileShader(shader);
-    // check for shader compile errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
+    //int shader = glCreateShader(GL_VERTEX_SHADER);
+    //const char* src = shaderSource.c_str();
+    //glShaderSource(shader, 1, &src, NULL);
+    //glCompileShader(shader);
+    //// check for shader compile errors
+    //int success;
+    //char infoLog[512];
+    //glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    //if (!success) {
+        //glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        //std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    //}
 
-    //std::cout << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    ////std::cout << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 
-    // link shaders
-    int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, shader);
-    glLinkProgram(shaderProgram);
-    // check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-        return -1;
-    }
-    glDeleteShader(shader);
-    glUseProgram(shaderProgram);
+    //// link shaders
+    //int shaderProgram = glCreateProgram();
+    //glAttachShader(shaderProgram, shader);
+    //glLinkProgram(shaderProgram);
+    //// check for linking errors
+    //glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    //if (!success) {
+        //glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        //std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        //return -1;
+    //}
+    //glDeleteShader(shader);
+    //glUseProgram(shaderProgram);
 
 #endif
     return 0;
@@ -357,6 +366,7 @@ int gbc_emu::gui_step() {
 
     ImGui::Begin("Debug");
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::Text("sloppy emu - by Christian Nieves");
     ImGui::End();
     // Rendering
     ImGui::Render();
