@@ -41,9 +41,6 @@ u8* gbc_mmu::get_address_ptr(u16 address) {
         return &z;
     }
     if (address < 0xFF80) {
-        if ((address & 0xFF) >= 0xA0) {
-            printf("invalid OAM access: 0x%x", address);
-        }
         return &io[address & 0xFF];
     }
     if (address <= 0xFFFF) {
