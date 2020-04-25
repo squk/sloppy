@@ -1,5 +1,9 @@
 #pragma once
+#include <string>
+
 #include "types.h"
+#include "utils.h"
+
 /*
  * Memory Bank Controller
  * https://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers
@@ -104,41 +108,38 @@ enum RAM_SIZE {
 #define BYTES_4M   4194304
 #define BYTES_8M   8388608
 
-typedef struct {
-    u8 title[0x10];
-} gbc_cartridge;
+class gbc_mbc {
+    public:
+        u8 num_rom_banks;     // number of ROM banks in cartridge
+        u8 num_ram_banks;     // number of RAM banks in cartridge
+        u8 rom_size;
+        u8 ram_size;
 
-typedef struct {
-    u8 num_rom_banks;     // number of ROM banks in cartridge
-    u8 num_ram_banks;     // number of RAM banks in cartridge
-    u8 rom_size;
-    u8 ram_size;
+        u8 RAMG, BANK1, BANK2, MODE;
+        u8 type;
 
-    u8 RAMG, BANK1, BANK2, MODE;
-    u8 type;
+        u8 *ram;
+        std::string rom;
+        long rom_numbytes;
+        long ram_numbytes;
+        std::string title;
 
-    u8 *ram;
-    u8 *rom;
-    long rom_numbytes;
-    long ram_numbytes;
+        void init();
 
-    gbc_cartridge cart;
+        const long RAM_NUMBYTES();
+        const std::string TYPE_STR();
 
-} gbc_mbc;
+        u8 read_u8(u16 address);
+        void write_u8(u16 address, u8 val);
 
-void gbc_mbc_init(gbc_mbc *mbc);
+        u8 mbc1_read_u8(u16 address);
+        u8 mbc2_read_u8(u16 address);
+        u8 mbc3_read_u8(u16 address);
+        u8 mbc5_read_u8(u16 address);
+        void mbc1_write_u8(u16 address, u8 val);
+        void mbc2_write_u8(u16 address, u8 val);
+        void mbc3_write_u8(u16 address, u8 val);
+        void mbc5_write_u8(u16 address, u8 val);
 
-u8 gbc_mbc_read_u8(gbc_mbc *mbc, u16 address);
-void gbc_mbc_write_u8(gbc_mbc *mbc, u16 address, u8 val);
+};
 
-u8 mbc1_read_u8(gbc_mbc *mbc, u16 address);
-void mbc1_write_u8(gbc_mbc *mbc, u16 address, u8 val);
-
-u8 mbc2_read_u8(gbc_mbc *mbc, u16 address);
-void mbc2_write_u8(gbc_mbc *mbc, u16 address, u8 val);
-
-u8 mbc3_read_u8(gbc_mbc *mbc, u16 address);
-void mbc3_write_u8(gbc_mbc *mbc, u16 address, u8 val);
-
-u8 mbc5_read_u8(gbc_mbc *mbc, u16 address);
-void mbc5_write_u8(gbc_mbc *mbc, u16 address, u8 val);

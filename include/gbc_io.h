@@ -26,15 +26,15 @@ static const u16 TAC_CYCLES[4] = {1024, 16, 64, 256};
 #define IO_SCROLLY 0xFF42
 #define IO_SCROLLX 0xFF43
 
-#define IO_CURLINE 0xFF44 // LY
-#define IO_CMPLINE 0xFF45 // LYC
+#define IO_LY 0xFF44
+#define IO_LYC 0xFF45
 
 #define IO_BGRDPAL 0xFF47
 #define IO_OBJ0PAL 0xFF48
 #define IO_OBJ1PAL 0xFF49
 
-#define IO_WNDPOSY 0xFF4A
-#define IO_WNDPOSX 0xFF4B
+#define IO_WINPOSY 0xFF4A
+#define IO_WINPOSX 0xFF4B
 
 #define IO_DMACONT 0xFF46
 #define IO_IENABLE 0xFFFF
@@ -112,13 +112,13 @@ static const u16 TAC_CYCLES[4] = {1024, 16, 64, 256};
 
 // from: https://github.com/Dhole/miniBoy/blob/461697a267648391fe78897ac83daa54df080810/io_regs.h
 #define MASK_LCDCONT_LCD_Display_Enable             (0x01 << 7)
-#define MASK_LCDCONT_Window_Tile_Map_Display_Select (0x01 << 6)
-#define MASK_LCDCONT_Window_Display_Enable          (0x01 << 5)
-#define MASK_LCDCONT_BGWindow_Tile_Data_Select      (0x01 << 4)
+#define MASK_LCDCONT_WIN_Tile_Map_Display_Select (0x01 << 6)
+#define MASK_LCDCONT_WIN_Display_Enable          (0x01 << 5)
+#define MASK_LCDCONT_BGWIN_Tile_Data_Select      (0x01 << 4)
 #define MASK_LCDCONT_BG_Tile_Map_Display_Select     (0x01 << 3)
 #define MASK_LCDCONT_OBJ_Size                       (0x01 << 2)
 #define MASK_LCDCONT_OBJ_Display_Enable             (0x01 << 1)
-#define MASK_LCDCONT_BG_Display_Enable              (0x01 << 0)
+#define MASK_LCDCONT_BGWIN_Display_Priority              (0x01 << 0) // only disables BG on DMG, only alters priority on CGB
 
 #define MASK_INT_LCDSTAT_INT            (0x01 << 1)
 #define MASK_INT_VBLANK                 (0x01 << 0)

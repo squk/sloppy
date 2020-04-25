@@ -1,7 +1,14 @@
 sloppy emu
 =======================
 
-A Gameboy Color emulator for the Gameboy Advance. 
+Multiplatform Gameboy Color emulator
+
+DMG: in progress
+CGB: not started
+
+
+dmg-acid2 test passing: 
+![dmg-acid2 test passing image](/screenshots/dmg-acid2.png?raw=true)
 
 Work in progress. Currently debugging emulator opcodes on a computer's CLI. 
 
@@ -11,7 +18,7 @@ Work in progress. Currently debugging emulator opcodes on a computer's CLI.
 | cpu instrs test         |  pass/fail |
 | ----------------------- | ---------- |
 | 01-special              | :+1:       |
-| 02-interrupts           | :x:        |
+| 02-interrupts           | :+1:        |
 | 03-op sp,hl             | :+1:       |
 | 04-op r,imm             | :+1:       |
 | 04_op_r_imm.h           | :+1:       |
@@ -25,7 +32,7 @@ Work in progress. Currently debugging emulator opcodes on a computer's CLI.
 
 ## mooneye-gb tests
 ### Acceptance Tests
-| Test                    | mooneye-gb |
+| Test                    | pass/fail  |
 | ----------------------- | ---------- |
 | add sp e timing         | :x:        |
 | boot div dmg0           | :x:        |
@@ -70,7 +77,7 @@ Work in progress. Currently debugging emulator opcodes on a computer's CLI.
 | rst timing              | :x:        |
 
 ### Timer
-| Test                 | mooneye-gb |
+| Test                 | pass/fail |
 | -------------------- | ---------- |
 | div write            | :+1:       |
 | rapid toggle         | :x:        |
@@ -85,6 +92,56 @@ Work in progress. Currently debugging emulator opcodes on a computer's CLI.
 | tima reload          | :x:        |
 | tima write reloading | :x:        |
 | tma write reloading  | :x:        |
+
+### Memory Bank Controllers
+#### MBC1
+
+| Test              | pass/fail |
+| ----------------- | ---------- |
+| bits bank1        | :+1:       |
+| bits bank2        | :+1:       |
+| bits mode         | :+1:       |
+| bits ramg         | :+1:       |
+| rom 512kb         | :+1:       |
+| rom 1Mb           | :+1:       |
+| rom 2Mb           | :+1:       |
+| rom 4Mb           | :+1:       |
+| rom 8Mb           | :+1:       |
+| rom 16Mb          | :+1:       |
+| ram 64kb          | :x:       |
+| ram 256kb         | :+1:       |
+| multicart rom 8Mb | :x:       |
+
+#### MBC2
+
+| Test              | pass/fail |
+| ----------------- | ---------- |
+| bits ramg         | :x:       |
+| bits romb         | :x:       |
+| bits unused       | :x:       |
+| rom 512kb         | :x:       |
+| rom 1Mb           | :x:       |
+| rom 2Mb           | :x:       |
+| ram               | :x:       |
+
+#### MBC5
+
+| Test              | pass/fail |
+| ----------------- | ---------- |
+| rom 512kb         | :x:       |
+| rom 1Mb           | :x:       |
+| rom 2Mb           | :x:       |
+| rom 4Mb           | :x:       |
+| rom 8Mb           | :x:       |
+| rom 16Mb          | :x:       |
+| rom 32Mb          | :x:       |
+| rom 64Mb          | :x:       |
+
+### Mooneye GB manual tests
+
+| Test            | pass/fail |
+| --------------- | ---------- |
+| sprite priority | :+1:       |
 
 # deps
 https://devkitpro.org/
