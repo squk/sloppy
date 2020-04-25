@@ -27,6 +27,9 @@ u8* gbc_mmu::get_address_ptr(u16 address) {
     if (address < 0xA000) {
         return &vram[address & 0x1FFF];
     }
+    if (address < 0xE000) {
+        return &wram[address & 0x1FFF];
+    }
     if (address < 0xF000) {
         return &wram[address & 0x1FFF]; // echo
     }
