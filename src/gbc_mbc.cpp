@@ -83,6 +83,9 @@ void gbc_mbc::init(const std::string save_name) {
     title = rom.substr(0x134, 0x10);
     std::cout << "TITLE: " << title << std::endl;
 
+    cgb_flag = rom[0x143];
+    std::cout << "CGB_FLAG: " << std::hex << cgb_flag << std::endl;
+
     // 0147 - Cartridge Type
     type = rom[0x147];
     std::cout << "MBC TYPE: " << TYPE_STR() << std::endl;
@@ -280,7 +283,6 @@ void gbc_mbc::mbc1_write_u8(u16 address, u8 val) {
             ram[haddr] = val;
 
             if (has_ram_battery() && ram_file.is_open()) {
-                printf("haddr:0x%x\n", haddr);
                 ram_file.seekg(haddr);
                 ram_file.put(val);
             }

@@ -124,7 +124,8 @@ class gbc_mbc {
         std::fstream ram_file;
         long rom_numbytes;
         long ram_numbytes;
-        std::string title;
+        std::string title; // 0x0134-0x0143
+        u8 cgb_flag; // 0x0143
 
         void init(const std::string save_name);
 
