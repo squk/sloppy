@@ -10,6 +10,7 @@ list(APPEND MAIN_APP_SOURCES
     sloppy_gui/emulator_window.cpp
     sloppy_gui/map_window.cpp
     sloppy_gui/cpu_window.cpp
+    sloppy_gui/memory_window.cpp
     sloppy_gui/mbc_window.cpp
     sloppy_gui/io_window.cpp
     sloppy_gui/serial_window.cpp
@@ -38,6 +39,7 @@ list(APPEND MAIN_APP_INCLUDE_DIRS
     "/usr/local/include"
     "${CMAKE_SOURCE_DIR}/include"
     "${CMAKE_SOURCE_DIR}/modules/imgui"
+    "${CMAKE_SOURCE_DIR}/modules/imgui_club/imgui_memory_editor"
     )
 
 set(NAME sloppy-emu)

@@ -26,7 +26,6 @@ class gbc_mmu {
 
         u8 bios[0x100];
         u8 vram[0x2000]; // 8KB Video RAM (VRAM)	Only bank 0 in Non-CGB mode. Switchable bank 0/1 in CGB mode
-        u8 eram[0x4000]; // 8KB External RAM	In cartridge, switchable bank if any
         u8 wram[0x4000]; // 4KB Work RAM * 2
         u8 oam[0xA0];
         u8 io[0x80];

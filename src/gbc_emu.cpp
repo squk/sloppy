@@ -177,11 +177,11 @@ void gbc_emu::test() {
     //mmu.load_rom_file("./pocket.gb");
     //mmu.load_rom_file("./data/pokemon_blue_gb.bin");
     //mmu.load_rom_file("DK.gb");
-    //mmu.load_rom_file("./MarioLand.gb"); // required mapper
+    mmu.load_rom_file("./MarioLand.gb"); // required mapper
     //mmu.load_rom_file("data/m2_win_en_toggle.gb");
     //mmu.load_rom_file("dmg-acid2.gb"); // required mapper
     //mmu.load_rom_file("dmg-acid2-preview.gb"); // required mapper
-    mmu.load_rom_file("data/sprite_priority.gb");
+    //mmu.load_rom_file("data/sprite_priority.gb");
     //mmu.load_rom_file("data/tests/oam_bug/rom_singles/4-scanline_timing.gb");
 
     // CPU instruction tests
@@ -360,6 +360,7 @@ int gbc_emu::gui_step() {
     map_window();
     tiledata_window();
     cpu_window();
+    //memory_window();
     mbc_window();
     io_window();
     serial_window();

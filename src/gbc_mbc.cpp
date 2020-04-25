@@ -7,6 +7,21 @@
 #include "gbc_io.h"
 #include "gbc_mbc.hpp"
 
+const long gbc_mbc::RAM_NUMBYTES() {
+    switch (ram_size) {
+        case RAM_32K: return BYTES_32K;
+        case RAM_64K: return BYTES_64K;
+        case RAM_128K: return BYTES_128K;
+        case RAM_256K: return BYTES_256K;
+        case RAM_512K: return BYTES_512K;
+        case RAM_1M: return BYTES_1M;
+        case RAM_2M: return BYTES_2M;
+        case RAM_4M: return BYTES_4M;
+        case RAM_8M: return BYTES_8M;
+        default: return 0;
+    }
+}
+
 const std::string gbc_mbc::TYPE_STR() {
     switch (type) {
         case 0x00: return "ROM_ONLY";
@@ -41,19 +56,12 @@ const std::string gbc_mbc::TYPE_STR() {
     }
 }
 
-const long gbc_mbc::RAM_NUMBYTES() {
-    switch (ram_size) {
-        case RAM_32K: return BYTES_32K;
-        case RAM_64K: return BYTES_64K;
-        case RAM_128K: return BYTES_128K;
-        case RAM_256K: return BYTES_256K;
-        case RAM_512K: return BYTES_512K;
-        case RAM_1M: return BYTES_1M;
-        case RAM_2M: return BYTES_2M;
-        case RAM_4M: return BYTES_4M;
-        case RAM_8M: return BYTES_8M;
-        default: return 0;
-    }
+const bool gbc_mbc::has_ram_battery() {
+    return type == MBC1_RAM_BATTERY || type == MBC2_BATTERY ||
+        type == ROM_RAM_BATTERY || type == MBC3_RAM_BATTERY ||
+        type == MBC3_TIMER_RAM_BATTERY || type == MBC5_RUMBLE_RAM_BATTERY ||
+        type == MBC5_RAM_BATTERY || type == MBC7_SENSOR_RUMBLE_RAM_BATTERY ||
+        type == HuC1_RAM_BATTERY;
 }
 
 void gbc_mbc::init() {

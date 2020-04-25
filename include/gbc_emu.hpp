@@ -48,6 +48,7 @@ class gbc_emu {
         void emulator_menubar();
         void map_window();
         void cpu_window();
+        void memory_window();
         void mbc_window();
         void io_window();
         void tiledata_window();

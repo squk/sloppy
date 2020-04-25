@@ -128,6 +128,7 @@ class gbc_mbc {
 
         const long RAM_NUMBYTES();
         const std::string TYPE_STR();
+        const bool has_ram_battery();
 
         u8 read_u8(u16 address);
         void write_u8(u16 address, u8 val);
