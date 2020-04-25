@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "types.h"
+#include "utils.hpp"
 #include "gbc_io.h"
 #include "gbc_mbc.hpp"
 
@@ -64,7 +65,7 @@ const bool gbc_mbc::has_ram_battery() {
         type == HuC1_RAM_BATTERY;
 }
 
-void gbc_mbc::init() {
+void gbc_mbc::init(const std::string save_name) {
     num_rom_banks = 0;
     num_ram_banks = 0;
     rom_size = 0;
@@ -76,7 +77,7 @@ void gbc_mbc::init() {
     MODE = 0;
     RAMG = 0;
 
-    printf("ROM BYTES: %d\n", rom_numbytes);
+    printf("ROM BYTES: %ld\n", rom_numbytes);
 
     // 0134-0143 - Title
     title = rom.substr(0x134, 0x10);
@@ -93,10 +94,37 @@ void gbc_mbc::init() {
     ram_size = rom[0x149];
     ram_numbytes = RAM_NUMBYTES();
     num_ram_banks = ram_numbytes / CART_RAM_BANK_SIZE;
-    printf("RAM SIZE: %d    BYTES: %d   BANKS: %d\n", ram_size, ram_numbytes, num_ram_banks);
+    printf("RAM SIZE: %d    BYTES: %ld   BANKS: %d\n", ram_size, ram_numbytes, num_ram_banks);
     if (ram_numbytes > 0x00) {
-        ram = (u8*)malloc(ram_numbytes);
-        memset(ram, 0xFF, ram_numbytes); // TODO: is this right?
+        ram.reserve(ram_numbytes);
+        ram.insert(ram.begin(), 0, 0xFF);
+
+        if (has_ram_battery()) {
+            if (!file_exists(save_name)) {
+                ram_file.open(save_name, std::ios::out | std::ios::app);
+                ram_file.seekp(ram_numbytes);
+                ram_file.close();
+                ram_file.open(save_name, std::ios::in | std::ios::out | std::ios::app);
+                ram_file.write(ram.c_str(), ram_numbytes);
+            } else {
+                std::ifstream is(save_name.c_str(), std::ios::binary);
+                is.seekg (0, std::ios::end);
+                size_t length = is.tellg();
+
+                std::ifstream t(save_name);
+                t.seekg(0, std::ios::end);
+                length = t.tellg();
+                if (length != ram_numbytes) {
+                    printf("WARNING: INVALID SAVE FOUND expected:0x%X   got:0x%X\n", ram_numbytes, length);
+                }
+                ram.reserve(t.tellg());
+                t.seekg(0, std::ios::beg);
+                ram.assign((std::istreambuf_iterator<char>(t)),
+                        std::istreambuf_iterator<char>());
+                t.close();
+            }
+            ram_file.open(save_name, std::ios::in | std::ios::out | std::ios::app);
+        }
     }
 }
 
@@ -250,6 +278,12 @@ void gbc_mbc::mbc1_write_u8(u16 address, u8 val) {
             u8 upper_bits = MODE ? BANK2: 0;
             u16 haddr = (upper_bits << 14) | (address & 0x1F);
             ram[haddr] = val;
+
+            if (has_ram_battery() && ram_file.is_open()) {
+                printf("haddr:0x%x\n", haddr);
+                ram_file.seekg(haddr);
+                ram_file.put(val);
+            }
         }
     }
 }

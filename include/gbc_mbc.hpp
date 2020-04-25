@@ -1,8 +1,9 @@
 #pragma once
 #include <string>
+#include <fstream>
 
 #include "types.h"
-#include "utils.h"
+#include "utils.hpp"
 
 /*
  * Memory Bank Controller
@@ -118,13 +119,14 @@ class gbc_mbc {
         u8 RAMG, BANK1, BANK2, MODE;
         u8 type;
 
-        u8 *ram;
+        std::string ram;
         std::string rom;
+        std::fstream ram_file;
         long rom_numbytes;
         long ram_numbytes;
         std::string title;
 
-        void init();
+        void init(const std::string save_name);
 
         const long RAM_NUMBYTES();
         const std::string TYPE_STR();

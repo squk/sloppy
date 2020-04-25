@@ -2,7 +2,7 @@
 
 #include "gbc_mbc.hpp"
 #include "gbc_cpu_counter.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 // 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 // 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)

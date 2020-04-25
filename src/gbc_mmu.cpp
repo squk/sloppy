@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "types.h"
+#include "utils.hpp"
 #include "gbc_emu.hpp"
 #include "gbc_mmu.hpp"
 #include "gbc_mbc.hpp"
@@ -58,7 +59,7 @@ void gbc_mmu::load_rom_file(const std::string& fname) {
     t.seekg(0, std::ios::beg);
 
     mbc.rom.assign((std::istreambuf_iterator<char>(t)),
-                   std::istreambuf_iterator<char>());
+            std::istreambuf_iterator<char>());
 
     mbc.rom_numbytes = mbc.rom.size();
 
@@ -66,10 +67,8 @@ void gbc_mmu::load_rom_file(const std::string& fname) {
         printf("ROM is tucked\n");
         return;
     }
-    //mbc.rom = (u8*)malloc(mbc.rom_numbytes);
 
-    //infile.read((char*)mbc.rom, mbc.rom_numbytes);
-    mbc.init();
+    mbc.init(replace_ext(fname, "sav"));
 }
 
 u8 gbc_mmu::read_u8(u16 address) {
@@ -77,7 +76,7 @@ u8 gbc_mmu::read_u8(u16 address) {
         return bios[address];
     }
     if (address < 0x8000 ||
-        (address >= 0xA000 && address <  0xC000)) {
+            (address >= 0xA000 && address <  0xC000)) {
         return mbc.read_u8(address);
     }
 
@@ -95,11 +94,11 @@ u8 gbc_mmu::read_u8(u16 address) {
         u8 btn_dir = *ptr & 0x30;
         if (btn_dir == 0x10) { // direction
             *ptr |= ~((ks[SDL_SCANCODE_RETURN] << 3) | (ks[SDL_SCANCODE_TAB] << 2) |
-                      (ks[SDL_SCANCODE_Z] << 1) | (ks[SDL_SCANCODE_X] << 0));
+                    (ks[SDL_SCANCODE_Z] << 1) | (ks[SDL_SCANCODE_X] << 0));
         }
         if (btn_dir == 0x20) { // buttons
             *ptr |= ~((ks[SDL_SCANCODE_DOWN] << 3) | (ks[SDL_SCANCODE_UP] << 2) |
-                      (ks[SDL_SCANCODE_LEFT] << 1) | (ks[SDL_SCANCODE_RIGHT] << 0));
+                    (ks[SDL_SCANCODE_LEFT] << 1) | (ks[SDL_SCANCODE_RIGHT] << 0));
         }
     }
     // don't restrict OAM/VRAM access until passing PPU timing tests
@@ -118,7 +117,7 @@ u8 gbc_mmu::read_u8(u16 address) {
 
 void gbc_mmu::write_u8(u16 address, u8 val) {
     if (address < 0x8000 ||
-        (address >= 0xA000 && address <  0xC000)) {
+            (address >= 0xA000 && address <  0xC000)) {
         return mbc.write_u8(address, val);
     }
 
@@ -186,57 +185,57 @@ void gbc_mmu::write_u8(u16 address, u8 val) {
             *ptr = 0x00;
             break;
         case IO_TAC: {
-            /* When writing to TAC, if the previously selected multiplexer
-             * input was '1' and the new input is '0', TIMA will increase too.
-             * This doesn't happen when the timer is disabled, but it also
-             * happens when disabling the timer (the same effect as writing to
-             * DIV).
-             * https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour */
-            u8 old_TAC = *ptr;
-            u8 new_TAC = val;
-            *ptr = val;
+                         /* When writing to TAC, if the previously selected multiplexer
+                          * input was '1' and the new input is '0', TIMA will increase too.
+                          * This doesn't happen when the timer is disabled, but it also
+                          * happens when disabling the timer (the same effect as writing to
+                          * DIV).
+                          * https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour */
+                         u8 old_TAC = *ptr;
+                         u8 new_TAC = val;
+                         *ptr = val;
 
-            bool glitch = false;
-            u16 old_clocks = TAC_CYCLES[old_TAC & MASK_TAC_CYCLES];
-            u16 new_clocks = TAC_CYCLES[new_TAC & MASK_TAC_CYCLES];
-            u8 old_enable = old_TAC & MASK_TAC_ENABLE;
-            u8 new_enable = new_TAC & MASK_TAC_ENABLE;
+                         bool glitch = false;
+                         u16 old_clocks = TAC_CYCLES[old_TAC & MASK_TAC_CYCLES];
+                         u16 new_clocks = TAC_CYCLES[new_TAC & MASK_TAC_CYCLES];
+                         u8 old_enable = old_TAC & MASK_TAC_ENABLE;
+                         u8 new_enable = new_TAC & MASK_TAC_ENABLE;
 
-            if (old_enable == 0) {
-                //TODO:
-                //has a different behaviour in GBC (AGB and AGS seem to have
-                //strange behaviour even in the other statements). When
-                //enabling the timer and maintaining the same frequency it
-                //doesn't glitch. When disabling the timer it doesn't glitch
-                //either. When another change of value happens (so timer is
-                //enabled after the write), the behaviour depends on a race
-                //condition, so it cannot be predicted for every device.
-                glitch = 0;
-            } else {
-                if (new_enable == 0) {
-                    glitch = (counter->div & (old_clocks/2)) != 0;
-                } else {
-                    glitch = ((counter->div & (old_clocks/2)) != 0) && ((counter->div & (new_clocks/2)) == 0);
-                }
-            }
+                         if (old_enable == 0) {
+                             //TODO:
+                             //has a different behaviour in GBC (AGB and AGS seem to have
+                             //strange behaviour even in the other statements). When
+                             //enabling the timer and maintaining the same frequency it
+                             //doesn't glitch. When disabling the timer it doesn't glitch
+                             //either. When another change of value happens (so timer is
+                             //enabled after the write), the behaviour depends on a race
+                             //condition, so it cannot be predicted for every device.
+                             glitch = 0;
+                         } else {
+                             if (new_enable == 0) {
+                                 glitch = (counter->div & (old_clocks/2)) != 0;
+                             } else {
+                                 glitch = ((counter->div & (old_clocks/2)) != 0) && ((counter->div & (new_clocks/2)) == 0);
+                             }
+                         }
 
-            if (glitch) {
-                write_u8(IO_TIMA, read_u8(IO_TIMA) + 1);
-            }
-        }
-        break;
+                         if (glitch) {
+                             write_u8(IO_TIMA, read_u8(IO_TIMA) + 1);
+                         }
+                     }
+                     break;
         case IO_TIMA:
-            //If you write to TIMA during the cycle that TMA is being loaded to it [B], the write will be ignored and TMA value will be written to TIMA instead.
-            //write_io(mmu, IO_TIMA, read_u8(IO_TIMA) + 1);
-            (*ptr) = val;
-            break;
+                     //If you write to TIMA during the cycle that TMA is being loaded to it [B], the write will be ignored and TMA value will be written to TIMA instead.
+                     //write_io(mmu, IO_TIMA, read_u8(IO_TIMA) + 1);
+                     (*ptr) = val;
+                     break;
         case IO_JOYPAD: {
-            (*ptr) = val;
-        }
-        break;
+                            (*ptr) = val;
+                        }
+                        break;
         default:
-            *ptr = val;
-            break;
+                        *ptr = val;
+                        break;
     }
 }
 
