@@ -4,6 +4,7 @@
 
 #include "types.h"
 #include "utils.hpp"
+#include "gbc_rtc.hpp"
 
 /*
  * Memory Bank Controller
@@ -117,7 +118,9 @@ class gbc_mbc {
         u8 ram_size;
 
         u8 RAMG, BANK1, BANK2, MODE;
+        u8 LATCH_CLOCK;
         u8 type;
+        gbc_rtc rtc;
 
         std::string ram;
         std::string rom;
@@ -144,6 +147,5 @@ class gbc_mbc {
         void mbc2_write_u8(u16 address, u8 val);
         void mbc3_write_u8(u16 address, u8 val);
         void mbc5_write_u8(u16 address, u8 val);
-
 };
 

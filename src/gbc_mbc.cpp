@@ -140,7 +140,7 @@ u8 gbc_mbc::read_u8(u16 address) {
             return mbc1_read_u8(address);
         case MBC2:
             return mbc2_read_u8(address);
-        case MBC3: case MBC3_RAM:
+        case MBC3: case MBC3_RAM: case MBC3_RAM_BATTERY: case MBC3_TIMER_BATTERY: case MBC3_TIMER_RAM_BATTERY:
             return mbc3_read_u8(address);
         case MBC5: case MBC5_RAM:
             return mbc5_read_u8(address);
@@ -162,7 +162,7 @@ void gbc_mbc::write_u8(u16 address, u8 val) {
         case MBC2:
             mbc2_write_u8(address, val);
             break;
-        case MBC3: case MBC3_RAM:
+        case MBC3: case MBC3_RAM: case MBC3_RAM_BATTERY: case MBC3_TIMER_BATTERY: case MBC3_TIMER_RAM_BATTERY:
             mbc3_write_u8(address, val);
             break;
         case MBC5: case MBC5_RAM:
@@ -310,22 +310,115 @@ void gbc_mbc::mbc2_write_u8(u16 address, u8 val) {
 
 // MBC3 (max 2MByte ROM and/or 64KByte RAM and Timer)
 u8 gbc_mbc::mbc3_read_u8(u16 address) {
-    if (address <= 0x7FFF) { // ROM Bank 01-7F (Read Only)
-
+    if (address < 0x4000) { // ROM Bank 00
+        // Same as for MBC1.
+        u8 upper_bits = MODE ? (BANK2 << 5) : 0;
+        long haddr = ((upper_bits << 14) | (address & 0x7FFF)) % rom_numbytes;
+        return rom[haddr];
     }
-    if (address <= 0xBFFF) { // RAM Bank 00-03, if any (Read/Write)
+    if (address < 0x8000) { // ROM Bank 01-7F (Read Only)
+        // When the 0x4000-0x7FFF addess range is accessed, the effective bank
+        // number is always a combination of BANK1 and BANK2 register values.
+        // If the cartridge ROM is smaller than 16 Mbit, there are less ROM
+        // address pins to connect to and therefore some bank number bits are
+        // ignored. For example, 4 Mbit ROMs only need a 5-bit bank number, so
+        // the BANK2 register value is always ignored because those bits are
+        // simply not connected to the ROM.
+        //
+        // Same as for MBC1, except that accessing banks 20h, 40h, and 60h is
+        // supported now.
 
+        u8 rom_bank = (BANK2 << 5) | BANK1;
+        long haddr = (address + (CART_ROM_BANK_SIZE * (rom_bank - 1))) % rom_numbytes;
+        return rom[haddr];
     }
-    if (address <= 0xBFFF) { // RTC Register 08-0C (Read/Write)
+    if (address < 0xC000) { // RAM Bank 00-03, if any (Read/Write)
+        // This area is used to address external RAM in the cartridge (if any). External
+        // RAM is often battery buffered, allowing to store game positions or high
+        // score tables, even if the gameboy is turned off, or if the cartridge is
+        // removed from the gameboy. Available RAM sizes are: 2KByte (at A000-A7FF),
+        // 8KByte (at A000-BFFF), and 32KByte (in form of four 8K banks at *A000-BFFF).
 
+        if (RAMG == 0xA) {
+            if (BANK2 > 0x7) {
+                switch (BANK2) {
+                    case 0x08: return rtc.seconds;
+                    case 0x09: return rtc.minutes;
+                    case 0x0A: return rtc.hours;
+                    case 0x0B: return rtc.DL;
+                    case 0x0C: return rtc.DH;
+                }
+            } else {
+                // In MODE 0b0 the BANK2 register value is not used, so the first RAM
+                // bank is always mapped to the 0xA000-0xBFFF area. In MODE 0b1 the
+                // BANK2 register value is used as the bank number.
+                u8 upper_bits = MODE ? (BANK2 & 0x7): 0;
+                u16 haddr = (upper_bits << 14) | (address & 0x1F);
+                return ram[haddr];
+            }
+        }
     }
-    if (address <= 0xA1FF) { // 512x4bits RAM, built-in into the MBC2 chip (Read/Write)
-
-    }
-    return 0x00;
+    return 0xFF;
 }
 
 void gbc_mbc::mbc3_write_u8(u16 address, u8 val) {
+    if (address < 0x2000) { // RAM Enable (Write Only)
+        // RAMG - gbctr.pdf
+        // bit 7-4 Unimplemented: Ignored during writes
+        // bit 3-0 RAMG<3:0>: RAM gate register
+        // 0b1010= enable access to cartridge RAM
+        // All other values disable access to cartridge RAM
+        RAMG = val & 0xF;
+    }
+    else if (address < 0x4000) { // ROM Bank Number (Write Only)
+        // Same as for MBC1, except that the whole 7 bits of the RAM Bank
+        // Number are written directly to this address.
+        BANK1 = val;
+
+        if(BANK1 == 0) {
+            BANK1 = 1;
+        }
+    }
+    else if (address < 0x6000) { // RAM Bank Number - or - RTC Register Select
+        // As for the MBC1s RAM Banking Mode, writing a value in range for
+        // 00h-07h maps the corresponding external RAM Bank (if any) into
+        // memory at A000-BFFF. When writing a value of 08h-0Ch, this will map
+        // the corresponding RTC register into memory at A000-BFFF. That
+        // register could then be read/written by accessing any address in that
+        // area, typically that is done by using address A000.
+        BANK2 = val;
+    }
+    else if (address < 0x8000) { // Latch Clock Data (Write Only)
+        // When writing 00h, and then 01h to this register, the current time
+        // becomes latched into the RTC registers. The latched data will not
+        // change until it becomes latched again, by repeating the write
+        // 00h->01h procedure. This is supposed for <reading> from the RTC
+        // registers. This can be proven by reading the latched (frozen) time
+        // from the RTC registers, and then unlatch the registers to show the
+        // clock itself continues to tick in background.
+        LATCH_CLOCK = val;
+    }
+    else if (address < 0xC000) { // RAM Bank 00-03, if any (Read/Write)
+        /* This area is used to address external RAM in the cartridge (if any).
+         * External RAM is often battery buffered, allowing to store game
+         * positions or high score tables, even if the gameboy is turned off,
+         * or if the cartridge is removed from the gameboy. Available RAM sizes
+         * are: 2KByte (at A000-A7FF), 8KByte (at A000-BFFF), and 32KByte (in
+         * form of four 8K banks at *A000-BFFF). */
+        if (RAMG == 0xA) {
+            // On boards that have RAM, the A0-A12 cartridge bus signals are
+            // connected directly to the corresponding RAM pins, and pins
+            // A13-A14 are controlled by the MBC1.
+            u8 upper_bits = MODE ? (BANK2 & 0x7): 0;
+            u16 haddr = (upper_bits << 14) | (address & 0x1F);
+            ram[haddr] = val;
+
+            if (has_ram_battery() && ram_file.is_open()) {
+                ram_file.seekg(haddr);
+                ram_file.put(val);
+            }
+        }
+    }
 }
 
 u8 gbc_mbc::mbc5_read_u8(u16 address) {
