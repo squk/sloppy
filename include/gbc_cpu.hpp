@@ -23,8 +23,6 @@ class gbc_clock {
  * HL    H    L    HL
  * SP    -    -    Stack Pointer
  * PC    -    -    Program Counter/Pointer
- * As shown above, most registers can be accessed either as one 16bit
- * register, or as two separate 8bit registers.
  */
 class gbc_cpu_registers {
     public:
